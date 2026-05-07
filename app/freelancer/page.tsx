@@ -36,6 +36,12 @@ export default function FreelancerPage() {
             >
               Log in
             </Link>
+            <Link
+              href="/freelancer/account"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white px-6 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-black dark:text-zinc-50 dark:hover:bg-white/5 dark:focus-visible:ring-offset-black"
+            >
+              Account
+            </Link>
           </div>
         </div>
       </div>
