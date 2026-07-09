@@ -1,0 +1,291 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import {
+  formatFullAddress,
+  type JobDetailMeta,
+} from "../lib/jobDetails";
+import type { Job } from "../lib/jobs";
+
+type Props = {
+  job: Job;
+  meta: JobDetailMeta;
+};
+
+export function JobDetailView({ job, meta }: Props) {
+  const [directionFrom, setDirectionFrom] = useState<"home" | "location">("home");
+  const [copied, setCopied] = useState(false);
+
+  const fullAddress = formatFullAddress(meta);
+  const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${meta.lng - 0.02}%2C${meta.lat - 0.015}%2C${meta.lng + 0.02}%2C${meta.lat + 0.015}&layer=mapnik&marker=${meta.lat}%2C${meta.lng}`;
+
+  async function copyAddress() {
+    await navigator.clipboard.writeText(fullAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="min-h-screen bg-white pb-28">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-black/5 bg-white">
+        <div className="mx-auto flex max-w-md items-center px-4 py-3">
+          <Link
+            href="/worker/jobs"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--brand-dark)] hover:bg-[var(--surface)]"
+            aria-label="Back to jobs"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <h1 className="flex-1 text-center text-base font-semibold text-[var(--brand-dark)]">
+            Job Details
+          </h1>
+          <div className="w-9" />
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-md">
+        {/* Title */}
+        <div className="px-5 pt-6">
+          <h2 className="text-2xl font-bold leading-tight text-[var(--brand-dark)]">
+            {job.title}
+          </h2>
+        </div>
+
+        {/* Company block */}
+        <div className="mt-5 flex items-center gap-3 px-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-400 text-lg font-bold text-[var(--brand-dark)]">
+            {job.company.charAt(0)}
+          </div>
+          <div className="min-w-0">
+            <div className="font-bold text-[var(--brand-dark)]">
+              {job.company} – {meta.employmentType}
+            </div>
+            <div className="text-sm text-[var(--muted)]">{job.category}</div>
+            <div className="mt-0.5 flex items-center gap-1 text-sm">
+              <span className="text-amber-500">★</span>
+              <span className="font-semibold text-[var(--brand-dark)]">
+                {meta.rating.toFixed(1)}
+              </span>
+              <span className="text-[var(--muted)]">({meta.reviewCount})</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Pay pill */}
+        <div className="mt-5 px-5">
+          <div className="inline-flex rounded-full bg-[var(--brand-dark)] px-6 py-3 text-lg font-bold text-white">
+            {meta.hourlyRate}
+          </div>
+        </div>
+
+        {/* Schedule */}
+        <div className="mt-6 px-5">
+          <div className="text-sm font-bold tracking-wide text-[var(--brand-dark)]">
+            {meta.scheduleRange}
+          </div>
+          <div className="mt-1 text-sm font-bold text-[var(--brand-dark)]">
+            {meta.shiftTime} {meta.timezone}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
+            <span>
+              Est. pay per workday is{" "}
+              <span className="font-semibold text-[var(--brand-dark)]">
+                {meta.estimatedDailyPay}
+              </span>{" "}
+              before tax
+            </span>
+            <button
+              type="button"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/10 text-xs text-[var(--muted)]"
+              aria-label="Pay estimate info"
+            >
+              i
+            </button>
+            <span className="rounded bg-[var(--brand-light)] px-1.5 py-0.5 text-xs font-bold text-[var(--brand)]">
+              {meta.employmentType}
+            </span>
+          </div>
+        </div>
+
+        <hr className="mx-5 mt-6 border-black/5" />
+
+        {/* Available shifts */}
+        <section className="px-5 pt-6">
+          <h3 className="text-base font-bold text-[var(--brand-dark)]">
+            Available Dates and Times
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            You will be able to select days once you finish the job requirements.
+          </p>
+
+          <ul className="mt-4 divide-y divide-black/5">
+            {meta.shifts.map((shift) => (
+              <li
+                key={shift.dateLabel}
+                className="flex items-center justify-between py-3.5"
+              >
+                <span className="text-sm font-medium text-[var(--brand-dark)]">
+                  {shift.dateLabel}
+                </span>
+                <div className="text-right">
+                  <div className="text-sm text-[var(--muted)]">{shift.time}</div>
+                  <div className="text-sm font-semibold text-[var(--brand-dark)]">
+                    {shift.rate}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Important reminders */}
+        <section className="mx-5 mt-6 rounded-xl bg-amber-50 p-4">
+          <h3 className="text-sm font-bold text-[var(--brand-dark)]">
+            Important Reminders
+          </h3>
+          <ul className="mt-3 space-y-4">
+            <li className="flex gap-3 text-sm leading-6 text-[var(--muted)]">
+              <span className="mt-0.5 shrink-0 text-base">💵</span>
+              <span>
+                {meta.employmentType === "W2" ? (
+                  <>
+                    Pay periods run from Sunday to Saturday. You will be paid the
+                    following Friday for all work completed during the previous
+                    pay period.
+                  </>
+                ) : (
+                  <>
+                    Payment is issued within 2 business days after each completed
+                    shift via direct deposit.
+                  </>
+                )}
+              </span>
+            </li>
+            <li className="flex gap-3 text-sm leading-6 text-[var(--muted)]">
+              <span className="mt-0.5 shrink-0 text-base">🎫</span>
+              <span>
+                {meta.employmentType === "W2"
+                  ? "Taxes are withheld for W2 jobs."
+                  : "You are responsible for your own taxes on 1099 jobs."}
+              </span>
+            </li>
+            <li className="flex gap-3 text-sm leading-6">
+              <span className="mt-0.5 shrink-0 text-base">📖</span>
+              <button
+                type="button"
+                className="text-left text-sm font-semibold text-[var(--brand)] hover:underline"
+              >
+                Learn more about the benefits of this {meta.employmentType} job
+              </button>
+            </li>
+          </ul>
+        </section>
+
+        {/* Directions */}
+        <section className="mt-8 px-5">
+          <h3 className="text-base font-bold text-[var(--brand-dark)]">
+            Directions to {job.company}
+          </h3>
+          <div className="mt-2 flex items-start justify-between gap-2">
+            <p className="text-sm leading-6 text-[var(--muted)]">{fullAddress}</p>
+            <button
+              type="button"
+              onClick={copyAddress}
+              className="shrink-0 text-sm font-semibold text-[var(--brand)]"
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+
+          <p className="mt-5 text-sm font-semibold text-[var(--brand-dark)]">
+            Directions from
+          </p>
+          <div className="mt-2 inline-flex rounded-full border border-black/10 p-0.5">
+            <button
+              type="button"
+              onClick={() => setDirectionFrom("home")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                directionFrom === "home"
+                  ? "bg-[var(--brand-light)] text-[var(--brand)]"
+                  : "text-[var(--muted)]"
+              }`}
+            >
+              🏠 Home
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirectionFrom("location")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                directionFrom === "location"
+                  ? "bg-[var(--brand-light)] text-[var(--brand)]"
+                  : "text-[var(--muted)]"
+              }`}
+            >
+              📍 My Location
+            </button>
+          </div>
+
+          {directionFrom === "home" && (
+            <button
+              type="button"
+              className="mt-2 flex items-center gap-1 text-sm font-semibold text-[var(--brand)]"
+            >
+              ✏️ Edit home address
+            </button>
+          )}
+        </section>
+
+        {/* Map */}
+        <div className="mx-5 mt-4 overflow-hidden rounded-xl border border-black/5">
+          <iframe
+            title={`Map of ${job.company}`}
+            src={mapSrc}
+            className="h-52 w-full"
+            loading="lazy"
+          />
+        </div>
+
+        {/* About & requirements */}
+        <section className="mt-8 px-5">
+          <h3 className="text-base font-bold text-[var(--brand-dark)]">
+            About the role
+          </h3>
+          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+            {job.description}
+          </p>
+
+          <h3 className="mt-6 text-base font-bold text-[var(--brand-dark)]">
+            Requirements
+          </h3>
+          <ul className="mt-2 list-inside list-disc space-y-1.5 text-sm leading-7 text-[var(--muted)]">
+            {job.requirements.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      {/* Sticky apply bar */}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-white p-4">
+        <div className="mx-auto flex max-w-md gap-3">
+          <Link
+            href="/worker/signup"
+            className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--brand)] text-sm font-bold text-white transition hover:bg-[var(--brand-strong)]"
+          >
+            Apply now
+          </Link>
+          <Link
+            href="/worker/login"
+            className="flex h-12 items-center justify-center rounded-full border-2 border-[var(--brand-dark)] px-5 text-sm font-bold text-[var(--brand-dark)]"
+          >
+            Log in
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

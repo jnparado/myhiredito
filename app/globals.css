@@ -1,15 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand */
-  --brand: #2563eb; /* blue-600 */
-  --brand-strong: #1d4ed8; /* blue-700 */
+  /* Brand — Wonolo-inspired green */
+  --brand: #00b074;
+  --brand-strong: #009960;
+  --brand-light: #e6f9f2;
+  --brand-dark: #003d2c;
 
   /* Surfaces */
   --background: #ffffff;
-  --foreground: #0b1220;
-  --surface: #f8fafc; /* slate-50 */
-  --surface-2: #f1f5f9; /* slate-100 */
+  --foreground: #0f1a14;
+  --surface: #f7faf8;
+  --surface-2: #eef4f0;
+  --muted: #5c6b62;
+
+  /* White & brown theme */
+  --cream: #faf7f2;
+  --brown-dark: #3d2b1f;
+  --brown: #5c4033;
+  --brown-muted: #8b7355;
+  --brown-light: #e8ddd0;
 }
 
 @theme inline {
@@ -19,20 +29,19 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --brand: #60a5fa; /* blue-400 */
-    --brand-strong: #3b82f6; /* blue-500 */
-    --background: #05070c;
-    --foreground: #eef2ff;
-    --surface: #070a12;
-    --surface-2: #0b1020;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
     Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Italic emphasis used in Wonolo-style headlines */
+.emphasis {
+  font-style: italic;
+  color: var(--brand);
+}
+
+.font-brand {
+  font-family: var(--font-brand), cursive;
 }

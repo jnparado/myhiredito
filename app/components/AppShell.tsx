@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const HIDE_CHROME_PATHS = new Set([
   "/employer/login",
@@ -12,164 +13,219 @@ const HIDE_CHROME_PATHS = new Set([
   "/worker/signup",
 ]);
 
+function shouldHideAllChrome(pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (HIDE_CHROME_PATHS.has(pathname)) return true;
+  if (/^\/worker\/jobs\/[^/]+$/.test(pathname)) return true;
+  if (pathname === "/worker" || pathname === "/worker/jobs") return true;
+  return false;
+}
+
+function shouldHideHeader(pathname: string | null): boolean {
+  if (shouldHideAllChrome(pathname)) return true;
+  if (pathname === "/") return true;
+  return false;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const hideChrome = pathname ? HIDE_CHROME_PATHS.has(pathname) : false;
+  const hideHeader = shouldHideHeader(pathname);
+  const hideFooter = shouldHideAllChrome(pathname);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <>
-      {!hideChrome && (
-        <header className="sticky top-0 z-50 border-b border-black/5 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-black/50">
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
+      {!hideHeader && (
+        <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-6">
             <Link
               href="/"
-              className="font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
+              className="flex shrink-0 items-center gap-2 font-bold text-zinc-900"
               aria-label="MyHiredito home"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/myhiredito-logo.png"
+                alt="MyHiredito"
+                width={32}
+                height={32}
+                className="h-8 w-8 shrink-0 rounded-md object-contain"
+              />
               <span className="text-lg">MyHiredito</span>
             </Link>
 
-            <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-700 dark:text-zinc-200 md:flex">
+            <div className="hidden items-center gap-1 rounded-full border border-zinc-200 p-0.5 md:flex">
               <Link
-                className="hover:text-zinc-950 dark:hover:text-white"
-                href="/worker"
-              >
-                Worker
-              </Link>
-              <Link
-                className="hover:text-zinc-950 dark:hover:text-white"
                 href="/employer"
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                  pathname?.startsWith("/employer")
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-600 hover:text-zinc-900"
+                }`}
               >
-                Employer
+                Business
               </Link>
               <Link
-                className="hover:text-zinc-950 dark:hover:text-white"
-                href="/freelancer"
+                href="/worker"
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                  pathname?.startsWith("/worker")
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-600 hover:text-zinc-900"
+                }`}
               >
-                Freelancer
+                Professional
               </Link>
-              <Link className="hover:text-zinc-950 dark:hover:text-white" href="#">
-                About
+            </div>
+
+            <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-600 lg:flex">
+              <Link className="hover:text-zinc-900" href="/#platform">
+                Platform
+              </Link>
+              <Link className="hover:text-zinc-900" href="/#how-we-help">
+                How we help
+              </Link>
+              <Link className="hover:text-zinc-900" href="/employer">
+                Who we serve
+              </Link>
+              <Link className="hover:text-zinc-900" href="/#resources">
+                Resources
               </Link>
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 lg:flex">
               <Link
                 href="/worker/login"
-                className="hidden rounded-full px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/10 sm:inline-flex"
+                className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
               >
-                Log in
+                Login
               </Link>
               <Link
-                href="/worker/signup"
-                className="inline-flex items-center justify-center rounded-full bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--brand-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black"
+                href="/employer/signup"
+                className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
               >
-                Get started
+                Signup
+              </Link>
+              <Link
+                href="/employer"
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+              >
+                Post a Shift
               </Link>
             </div>
+
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-700 lg:hidden"
+              aria-label="Toggle menu"
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
+
+          {menuOpen && (
+            <div className="border-t border-zinc-100 bg-white px-4 py-4 lg:hidden">
+              <div className="mb-4 flex gap-1 rounded-full border border-zinc-200 p-0.5">
+                <Link href="/employer" className="flex-1 rounded-full bg-zinc-900 py-2 text-center text-xs font-semibold text-white" onClick={() => setMenuOpen(false)}>
+                  Business
+                </Link>
+                <Link href="/worker" className="flex-1 rounded-full py-2 text-center text-xs font-semibold text-zinc-600" onClick={() => setMenuOpen(false)}>
+                  Professional
+                </Link>
+              </div>
+              <nav className="flex flex-col gap-3 text-sm font-medium text-zinc-700">
+                <Link href="/#platform" onClick={() => setMenuOpen(false)}>Platform</Link>
+                <Link href="/#how-we-help" onClick={() => setMenuOpen(false)}>How we help</Link>
+                <Link href="/employer" onClick={() => setMenuOpen(false)}>Who we serve</Link>
+                <Link href="/#resources" onClick={() => setMenuOpen(false)}>Resources</Link>
+                <hr className="border-zinc-100" />
+                <Link href="/worker/login" onClick={() => setMenuOpen(false)}>Login</Link>
+                <Link href="/employer/signup" onClick={() => setMenuOpen(false)}>Signup</Link>
+                <Link href="/employer" className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white" onClick={() => setMenuOpen(false)}>
+                  Post a Shift
+                </Link>
+              </nav>
+            </div>
+          )}
         </header>
       )}
 
       {children}
 
-      {!hideChrome && (
-        <footer className="mt-auto border-t border-black/5 bg-white dark:border-white/10 dark:bg-black">
-          <div className="mx-auto w-full max-w-6xl px-6 py-10">
-            <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-              <div className="max-w-md">
-                <div className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                  MyHiredito
+      {!hideFooter && (
+        <footer className="mt-auto border-t border-zinc-200 bg-white">
+          <div className="mx-auto w-full max-w-7xl px-6 py-16">
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/myhiredito-logo.png"
+                alt="MyHiredito"
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-md object-contain"
+              />
+              <span className="text-lg font-bold text-zinc-900">MyHiredito</span>
+            </div>
+            <p className="mt-2 text-sm text-zinc-500">
+              The workforce platform for staffing.
+            </p>
+
+            <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+              <div>
+                <div className="text-sm font-bold text-zinc-900">Products</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-600">
+                  <Link className="block hover:text-zinc-900" href="/worker/jobs">The Marketplace</Link>
+                  <Link className="block hover:text-zinc-900" href="/employer">Jobs</Link>
+                  <Link className="block hover:text-zinc-900" href="#">Pay</Link>
+                  <Link className="block hover:text-zinc-900" href="#">Compliance</Link>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  A friendlier way to hire talent and find work.
-                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-8 text-sm md:grid-cols-3">
-                <div className="space-y-3">
-                  <div className="font-semibold text-zinc-950 dark:text-zinc-50">
-                    Product
-                  </div>
-                  <div className="space-y-2 text-zinc-600 dark:text-zinc-400">
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      How it works
-                    </Link>
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      Use cases
-                    </Link>
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      Pricing
-                    </Link>
-                  </div>
+              <div>
+                <div className="text-sm font-bold text-zinc-900">By Size</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-600">
+                  <Link className="block hover:text-zinc-900" href="/employer">SMB</Link>
+                  <Link className="block hover:text-zinc-900" href="/employer">Multi-Unit</Link>
+                  <Link className="block hover:text-zinc-900" href="/employer/signup">Enterprise</Link>
                 </div>
-
-                <div className="space-y-3">
-                  <div className="font-semibold text-zinc-950 dark:text-zinc-50">
-                    Company
-                  </div>
-                  <div className="space-y-2 text-zinc-600 dark:text-zinc-400">
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      About
-                    </Link>
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      Contact
-                    </Link>
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      Careers
-                    </Link>
-                  </div>
+              </div>
+              <div>
+                <div className="text-sm font-bold text-zinc-900">Company</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-600">
+                  <Link className="block hover:text-zinc-900" href="#">About</Link>
+                  <Link className="block hover:text-zinc-900" href="#">Careers</Link>
                 </div>
-
-                <div className="space-y-3">
-                  <div className="font-semibold text-zinc-950 dark:text-zinc-50">
-                    Legal
-                  </div>
-                  <div className="space-y-2 text-zinc-600 dark:text-zinc-400">
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      Privacy
-                    </Link>
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      Terms
-                    </Link>
-                    <Link
-                      className="block hover:text-zinc-950 dark:hover:text-white"
-                      href="#"
-                    >
-                      Cookies
-                    </Link>
-                  </div>
+              </div>
+              <div>
+                <div className="text-sm font-bold text-zinc-900">Browse by Pros</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-600">
+                  <Link className="block hover:text-zinc-900" href="/worker/jobs">View All</Link>
+                  <Link className="block hover:text-zinc-900" href="/worker/jobs">Healthcare</Link>
+                  <Link className="block hover:text-zinc-900" href="/worker/jobs">By State</Link>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-bold text-zinc-900">Resources</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-600">
+                  <Link className="block hover:text-zinc-900" href="#">Blog</Link>
+                  <Link className="block hover:text-zinc-900" href="#">Case Studies</Link>
+                  <Link className="block hover:text-zinc-900" href="#">Help Center</Link>
                 </div>
               </div>
             </div>
 
-            <div className="mt-10 flex flex-col gap-2 border-t border-black/5 pt-6 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
-              <div>© {new Date().getFullYear()} MyHiredito. All rights reserved.</div>
-              <div className="text-zinc-500">Built with Next.js</div>
+            <div className="mt-12 flex flex-col gap-4 border-t border-zinc-100 pt-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+              <div>© {new Date().getFullYear()} MyHiredito Inc. All rights reserved.</div>
+              <div className="flex flex-wrap gap-4">
+                <Link className="hover:text-zinc-900" href="#">Privacy Policy</Link>
+                <Link className="hover:text-zinc-900" href="#">Terms of Use</Link>
+                <Link className="hover:text-zinc-900" href="#">Support</Link>
+              </div>
             </div>
           </div>
         </footer>
@@ -177,4 +233,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </>
   );
 }
-
