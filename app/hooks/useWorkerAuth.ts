@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { getSupabaseClient } from "@/app/lib/supabaseClient";
 import {
   getWorkerAuthUser,
   signOutWorker,
@@ -26,9 +27,22 @@ export function useWorkerAuth() {
 
     window.addEventListener("myhiredito-worker-auth", onAuthChange);
     window.addEventListener("storage", onAuthChange);
+
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const supabase = getSupabaseClient();
+      const { data } = supabase.auth.onAuthStateChange(() => {
+        refresh();
+      });
+      subscription = data.subscription;
+    } catch {
+      // Supabase not configured.
+    }
+
     return () => {
       window.removeEventListener("myhiredito-worker-auth", onAuthChange);
       window.removeEventListener("storage", onAuthChange);
+      subscription?.unsubscribe();
     };
   }, [refresh]);
 

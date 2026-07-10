@@ -4,10 +4,18 @@ import {
   getDemoWorkerSession,
   type WorkerDemoUser,
 } from "./workerDemoAuth";
+import { fetchProfile } from "./supabase/workerRepository";
 
 export type WorkerAuthUser =
-  | { source: "supabase"; email: string; displayName: string }
-  | { source: "demo"; user: WorkerDemoUser };
+  | { source: "demo"; user: WorkerDemoUser }
+  | {
+      source: "supabase";
+      id: string;
+      email: string;
+      displayName: string;
+      firstName?: string | null;
+      lastName?: string | null;
+    };
 
 function displayNameFromEmail(email: string): string {
   const local = email.split("@")[0] ?? "Worker";
@@ -25,19 +33,27 @@ export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
   try {
     const supabase = getSupabaseClient();
     const { data } = await supabase.auth.getSession();
-    const email = data.session?.user?.email;
-    if (email) {
-      return {
-        source: "supabase",
-        email,
-        displayName: displayNameFromEmail(email),
-      };
-    }
-  } catch {
-    // Supabase not configured or unavailable in this environment.
-  }
+    const sessionUser = data.session?.user;
+    const email = sessionUser?.email;
+    if (!sessionUser?.id || !email) return null;
 
-  return null;
+    const profile = await fetchProfile(sessionUser.id);
+    const displayName =
+      profile?.display_name?.trim() ||
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() ||
+      displayNameFromEmail(email);
+
+    return {
+      source: "supabase",
+      id: sessionUser.id,
+      email,
+      displayName,
+      firstName: profile?.first_name,
+      lastName: profile?.last_name,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function signOutWorker(): Promise<void> {
@@ -52,4 +68,14 @@ export async function signOutWorker(): Promise<void> {
 
 export function getWorkerDisplayName(user: WorkerAuthUser): string {
   return user.source === "demo" ? user.user.displayName : user.displayName;
+}
+
+export function getWorkerId(user: WorkerAuthUser | null): string | null {
+  if (!user) return null;
+  return user.source === "supabase" ? user.id : null;
+}
+
+export function notifyWorkerAuthChange(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("myhiredito-worker-auth"));
 }

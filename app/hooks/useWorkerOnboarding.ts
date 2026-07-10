@@ -16,25 +16,36 @@ export function useWorkerOnboarding() {
     getDefaultOnboardingProgress(),
   );
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(() => {
-    if (!userKey) {
+  const refresh = useCallback(async () => {
+    if (!user || !userKey) {
       setProgress(getDefaultOnboardingProgress());
       setReady(!authLoading);
       return;
     }
 
-    setProgress(getOnboardingProgress(userKey));
-    setReady(true);
-  }, [authLoading, userKey]);
+    try {
+      setError(null);
+      const next = await getOnboardingProgress(user, userKey);
+      setProgress(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load onboarding.");
+      setProgress(getDefaultOnboardingProgress());
+    } finally {
+      setReady(true);
+    }
+  }, [authLoading, user, userKey]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    if (authLoading) return;
+    setReady(false);
+    void refresh();
+  }, [authLoading, refresh]);
 
   useEffect(() => {
     function onChange() {
-      refresh();
+      void refresh();
     }
 
     window.addEventListener("myhiredito-worker-onboarding", onChange);
@@ -46,9 +57,11 @@ export function useWorkerOnboarding() {
   }, [refresh]);
 
   return {
+    user,
     userKey,
     progress,
     loading: authLoading || !ready,
+    error,
     refresh,
   };
 }

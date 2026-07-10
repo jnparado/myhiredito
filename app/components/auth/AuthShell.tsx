@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { MyHireditoLogo } from "../brand/MyHireditoLogo";
+import {
+  AudienceToggle,
+  getAuthAudienceHrefs,
+  type Audience,
+} from "../brand/AudienceToggle";
 
 type AuthVariant = "worker" | "employer";
 type AuthMode = "login" | "signup";
@@ -57,7 +62,8 @@ export function AuthShell({
   const content = panelContent[variant];
   const loginHref = variant === "worker" ? "/worker/login" : "/employer/login";
   const signupHref = variant === "worker" ? "/worker/signup" : "/employer/signup";
-  const isEmployers = variant === "employer";
+  const activeAudience: Audience = variant === "employer" ? "employers" : "workers";
+  const audienceHrefs = getAuthAudienceHrefs(mode);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0f1115] lg:flex-row">
@@ -109,28 +115,20 @@ export function AuthShell({
           <div className="mx-auto flex max-w-md items-center justify-between lg:max-w-lg">
             <MyHireditoLogo href="/" theme="dark" size="md" className="lg:hidden" />
             <MyHireditoLogo href="/" theme="light" size="md" className="hidden lg:inline-flex" />
-            <div className="flex items-center rounded-full border border-white/20 bg-white/5 p-0.5 lg:border-zinc-200 lg:bg-white">
-              <Link
-                href="/"
-                className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition sm:px-4 sm:text-[11px] ${
-                  isEmployers
-                    ? "bg-white text-zinc-900"
-                    : "text-zinc-400 hover:text-white lg:text-zinc-500 lg:hover:text-zinc-900"
-                }`}
-              >
-                Employers
-              </Link>
-              <Link
-                href="/worker"
-                className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition sm:px-4 sm:text-[11px] ${
-                  !isEmployers
-                    ? "bg-white text-zinc-900"
-                    : "text-zinc-400 hover:text-white lg:text-zinc-500 lg:hover:text-zinc-900"
-                }`}
-              >
-                Workers
-              </Link>
-            </div>
+            <AudienceToggle
+              active={activeAudience}
+              employersHref={audienceHrefs.employersHref}
+              workersHref={audienceHrefs.workersHref}
+              theme="dark"
+              className="lg:hidden"
+            />
+            <AudienceToggle
+              active={activeAudience}
+              employersHref={audienceHrefs.employersHref}
+              workersHref={audienceHrefs.workersHref}
+              theme="light"
+              className="hidden lg:inline-flex"
+            />
           </div>
         </header>
 

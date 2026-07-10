@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { MyHireditoLogo } from "../brand/MyHireditoLogo";
+import {
+  AudienceToggle,
+  getAudienceFromPath,
+  getMarketingAudienceHrefs,
+} from "../brand/AudienceToggle";
 import { HowWeHelpMegaMenu } from "./HowWeHelpMegaMenu";
 import { PlatformMegaMenu } from "./PlatformMegaMenu";
 import { ResourcesMegaMenu } from "./ResourcesMegaMenu";
@@ -49,10 +54,9 @@ export function MarketingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const pathname = usePathname();
-  const isWorkersContext =
-    pathname === "/worker" || (pathname?.startsWith("/worker/jobs") ?? false);
-  const isEmployersView = !isWorkersContext;
-  const isWorkersLanding = pathname === "/worker";
+  const audienceHrefs = getMarketingAudienceHrefs();
+  const activeAudience = getAudienceFromPath(pathname);
+  const isEmployersView = activeAudience === "employers";
 
   return (
     <nav
@@ -62,28 +66,13 @@ export function MarketingNav() {
       <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 lg:gap-6 lg:px-6">
         <MyHireditoLogo href="/" theme="dark" size="lg" />
 
-        <div className="hidden items-center rounded-full border border-white/20 bg-white/5 p-0.5 md:flex">
-          <Link
-            href="/"
-            className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-              isEmployersView
-                ? "bg-white text-zinc-900"
-                : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            Employers
-          </Link>
-          <Link
-            href="/worker"
-            className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-              isWorkersContext
-                ? "bg-[#1db954] text-white"
-                : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            Workers
-          </Link>
-        </div>
+        <AudienceToggle
+          active={activeAudience}
+          employersHref={audienceHrefs.employersHref}
+          workersHref={audienceHrefs.workersHref}
+          theme="dark"
+          className="hidden md:flex"
+        />
 
         <div className="hidden items-center gap-5 lg:flex xl:gap-6">
           {isEmployersView ? (
@@ -176,26 +165,15 @@ export function MarketingNav() {
 
       {mobileOpen && (
         <div className="border-t border-white/10 bg-[#0f1115] px-4 py-4 lg:hidden">
-          <div className="mb-4 flex rounded-full border border-white/20 p-0.5">
-            <Link
-              href="/"
-              className={`flex-1 rounded-full py-2 text-center text-[11px] font-bold uppercase ${
-                isEmployersView ? "bg-white text-zinc-900" : "text-zinc-400"
-              }`}
-              onClick={() => setMobileOpen(false)}
-            >
-              Employers
-            </Link>
-            <Link
-              href="/worker"
-              className={`flex-1 rounded-full py-2 text-center text-[11px] font-bold uppercase ${
-                isWorkersContext ? "bg-[#1db954] text-white" : "text-zinc-400"
-              }`}
-              onClick={() => setMobileOpen(false)}
-            >
-              Workers
-            </Link>
-          </div>
+          <AudienceToggle
+            active={activeAudience}
+            employersHref={audienceHrefs.employersHref}
+            workersHref={audienceHrefs.workersHref}
+            theme="dark"
+            fullWidth
+            className="mb-4"
+            onNavigate={() => setMobileOpen(false)}
+          />
 
           {isEmployersView ? (
             <>

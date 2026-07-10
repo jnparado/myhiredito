@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   authButtonClass,
+  authErrorClass,
   authFieldClass,
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
 import {
-  markOnboardingStepComplete,
   ONBOARDING_STEPS,
+  saveOnboardingStep,
   type OnboardingStepId,
 } from "@/app/lib/workerOnboarding";
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
@@ -62,32 +63,37 @@ export function OnboardingStepLayout({
 type SubmitProps = {
   stepId: OnboardingStepId;
   children: React.ReactNode;
-  onSubmit?: () => boolean;
 };
 
-export function OnboardingStepForm({
-  stepId,
-  children,
-  onSubmit,
-}: SubmitProps) {
+export function OnboardingStepForm({ stepId, children }: SubmitProps) {
   const router = useRouter();
-  const { userKey } = useWorkerOnboarding();
+  const { user, userKey } = useWorkerOnboarding();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!userKey) return;
-    if (onSubmit && !onSubmit()) return;
+    if (!user || !userKey) return;
 
+    setError(null);
     setLoading(true);
-    markOnboardingStepComplete(userKey, stepId);
-    router.push("/worker/dashboard");
-    router.refresh();
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      await saveOnboardingStep(user, userKey, stepId, formData);
+      router.push("/worker/dashboard");
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save. Try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       {children}
+      {error && <div className={authErrorClass}>{error}</div>}
       <button type="submit" disabled={loading || !userKey} className={authButtonClass}>
         {loading ? "Saving..." : "Save & continue"}
       </button>

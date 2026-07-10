@@ -11,7 +11,11 @@ import {
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
 import { getSupabaseClient } from "@/app/lib/supabaseClient";
-import { resetWorkerOnboarding } from "@/app/lib/workerOnboarding";
+import {
+  ensureOnboardingProgress,
+  ensureWorkerProfile,
+} from "@/app/lib/supabase/workerRepository";
+import { notifyWorkerAuthChange } from "@/app/lib/workerAuth";
 
 export default function WorkerSignupPage() {
   const router = useRouter();
@@ -33,16 +37,34 @@ export default function WorkerSignupPage() {
     setError(null);
     setLoading(true);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
       const supabase = getSupabaseClient();
-      const { error: authError } = await supabase.auth.signUp({
-        email,
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: normalizedEmail,
         password,
-        options: { data: { role: "worker" } },
+        options: {
+          data: { role: "worker" },
+          emailRedirectTo: `${window.location.origin}/worker/dashboard`,
+        },
       });
       if (authError) throw authError;
-      resetWorkerOnboarding(email.trim().toLowerCase());
-      router.push("/worker/dashboard");
-      router.refresh();
+
+      const userId = data.user?.id;
+      if (userId && data.session) {
+        await ensureWorkerProfile(userId, normalizedEmail);
+        await ensureOnboardingProgress(userId);
+      }
+
+      if (data.session) {
+        notifyWorkerAuthChange();
+        router.push("/worker/dashboard");
+        router.refresh();
+        return;
+      }
+
+      setError(
+        "Account created. Check your email to confirm your address, then log in.",
+      );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Signup failed.");
     } finally {
@@ -126,7 +148,7 @@ export default function WorkerSignupPage() {
         </button>
 
         <p className="text-center text-xs leading-5 text-zinc-400">
-          Get verified, then start picking up shifts in your market.
+          Create your profile, verify your ID, and start applying to open roles.
         </p>
       </form>
     </AuthShell>

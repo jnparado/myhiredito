@@ -1,6 +1,18 @@
 import type { WorkerAuthUser } from "./workerAuth";
+import {
+  fetchOnboardingProgress,
+  formDataToCertificateInput,
+  formDataToIdentityInput,
+  formDataToProfileInput,
+  markOnboardingStepCompleteInDb,
+  saveCertificateOnboarding,
+  saveIdentityOnboarding,
+  saveProfileOnboarding,
+  updateOnboardingProgressRow,
+} from "./supabase/workerRepository";
+import type { OnboardingStepId as DbOnboardingStepId } from "./supabase/types";
 
-export type OnboardingStepId = "profile" | "government-id" | "certificates";
+export type OnboardingStepId = DbOnboardingStepId;
 
 export type OnboardingStep = {
   id: OnboardingStepId;
@@ -51,14 +63,24 @@ function storageKey(userKey: string): string {
 
 export function getWorkerUserKey(user: WorkerAuthUser | null): string | null {
   if (!user) return null;
-  return user.source === "demo" ? user.user.email : user.email;
+  return user.source === "demo" ? user.user.email : user.id;
 }
 
 export function getDefaultOnboardingProgress(): OnboardingProgress {
   return { completedSteps: [], dismissed: false };
 }
 
-export function getOnboardingProgress(userKey: string): OnboardingProgress {
+function rowToProgress(row: {
+  completed_steps: OnboardingStepId[];
+  dismissed: boolean;
+}): OnboardingProgress {
+  return {
+    completedSteps: row.completed_steps ?? [],
+    dismissed: row.dismissed ?? false,
+  };
+}
+
+export function getOnboardingProgressLocal(userKey: string): OnboardingProgress {
   if (typeof window === "undefined") return getDefaultOnboardingProgress();
 
   const raw = localStorage.getItem(storageKey(userKey));
@@ -75,7 +97,20 @@ export function getOnboardingProgress(userKey: string): OnboardingProgress {
   }
 }
 
-function saveOnboardingProgress(
+export async function getOnboardingProgress(
+  user: WorkerAuthUser,
+  userKey: string,
+): Promise<OnboardingProgress> {
+  if (user.source === "demo") {
+    return getOnboardingProgressLocal(userKey);
+  }
+
+  const row = await fetchOnboardingProgress(userKey);
+  if (!row) return getDefaultOnboardingProgress();
+  return rowToProgress(row);
+}
+
+function saveOnboardingProgressLocal(
   userKey: string,
   progress: OnboardingProgress,
 ): void {
@@ -85,30 +120,98 @@ function saveOnboardingProgress(
 }
 
 export function resetWorkerOnboarding(userKey: string): void {
-  saveOnboardingProgress(userKey, getDefaultOnboardingProgress());
+  saveOnboardingProgressLocal(userKey, getDefaultOnboardingProgress());
 }
 
-export function dismissOnboarding(userKey: string): void {
-  const progress = getOnboardingProgress(userKey);
-  saveOnboardingProgress(userKey, { ...progress, dismissed: true });
+export async function dismissOnboarding(
+  user: WorkerAuthUser,
+  userKey: string,
+): Promise<void> {
+  if (user.source === "demo") {
+    const progress = getOnboardingProgressLocal(userKey);
+    saveOnboardingProgressLocal(userKey, { ...progress, dismissed: true });
+    return;
+  }
+
+  const current = await getOnboardingProgress(user, userKey);
+  await updateOnboardingProgressRow(userKey, {
+    completed_steps: current.completedSteps,
+    dismissed: true,
+  });
+  window.dispatchEvent(new Event("myhiredito-worker-onboarding"));
 }
 
-export function resumeOnboarding(userKey: string): void {
-  const progress = getOnboardingProgress(userKey);
-  saveOnboardingProgress(userKey, { ...progress, dismissed: false });
+export async function resumeOnboarding(
+  user: WorkerAuthUser,
+  userKey: string,
+): Promise<void> {
+  if (user.source === "demo") {
+    const progress = getOnboardingProgressLocal(userKey);
+    saveOnboardingProgressLocal(userKey, { ...progress, dismissed: false });
+    return;
+  }
+
+  const current = await getOnboardingProgress(user, userKey);
+  await updateOnboardingProgressRow(userKey, {
+    completed_steps: current.completedSteps,
+    dismissed: false,
+  });
+  window.dispatchEvent(new Event("myhiredito-worker-onboarding"));
 }
 
-export function markOnboardingStepComplete(
+export async function markOnboardingStepComplete(
+  user: WorkerAuthUser,
   userKey: string,
   stepId: OnboardingStepId,
-): void {
-  const progress = getOnboardingProgress(userKey);
-  if (progress.completedSteps.includes(stepId)) return;
+): Promise<void> {
+  if (user.source === "demo") {
+    const progress = getOnboardingProgressLocal(userKey);
+    if (progress.completedSteps.includes(stepId)) return;
+    saveOnboardingProgressLocal(userKey, {
+      ...progress,
+      completedSteps: [...progress.completedSteps, stepId],
+    });
+    return;
+  }
 
-  saveOnboardingProgress(userKey, {
-    ...progress,
-    completedSteps: [...progress.completedSteps, stepId],
-  });
+  await markOnboardingStepCompleteInDb(userKey, stepId);
+  window.dispatchEvent(new Event("myhiredito-worker-onboarding"));
+}
+
+export async function saveOnboardingStep(
+  user: WorkerAuthUser,
+  userKey: string,
+  stepId: OnboardingStepId,
+  formData: FormData,
+): Promise<void> {
+  if (user.source === "demo") {
+    await markOnboardingStepComplete(user, userKey, stepId);
+    return;
+  }
+
+  switch (stepId) {
+    case "profile":
+      await saveProfileOnboarding(userKey, formDataToProfileInput(formData));
+      break;
+    case "government-id": {
+      const input = formDataToIdentityInput(formData);
+      if (!input.idFront) {
+        throw new Error("Please upload the front of your ID.");
+      }
+      await saveIdentityOnboarding(userKey, input);
+      break;
+    }
+    case "certificates": {
+      const input = formDataToCertificateInput(formData);
+      if (!input.certificateFile) {
+        throw new Error("Please upload your certificate file.");
+      }
+      await saveCertificateOnboarding(userKey, input);
+      break;
+    }
+    default:
+      await markOnboardingStepComplete(user, userKey, stepId);
+  }
 }
 
 export function isOnboardingComplete(progress: OnboardingProgress): boolean {

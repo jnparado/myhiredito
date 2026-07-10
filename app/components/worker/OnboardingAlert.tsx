@@ -10,7 +10,7 @@ import {
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
 
 export function OnboardingAlert() {
-  const { userKey, progress, loading } = useWorkerOnboarding();
+  const { user, userKey, progress, loading } = useWorkerOnboarding();
 
   if (loading || !userKey || isOnboardingComplete(progress)) return null;
 
@@ -50,7 +50,9 @@ export function OnboardingAlert() {
           {progress.dismissed && (
             <button
               type="button"
-              onClick={() => userKey && resumeOnboarding(userKey)}
+              onClick={() => {
+                if (user && userKey) void resumeOnboarding(user, userKey);
+              }}
               className="rounded border border-red-300 bg-white px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-red-700 transition hover:bg-red-100"
             >
               Show tasks

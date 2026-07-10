@@ -10,7 +10,7 @@ import {
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
 
 export function OnboardingTaskList() {
-  const { userKey, progress, loading } = useWorkerOnboarding();
+  const { user, userKey, progress, loading } = useWorkerOnboarding();
 
   if (loading || !userKey) return null;
 
@@ -57,7 +57,9 @@ export function OnboardingTaskList() {
         </div>
         <button
           type="button"
-          onClick={() => dismissOnboarding(userKey)}
+          onClick={() => {
+            if (user && userKey) void dismissOnboarding(user, userKey);
+          }}
           className="rounded border border-zinc-300 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-zinc-600 transition hover:bg-zinc-50"
         >
           Skip
