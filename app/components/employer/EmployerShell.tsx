@@ -12,7 +12,7 @@ import {
 } from "@/app/lib/employerAuth";
 
 const navItems = [
-  { href: "#", label: "Post Job", icon: "post" },
+  { href: "/employer/dashboard?post=1", label: "Post Job", icon: "post" },
   { href: "/employer/dashboard", label: "Home", icon: "home" },
   { href: "#", label: "Applicants", icon: "applicants" },
   { href: "#", label: "Workers", icon: "workers" },
