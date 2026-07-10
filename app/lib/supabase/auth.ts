@@ -81,7 +81,18 @@ export async function signInWithRole({
   if (!userId) throw new Error("Login failed. No user returned.");
 
   const profile = await fetchProfile(userId);
+  const metadataRole = data.user?.user_metadata?.role as UserRole | undefined;
+
   if (profile && profile.role !== role) {
+    await supabase.auth.signOut();
+    throw new Error(
+      role === "worker"
+        ? "This account is registered as an employer. Use the employer login instead."
+        : "This account is registered as a worker. Use the worker login instead.",
+    );
+  }
+
+  if (!profile && metadataRole && metadataRole !== role) {
     await supabase.auth.signOut();
     throw new Error(
       role === "worker"
@@ -95,7 +106,11 @@ export async function signInWithRole({
   }
 
   if (role === "worker") {
-    await ensureWorkerOnboardingInDb(userId);
+    try {
+      await ensureWorkerOnboardingInDb(userId);
+    } catch {
+      // Trigger may have already created the row; don't block login.
+    }
   }
 
   return data;

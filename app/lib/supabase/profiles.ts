@@ -33,7 +33,15 @@ export async function ensureProfileForUser({
 
   const { data, error } = await supabase
     .from("profiles")
-    .insert({ id: userId, role, email })
+    .upsert(
+      {
+        id: userId,
+        role,
+        email: email.trim().toLowerCase(),
+        display_name: email.split("@")[0],
+      },
+      { onConflict: "id" },
+    )
     .select("*")
     .single();
 

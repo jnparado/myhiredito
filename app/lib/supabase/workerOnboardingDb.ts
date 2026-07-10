@@ -3,12 +3,9 @@ import { isSupabaseConfigured } from "./env";
 import type { OnboardingStepId } from "./types";
 
 export type WorkerOnboardingRow = {
-  user_id: string;
+  worker_id: string;
   completed_steps: OnboardingStepId[];
   dismissed: boolean;
-  personal: Record<string, unknown> | null;
-  location_skills: Record<string, unknown> | null;
-  payment: Record<string, unknown> | null;
   updated_at: string;
 };
 
@@ -21,79 +18,64 @@ function normalizeCompletedSteps(steps: string[]): OnboardingStepId[] {
 }
 
 export async function fetchWorkerOnboardingFromDb(
-  userId: string,
+  workerId: string,
 ): Promise<WorkerOnboardingRow | null> {
   if (!isSupabaseConfigured()) return null;
 
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase
-    .from("worker_onboarding")
+    .from("onboarding_progress")
     .select("*")
-    .eq("user_id", userId)
+    .eq("worker_id", workerId)
     .maybeSingle();
 
   if (error || !data) return null;
 
   return {
-    ...data,
+    worker_id: data.worker_id,
     completed_steps: normalizeCompletedSteps(data.completed_steps ?? []),
-    personal: (data.personal as Record<string, unknown> | null) ?? null,
-    location_skills:
-      (data.location_skills as Record<string, unknown> | null) ?? null,
-    payment: (data.payment as Record<string, unknown> | null) ?? null,
+    dismissed: data.dismissed ?? false,
+    updated_at: data.updated_at,
   };
 }
 
-export async function ensureWorkerOnboardingInDb(userId: string): Promise<void> {
+export async function ensureWorkerOnboardingInDb(workerId: string): Promise<void> {
   if (!isSupabaseConfigured()) return;
 
   const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase.from("worker_onboarding").upsert(
+  const { error } = await supabase.from("onboarding_progress").upsert(
     {
-      user_id: userId,
+      worker_id: workerId,
       completed_steps: [],
       dismissed: false,
     },
-    { onConflict: "user_id" },
+    { onConflict: "worker_id" },
   );
 
   if (error) throw error;
 }
 
 export async function saveWorkerOnboardingToDb(
-  userId: string,
-  updates: Partial<
-    Pick<
-      WorkerOnboardingRow,
-      | "completed_steps"
-      | "dismissed"
-      | "personal"
-      | "location_skills"
-      | "payment"
-    >
-  >,
+  workerId: string,
+  updates: Partial<Pick<WorkerOnboardingRow, "completed_steps" | "dismissed">>,
 ): Promise<WorkerOnboardingRow> {
   if (!isSupabaseConfigured()) {
     throw new Error("Supabase is not configured.");
   }
 
-  const current = await fetchWorkerOnboardingFromDb(userId);
+  const current = await fetchWorkerOnboardingFromDb(workerId);
   const supabase = createSupabaseBrowserClient();
 
   const { data, error } = await supabase
-    .from("worker_onboarding")
+    .from("onboarding_progress")
     .upsert(
       {
-        user_id: userId,
+        worker_id: workerId,
         completed_steps:
           updates.completed_steps ?? current?.completed_steps ?? [],
         dismissed: updates.dismissed ?? current?.dismissed ?? false,
-        personal: updates.personal ?? current?.personal ?? null,
-        location_skills:
-          updates.location_skills ?? current?.location_skills ?? null,
-        payment: updates.payment ?? current?.payment ?? null,
       },
-      { onConflict: "user_id" },
+      { onConflict: "worker_id" },
     )
     .select("*")
     .single();
@@ -101,34 +83,29 @@ export async function saveWorkerOnboardingToDb(
   if (error) throw error;
 
   return {
-    ...data,
+    worker_id: data.worker_id,
     completed_steps: normalizeCompletedSteps(data.completed_steps ?? []),
-    personal: (data.personal as Record<string, unknown> | null) ?? null,
-    location_skills:
-      (data.location_skills as Record<string, unknown> | null) ?? null,
-    payment: (data.payment as Record<string, unknown> | null) ?? null,
+    dismissed: data.dismissed ?? false,
+    updated_at: data.updated_at,
   };
 }
 
 export async function markWorkerOnboardingStepCompleteInDb(
-  userId: string,
+  workerId: string,
   stepId: OnboardingStepId,
 ): Promise<WorkerOnboardingRow> {
-  const current = await fetchWorkerOnboardingFromDb(userId);
+  const current = await fetchWorkerOnboardingFromDb(workerId);
   const completed = current?.completed_steps ?? [];
 
   if (completed.includes(stepId)) {
     return (
       current ??
-      (await saveWorkerOnboardingToDb(userId, { completed_steps: completed }))
+      (await saveWorkerOnboardingToDb(workerId, { completed_steps: completed }))
     );
   }
 
-  return saveWorkerOnboardingToDb(userId, {
+  return saveWorkerOnboardingToDb(workerId, {
     completed_steps: [...completed, stepId],
     dismissed: current?.dismissed ?? false,
-    personal: current?.personal ?? null,
-    location_skills: current?.location_skills ?? null,
-    payment: current?.payment ?? null,
   });
 }

@@ -1,7 +1,7 @@
 import { createSupabaseBrowserClient } from "./supabase/client";
 import { isSupabaseConfigured } from "./supabase/env";
-import { fetchProfile, profileDisplayName } from "./supabase/profiles";
-import type { Profile } from "./supabase/database.types";
+import { fetchProfile as fetchWorkerProfile } from "./supabase/workerRepository";
+import type { ProfileRow } from "./supabase/types";
 
 export type WorkerAuthUser = {
   id: string;
@@ -9,7 +9,7 @@ export type WorkerAuthUser = {
   displayName: string;
   firstName?: string | null;
   lastName?: string | null;
-  profile: Profile | null;
+  profile: ProfileRow | null;
 };
 
 function displayNameFromEmail(email: string): string {
@@ -21,32 +21,43 @@ function displayNameFromEmail(email: string): string {
     .join(" ");
 }
 
+function profileDisplayName(profile: ProfileRow | null, email: string): string {
+  if (!profile) return displayNameFromEmail(email);
+  const full = [profile.first_name, profile.last_name].filter(Boolean).join(" ");
+  return (
+    profile.display_name?.trim() ||
+    full ||
+    displayNameFromEmail(email)
+  );
+}
+
 export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
   if (!isSupabaseConfigured()) return null;
 
   try {
     const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase.auth.getUser();
-    const sessionUser = data.user;
+    const { data, error } = await supabase.auth.getSession();
+    if (error) return null;
+
+    const sessionUser = data.session?.user;
     const email = sessionUser?.email;
     if (!sessionUser?.id || !email) return null;
 
-    let profile: Profile | null = null;
+    let profile: ProfileRow | null = null;
     try {
-      profile = await fetchProfile(sessionUser.id);
+      profile = await fetchWorkerProfile(sessionUser.id);
     } catch {
       // Profile table may be unavailable; still allow session auth.
     }
 
+    const metadataRole = sessionUser.user_metadata?.role as string | undefined;
     if (profile && profile.role !== "worker") return null;
-
-    const displayName =
-      profileDisplayName(profile, email) || displayNameFromEmail(email);
+    if (!profile && metadataRole && metadataRole !== "worker") return null;
 
     return {
       id: sessionUser.id,
       email,
-      displayName,
+      displayName: profileDisplayName(profile, email),
       firstName: profile?.first_name,
       lastName: profile?.last_name,
       profile,
