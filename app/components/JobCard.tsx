@@ -15,7 +15,7 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
   return (
     <Link
       href={`/worker/jobs/${job.slug}`}
-      className="group block rounded-xl border border-black/5 bg-white p-4 transition hover:border-[var(--brand)]/40 hover:shadow-md sm:p-5"
+      className="group block rounded-xl border border-black/5 bg-white p-5 transition hover:border-[var(--brand)]/40 hover:shadow-md"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 flex-1">

@@ -4,29 +4,29 @@ import { useCallback, useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/app/lib/supabase/client";
 import { isSupabaseConfigured } from "@/app/lib/supabase/env";
 import {
-  getWorkerAuthUser,
-  getWorkerUserId,
-  signOutWorker,
-  type WorkerAuthUser,
-} from "@/app/lib/workerAuth";
+  getEmployerAuthUser,
+  getEmployerUserId,
+  signOutEmployer,
+  type EmployerAuthUser,
+} from "@/app/lib/employerAuth";
 import {
-  hydrateWorkerOnboardingFromDb,
-  setWorkerOnboardingSyncUserId,
-} from "@/app/lib/workerOnboarding";
+  hydrateEmployerOnboardingFromDb,
+  setEmployerOnboardingSyncUserId,
+} from "@/app/lib/employerOnboarding";
 
-export function useWorkerAuth() {
-  const [user, setUser] = useState<WorkerAuthUser | null | undefined>(
+export function useEmployerAuth() {
+  const [user, setUser] = useState<EmployerAuthUser | null | undefined>(
     undefined,
   );
 
   const refresh = useCallback(async () => {
-    const nextUser = await getWorkerAuthUser();
+    const nextUser = await getEmployerAuthUser();
     setUser(nextUser);
 
-    const userId = getWorkerUserId(nextUser);
-    setWorkerOnboardingSyncUserId(userId);
+    const userId = getEmployerUserId(nextUser);
+    setEmployerOnboardingSyncUserId(userId);
     if (userId) {
-      await hydrateWorkerOnboardingFromDb(userId);
+      await hydrateEmployerOnboardingFromDb(userId);
     }
   }, []);
 
@@ -37,7 +37,7 @@ export function useWorkerAuth() {
       refresh();
     }
 
-    window.addEventListener("myhiredito-worker-auth", onAuthChange);
+    window.addEventListener("myhiredito-employer-auth", onAuthChange);
     window.addEventListener("storage", onAuthChange);
 
     if (isSupabaseConfigured()) {
@@ -50,20 +50,20 @@ export function useWorkerAuth() {
 
       return () => {
         subscription.unsubscribe();
-        window.removeEventListener("myhiredito-worker-auth", onAuthChange);
+        window.removeEventListener("myhiredito-employer-auth", onAuthChange);
         window.removeEventListener("storage", onAuthChange);
       };
     }
 
     return () => {
-      window.removeEventListener("myhiredito-worker-auth", onAuthChange);
+      window.removeEventListener("myhiredito-employer-auth", onAuthChange);
       window.removeEventListener("storage", onAuthChange);
     };
   }, [refresh]);
 
   async function signOut() {
-    await signOutWorker();
-    setWorkerOnboardingSyncUserId(null);
+    await signOutEmployer();
+    setEmployerOnboardingSyncUserId(null);
     setUser(null);
   }
 

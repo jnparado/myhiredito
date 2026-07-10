@@ -1,24 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
-import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
-import {
-  getBoostLabel,
-  getTierLabel,
-} from "@/app/lib/jobAssessments";
-import {
-  getAssessmentResult,
-  hasAppliedToJob,
-} from "@/app/lib/jobApplications";
-import { getOrCreateEmployerConversation } from "@/app/lib/messages";
+import { useState } from "react";
 import {
   formatFullAddress,
   type JobDetailMeta,
 } from "../lib/jobDetails";
 import type { Job } from "../lib/jobs";
-import { getWorkerUserKey, isOnboardingComplete } from "@/app/lib/workerOnboarding";
 
 type Props = {
   job: Job;
@@ -28,24 +16,6 @@ type Props = {
 export function JobDetailView({ job, meta }: Props) {
   const [directionFrom, setDirectionFrom] = useState<"home" | "location">("home");
   const [copied, setCopied] = useState(false);
-  const [messageConversationId, setMessageConversationId] = useState<string | null>(
-    null,
-  );
-  const { user, loading: authLoading } = useWorkerAuth();
-  const { progress, loading: onboardingLoading } = useWorkerOnboarding();
-  const userKey = getWorkerUserKey(user);
-  const assessmentResult =
-    userKey && !authLoading ? getAssessmentResult(userKey, job.slug) : null;
-  const applied =
-    userKey && !authLoading ? hasAppliedToJob(userKey, job.slug) : false;
-  const onboardingComplete = isOnboardingComplete(progress);
-
-  useEffect(() => {
-    if (!userKey) return;
-    setMessageConversationId(
-      getOrCreateEmployerConversation(userKey, job.company, job.title),
-    );
-  }, [userKey, job.company, job.title]);
 
   const fullAddress = formatFullAddress(meta);
   const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${meta.lng - 0.02}%2C${meta.lat - 0.015}%2C${meta.lng + 0.02}%2C${meta.lat + 0.015}&layer=mapnik&marker=${meta.lat}%2C${meta.lng}`;
@@ -56,21 +26,9 @@ export function JobDetailView({ job, meta }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const applyHref = user
-    ? onboardingComplete
-      ? `/worker/jobs/${job.slug}/assessment`
-      : "/worker/dashboard"
-    : "/worker/login";
-  const applyLabel = user
-    ? applied
-      ? "View application"
-      : assessmentResult
-        ? "Apply with boost"
-        : "Take exam & apply"
-    : "Apply now";
-
   return (
     <div className="min-h-screen bg-white pb-28">
+      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-black/5 bg-white">
         <div className="mx-auto flex max-w-md items-center px-4 py-3">
           <Link
@@ -90,12 +48,14 @@ export function JobDetailView({ job, meta }: Props) {
       </header>
 
       <div className="mx-auto max-w-md">
+        {/* Title */}
         <div className="px-5 pt-6">
           <h2 className="text-2xl font-bold leading-tight text-[var(--brand-dark)]">
             {job.title}
           </h2>
         </div>
 
+        {/* Company block */}
         <div className="mt-5 flex items-center gap-3 px-5">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-400 text-lg font-bold text-[var(--brand-dark)]">
             {job.company.charAt(0)}
@@ -115,55 +75,14 @@ export function JobDetailView({ job, meta }: Props) {
           </div>
         </div>
 
+        {/* Pay pill */}
         <div className="mt-5 px-5">
           <div className="inline-flex rounded-full bg-[var(--brand-dark)] px-6 py-3 text-lg font-bold text-white">
             {meta.hourlyRate}
           </div>
         </div>
 
-        {/* Role readiness exam */}
-        <section className="mx-5 mt-6 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand-light)] p-4">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg">
-              📝
-            </span>
-            <div>
-              <h3 className="text-sm font-bold text-[var(--brand-dark)]">
-                Boost your hire chance
-              </h3>
-              <p className="mt-1 text-sm leading-6 text-[var(--brand-dark)]/80">
-                Take a quick {job.category.toLowerCase()} exam before you apply.
-                Strong scores add a visibility boost employers can see.
-              </p>
-              {assessmentResult && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[var(--brand-dark)]">
-                    {assessmentResult.percent}% — {getTierLabel(assessmentResult.tier)}
-                  </span>
-                  {getBoostLabel(assessmentResult.tier) && (
-                    <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">
-                      {getBoostLabel(assessmentResult.tier)}
-                    </span>
-                  )}
-                </div>
-              )}
-              {user && onboardingComplete && (
-                <Link
-                  href={`/worker/jobs/${job.slug}/assessment`}
-                  className="mt-3 inline-flex text-sm font-bold text-[var(--brand)] hover:underline"
-                >
-                  {assessmentResult ? "Retake role exam" : "Start quick exam →"}
-                </Link>
-              )}
-              {user && !onboardingLoading && !onboardingComplete && (
-                <p className="mt-3 text-xs font-semibold text-red-700">
-                  Complete onboarding to unlock the role exam.
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-
+        {/* Schedule */}
         <div className="mt-6 px-5">
           <div className="text-sm font-bold tracking-wide text-[var(--brand-dark)]">
             {meta.scheduleRange}
@@ -179,6 +98,13 @@ export function JobDetailView({ job, meta }: Props) {
               </span>{" "}
               before tax
             </span>
+            <button
+              type="button"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/10 text-xs text-[var(--muted)]"
+              aria-label="Pay estimate info"
+            >
+              i
+            </button>
             <span className="rounded bg-[var(--brand-light)] px-1.5 py-0.5 text-xs font-bold text-[var(--brand)]">
               {meta.employmentType}
             </span>
@@ -187,6 +113,7 @@ export function JobDetailView({ job, meta }: Props) {
 
         <hr className="mx-5 mt-6 border-black/5" />
 
+        {/* Available shifts */}
         <section className="px-5 pt-6">
           <h3 className="text-base font-bold text-[var(--brand-dark)]">
             Available Dates and Times
@@ -194,6 +121,7 @@ export function JobDetailView({ job, meta }: Props) {
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
             You will be able to select days once you finish the job requirements.
           </p>
+
           <ul className="mt-4 divide-y divide-black/5">
             {meta.shifts.map((shift) => (
               <li
@@ -214,6 +142,7 @@ export function JobDetailView({ job, meta }: Props) {
           </ul>
         </section>
 
+        {/* Important reminders */}
         <section className="mx-5 mt-6 rounded-xl bg-amber-50 p-4">
           <h3 className="text-sm font-bold text-[var(--brand-dark)]">
             Important Reminders
@@ -222,8 +151,18 @@ export function JobDetailView({ job, meta }: Props) {
             <li className="flex gap-3 text-sm leading-6 text-[var(--muted)]">
               <span className="mt-0.5 shrink-0 text-base">💵</span>
               <span>
-                Payment is issued based on the employer&apos;s schedule after
-                completed work.
+                {meta.employmentType === "W2" ? (
+                  <>
+                    Pay periods run from Sunday to Saturday. You will be paid the
+                    following Friday for all work completed during the previous
+                    pay period.
+                  </>
+                ) : (
+                  <>
+                    Payment is issued within 2 business days after each completed
+                    shift via direct deposit.
+                  </>
+                )}
               </span>
             </li>
             <li className="flex gap-3 text-sm leading-6 text-[var(--muted)]">
@@ -234,9 +173,19 @@ export function JobDetailView({ job, meta }: Props) {
                   : "You are responsible for your own taxes on 1099 jobs."}
               </span>
             </li>
+            <li className="flex gap-3 text-sm leading-6">
+              <span className="mt-0.5 shrink-0 text-base">📖</span>
+              <button
+                type="button"
+                className="text-left text-sm font-semibold text-[var(--brand)] hover:underline"
+              >
+                Learn more about the benefits of this {meta.employmentType} job
+              </button>
+            </li>
           </ul>
         </section>
 
+        {/* Directions */}
         <section className="mt-8 px-5">
           <h3 className="text-base font-bold text-[var(--brand-dark)]">
             Directions to {job.company}
@@ -251,8 +200,46 @@ export function JobDetailView({ job, meta }: Props) {
               {copied ? "Copied!" : "Copy"}
             </button>
           </div>
+
+          <p className="mt-5 text-sm font-semibold text-[var(--brand-dark)]">
+            Directions from
+          </p>
+          <div className="mt-2 inline-flex rounded-full border border-black/10 p-0.5">
+            <button
+              type="button"
+              onClick={() => setDirectionFrom("home")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                directionFrom === "home"
+                  ? "bg-[var(--brand-light)] text-[var(--brand)]"
+                  : "text-[var(--muted)]"
+              }`}
+            >
+              🏠 Home
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirectionFrom("location")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                directionFrom === "location"
+                  ? "bg-[var(--brand-light)] text-[var(--brand)]"
+                  : "text-[var(--muted)]"
+              }`}
+            >
+              📍 My Location
+            </button>
+          </div>
+
+          {directionFrom === "home" && (
+            <button
+              type="button"
+              className="mt-2 flex items-center gap-1 text-sm font-semibold text-[var(--brand)]"
+            >
+              ✏️ Edit home address
+            </button>
+          )}
         </section>
 
+        {/* Map */}
         <div className="mx-5 mt-4 overflow-hidden rounded-xl border border-black/5">
           <iframe
             title={`Map of ${job.company}`}
@@ -262,6 +249,7 @@ export function JobDetailView({ job, meta }: Props) {
           />
         </div>
 
+        {/* About & requirements */}
         <section className="mt-8 px-5">
           <h3 className="text-base font-bold text-[var(--brand-dark)]">
             About the role
@@ -281,33 +269,21 @@ export function JobDetailView({ job, meta }: Props) {
         </section>
       </div>
 
+      {/* Sticky apply bar */}
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-white p-4">
-        <div className="mx-auto flex max-w-md gap-2">
+        <div className="mx-auto flex max-w-md gap-3">
           <Link
-            href={applied ? "/worker/dashboard#applications" : applyHref}
+            href="/worker/signup"
             className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--brand)] text-sm font-bold text-white transition hover:bg-[var(--brand-strong)]"
           >
-            {applyLabel}
+            Apply now
           </Link>
-          {user && messageConversationId ? (
-            <Link
-              href={`/worker/messages/${messageConversationId}`}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-dark)] text-[var(--brand-dark)]"
-              aria-label="Message employer"
-              title="Message employer"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
-              </svg>
-            </Link>
-          ) : !user ? (
-            <Link
-              href="/worker/login"
-              className="flex h-12 items-center justify-center rounded-full border-2 border-[var(--brand-dark)] px-5 text-sm font-bold text-[var(--brand-dark)]"
-            >
-              Log in
-            </Link>
-          ) : null}
+          <Link
+            href="/worker/login"
+            className="flex h-12 items-center justify-center rounded-full border-2 border-[var(--brand-dark)] px-5 text-sm font-bold text-[var(--brand-dark)]"
+          >
+            Log in
+          </Link>
         </div>
       </div>
     </div>

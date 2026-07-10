@@ -10,7 +10,14 @@ import {
   authFieldClass,
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
-import { getSupabaseClient } from "@/app/lib/supabaseClient";
+import { signInWithRole } from "@/app/lib/supabase/auth";
+import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
+import {
+  EMPLOYER_DEMO_EMAIL,
+  EMPLOYER_DEMO_PASSWORD,
+  isEmployerDemoCredentials,
+  setDemoEmployerSession,
+} from "@/app/lib/employerDemoAuth";
 
 export default function EmployerLoginPage() {
   const router = useRouter();
@@ -31,13 +38,19 @@ export default function EmployerLoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const supabase = getSupabaseClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (authError) throw authError;
-      router.push("/employer");
+      if (isEmployerDemoCredentials(email, password)) {
+        setDemoEmployerSession();
+        router.push("/employer/dashboard");
+        router.refresh();
+        return;
+      }
+
+      if (!isSupabaseConfigured()) {
+        throw new Error("Supabase is not configured. Use demo login or set .env.local.");
+      }
+
+      await signInWithRole({ email, password, role: "employer" });
+      router.push("/employer/dashboard");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed.");
@@ -104,6 +117,19 @@ export default function EmployerLoginPage() {
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Logging in..." : "Log In"}
         </button>
+
+        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <p className="font-semibold text-zinc-800">Demo employer login</p>
+          <p className="mt-1">
+            Email: <span className="font-mono text-zinc-900">{EMPLOYER_DEMO_EMAIL}</span>
+          </p>
+          <p>
+            Password: <span className="font-mono text-zinc-900">{EMPLOYER_DEMO_PASSWORD}</span>
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            Use these credentials to preview the employer account and onboarding.
+          </p>
+        </div>
       </form>
     </AuthShell>
   );

@@ -10,12 +10,8 @@ import {
   authFieldClass,
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
-import { getSupabaseClient } from "@/app/lib/supabaseClient";
-import {
-  ensureOnboardingProgress,
-  ensureWorkerProfile,
-} from "@/app/lib/supabase/workerRepository";
-import { notifyWorkerAuthChange } from "@/app/lib/workerAuth";
+import { signInWithRole } from "@/app/lib/supabase/auth";
+import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import {
   isDemoCredentials,
   setDemoWorkerSession,
@@ -44,27 +40,16 @@ export default function WorkerLoginPage() {
     try {
       if (isDemoCredentials(email, password)) {
         setDemoWorkerSession();
-        notifyWorkerAuthChange();
         router.push("/worker/dashboard");
         router.refresh();
         return;
       }
 
-      const supabase = getSupabaseClient();
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-      if (authError) throw authError;
-
-      const userId = data.user?.id;
-      const userEmail = data.user?.email ?? email.trim().toLowerCase();
-      if (userId) {
-        await ensureWorkerProfile(userId, userEmail);
-        await ensureOnboardingProgress(userId);
+      if (!isSupabaseConfigured()) {
+        throw new Error("Supabase is not configured. Use demo login or set .env.local.");
       }
 
-      notifyWorkerAuthChange();
+      await signInWithRole({ email, password, role: "worker" });
       router.push("/worker/dashboard");
       router.refresh();
     } catch (err: unknown) {

@@ -4,11 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { MyHireditoLogo } from "./brand/MyHireditoLogo";
-import {
-  AudienceToggle,
-  getAudienceFromPath,
-  getMarketingAudienceHrefs,
-} from "./brand/AudienceToggle";
 
 const HIDE_CHROME_PATHS = new Set([
   "/employer/login",
@@ -22,11 +17,9 @@ const HIDE_CHROME_PATHS = new Set([
 function shouldHideAllChrome(pathname: string | null): boolean {
   if (!pathname) return false;
   if (HIDE_CHROME_PATHS.has(pathname)) return true;
-  if (/^\/worker\/jobs\/[^/]+(\/assessment)?$/.test(pathname)) return true;
+  if (/^\/worker\/jobs\/[^/]+$/.test(pathname)) return true;
   if (pathname === "/worker/dashboard" || pathname === "/worker/jobs") return true;
-  if (pathname === "/worker/connect") return true;
-  if (pathname?.startsWith("/worker/messages")) return true;
-  if (pathname?.startsWith("/worker/onboarding")) return true;
+  if (pathname === "/employer/dashboard") return true;
   return false;
 }
 
@@ -41,8 +34,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const hideHeader = shouldHideHeader(pathname);
   const hideFooter = shouldHideAllChrome(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
-  const audienceHrefs = getMarketingAudienceHrefs();
-  const activeAudience = getAudienceFromPath(pathname);
 
   return (
     <>
@@ -51,13 +42,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-6">
             <MyHireditoLogo href="/" theme="light" size="md" />
 
-            <AudienceToggle
-              active={activeAudience}
-              employersHref={audienceHrefs.employersHref}
-              workersHref={audienceHrefs.workersHref}
-              theme="light"
-              className="hidden md:flex"
-            />
+            <div className="hidden items-center gap-1 rounded-full border border-zinc-200 p-0.5 md:flex">
+              <Link
+                href="/employer"
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                  pathname?.startsWith("/employer")
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-600 hover:text-zinc-900"
+                }`}
+              >
+                Employers
+              </Link>
+              <Link
+                href="/worker"
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                  pathname?.startsWith("/worker")
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-600 hover:text-zinc-900"
+                }`}
+              >
+                Workers
+              </Link>
+            </div>
 
             <nav className="hidden items-center gap-5 text-[11px] font-bold uppercase tracking-wide text-zinc-600 lg:flex">
               <Link className="hover:text-zinc-900" href="/#platform">
@@ -113,15 +119,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {menuOpen && (
             <div className="border-t border-zinc-100 bg-white px-4 py-4 lg:hidden">
-              <AudienceToggle
-                active={activeAudience}
-                employersHref={audienceHrefs.employersHref}
-                workersHref={audienceHrefs.workersHref}
-                theme="light"
-                fullWidth
-                className="mb-4"
-                onNavigate={() => setMenuOpen(false)}
-              />
+              <div className="mb-4 flex gap-1 rounded-full border border-zinc-200 p-0.5">
+                <Link href="/employer" className="flex-1 rounded-full bg-zinc-900 py-2 text-center text-xs font-semibold text-white" onClick={() => setMenuOpen(false)}>
+                  Employers
+                </Link>
+                <Link href="/worker" className="flex-1 rounded-full py-2 text-center text-xs font-semibold text-zinc-600" onClick={() => setMenuOpen(false)}>
+                  Workers
+                </Link>
+              </div>
               <nav className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-wide text-zinc-700">
                 <Link href="/#platform" onClick={() => setMenuOpen(false)}>Platform</Link>
                 <Link href="/#how-we-help" onClick={() => setMenuOpen(false)}>How we help</Link>

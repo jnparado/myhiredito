@@ -10,7 +10,9 @@ import {
   authFieldClass,
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
-import { getSupabaseClient } from "@/app/lib/supabaseClient";
+import { signUpWithRole } from "@/app/lib/supabase/auth";
+import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
+import { resetEmployerOnboardingState } from "@/app/lib/employerOnboarding";
 
 export default function EmployerSignupPage() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export default function EmployerSignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const canSubmit = useMemo(() => {
@@ -29,18 +32,28 @@ export default function EmployerSignupPage() {
     e.preventDefault();
     if (!canSubmit) return;
     setError(null);
+    setMessage(null);
     setLoading(true);
     try {
-      const supabase = getSupabaseClient();
-      const { error: authError } = await supabase.auth.signUp({
+      if (!isSupabaseConfigured()) {
+        throw new Error("Supabase is not configured. Add keys to .env.local.");
+      }
+
+      const data = await signUpWithRole({
         email,
         password,
-        options: {
-          data: { role: "employer" },
-        },
+        role: "employer",
+        nextPath: "/employer/dashboard",
       });
-      if (authError) throw authError;
-      router.push("/employer");
+
+      resetEmployerOnboardingState();
+
+      if (data.user && !data.session) {
+        setMessage("Account created. Check your email to confirm, then log in.");
+        return;
+      }
+
+      router.push("/employer/dashboard");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Signup failed.");
@@ -119,13 +132,18 @@ export default function EmployerSignupPage() {
         </label>
 
         {error && <div className={authErrorClass}>{error}</div>}
+        {message && (
+          <div className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand-light)] px-4 py-3 text-sm text-[var(--brand-dark)]">
+            {message}
+          </div>
+        )}
 
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Creating account..." : "Create Employer Account"}
         </button>
 
         <p className="text-center text-xs leading-5 text-zinc-400">
-          Post your first shift and get matched with verified pros.
+          Complete onboarding after signup to verify your business and post jobs.
         </p>
       </form>
     </AuthShell>

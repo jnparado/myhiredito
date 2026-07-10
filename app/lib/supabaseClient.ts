@@ -1,11 +1,9 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "./supabase/client";
+import { createSupabaseBrowserClient } from "./supabase/client";
+import { isSupabaseConfigured } from "./supabase/env";
 
-let cached: SupabaseClient | null = null;
-
-/** Browser Supabase client (use in client components and form handlers). */
-export function getSupabaseClient(): SupabaseClient {
-  if (cached) return cached;
-  cached = createClient();
-  return cached;
+export function getSupabaseClient() {
+  return createSupabaseBrowserClient();
 }
+
+export { isSupabaseConfigured } from "./supabase/env";
+export { createSupabaseBrowserClient } from "./supabase/client";
