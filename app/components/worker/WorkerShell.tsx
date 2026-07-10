@@ -15,6 +15,7 @@ import {
 } from "@/app/lib/workerOnboarding";
 import { NotificationPanel } from "./NotificationPanel";
 import { FloatingMessagingWidget } from "./FloatingMessagingWidget";
+import { WorkerAiAssistant } from "./WorkerAiAssistant";
 
 type OpenPanel = "notifications" | "more" | null;
 
@@ -377,6 +378,7 @@ export function WorkerShell({
       </nav>
 
       <FloatingMessagingWidget />
+      <WorkerAiAssistant />
     </div>
   );
 }

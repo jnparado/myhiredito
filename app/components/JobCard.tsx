@@ -4,6 +4,7 @@ import {
   formatPostedAgo,
   type Job,
 } from "../lib/jobs";
+import type { JobMatchResult } from "../lib/ai/types";
 
 const typeLabels: Record<Job["type"], string> = {
   "on-demand": "On-demand",
@@ -11,7 +12,15 @@ const typeLabels: Record<Job["type"], string> = {
   "temp-to-perm": "Temp-to-perm",
 };
 
-export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
+export function JobCard({
+  job,
+  compact,
+  match,
+}: {
+  job: Job;
+  compact?: boolean;
+  match?: JobMatchResult;
+}) {
   return (
     <Link
       href={`/worker/jobs/${job.slug}`}
@@ -32,6 +41,11 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+        {match && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#1db954]/10 px-2 py-0.5 font-bold text-[#1a5c42]">
+            ✦ {match.score}% match · {match.label}
+          </span>
+        )}
         {job.verified && (
           <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-light)] px-2 py-0.5 font-semibold text-[var(--brand)]">
             ✓ Payment verified
@@ -49,6 +63,10 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
           </span>
         )}
       </div>
+
+      {match && !compact && (
+        <p className="mt-2 text-xs text-zinc-500">{match.reasons[0]}</p>
+      )}
 
       <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
         {job.description}

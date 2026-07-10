@@ -26,6 +26,7 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
   const { user } = useEmployerAuth();
   const { progress } = useEmployerOnboarding();
   const [loading, setLoading] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,6 +45,69 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
         .filter(Boolean)
         .join(", ")
     : "";
+
+  async function handleAiDraft() {
+    const form = document.getElementById("employer-post-job-form") as HTMLFormElement | null;
+    if (!form || !user) return;
+
+    const title = (form.elements.namedItem("title") as HTMLInputElement).value.trim();
+    const category = (form.elements.namedItem("category") as HTMLSelectElement).value.trim();
+    const location = (form.elements.namedItem("location") as HTMLInputElement).value.trim();
+    const pay = (form.elements.namedItem("pay") as HTMLInputElement).value.trim();
+
+    if (!title || !category || !location || !pay) {
+      setError("Fill in title, role, location, and pay before using AI draft.");
+      return;
+    }
+
+    setError(null);
+    setDrafting(true);
+
+    try {
+      const companyName =
+        progress.data.businessCertificate?.legalBusinessName ||
+        getEmployerCompanyName(user);
+
+      const response = await fetch("/api/ai/job-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          category,
+          location,
+          pay,
+          companyName,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        draft?: {
+          description: string;
+          requirements: string;
+          skills: string;
+          schedule: string;
+        };
+        error?: string;
+      };
+
+      if (!response.ok || !data.draft) {
+        throw new Error(data.error ?? "AI draft failed");
+      }
+
+      (form.elements.namedItem("description") as HTMLTextAreaElement).value =
+        data.draft.description;
+      (form.elements.namedItem("requirements") as HTMLTextAreaElement).value =
+        data.draft.requirements;
+      (form.elements.namedItem("skills") as HTMLInputElement).value =
+        data.draft.skills;
+      (form.elements.namedItem("schedule") as HTMLInputElement).value =
+        data.draft.schedule;
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "AI draft failed.");
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -90,7 +154,26 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
           </button>
         </div>
 
-        <form className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4" onSubmit={handleSubmit}>
+        <form
+          id="employer-post-job-form"
+          className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4"
+          onSubmit={handleSubmit}
+        >
+          <div className="rounded-lg border border-[#1db954]/20 bg-[#1db954]/5 px-4 py-3">
+            <p className="text-sm font-semibold text-zinc-800">✦ Draft with AI</p>
+            <p className="mt-1 text-xs text-zinc-600">
+              Fill title, role, location, and pay — then let AI write the description and requirements.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleAiDraft()}
+              disabled={drafting}
+              className="mt-3 rounded-full border border-[#1db954] px-4 py-1.5 text-xs font-bold text-[#1a5c42] hover:bg-[#1db954]/10 disabled:opacity-50"
+            >
+              {drafting ? "Drafting..." : "Generate job copy"}
+            </button>
+          </div>
+
           <div>
             <label htmlFor="job-title" className={authLabelClass}>
               Job title

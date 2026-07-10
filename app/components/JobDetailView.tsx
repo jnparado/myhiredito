@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { buildWorkerContext, useAiJobMatches } from "@/app/hooks/useAiJobMatches";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
 import {
@@ -39,6 +40,16 @@ export function JobDetailView({ job, meta }: Props) {
   const applied =
     userKey && !authLoading ? hasAppliedToJob(userKey, job.slug) : false;
   const onboardingComplete = isOnboardingComplete(progress);
+  const workerContext = user
+    ? buildWorkerContext({
+        displayName: user.displayName,
+        profile: user.profile,
+        onboardingComplete,
+        completedSteps: progress.completedSteps,
+      })
+    : null;
+  const { matches } = useAiJobMatches(workerContext, userKey, useMemo(() => [job], [job]));
+  const jobMatch = matches[job.slug];
 
   useEffect(() => {
     if (!userKey) return;
@@ -119,6 +130,14 @@ export function JobDetailView({ job, meta }: Props) {
           <div className="inline-flex rounded-full bg-[var(--brand-dark)] px-6 py-3 text-lg font-bold text-white">
             {meta.hourlyRate}
           </div>
+          {jobMatch && (
+            <div className="mt-3 rounded-xl border border-[#1db954]/20 bg-[#1db954]/5 px-4 py-3">
+              <p className="text-sm font-bold text-[#1a5c42]">
+                ✦ {jobMatch.score}% AI match · {jobMatch.label}
+              </p>
+              <p className="mt-1 text-xs text-zinc-600">{jobMatch.reasons.join(" · ")}</p>
+            </div>
+          )}
         </div>
 
         {/* Role readiness exam */}

@@ -3,6 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { JobCard } from "../../components/JobCard";
 import {
+  buildWorkerContext,
+  useAiJobMatches,
+} from "../../hooks/useAiJobMatches";
+import { useWorkerAuth } from "../../hooks/useWorkerAuth";
+import { useWorkerOnboarding } from "../../hooks/useWorkerOnboarding";
+import { getWorkerDisplayName } from "../../lib/workerAuth";
+import {
+  getWorkerUserKey,
+  isOnboardingComplete,
+} from "../../lib/workerOnboarding";
+import {
   experienceLabels,
   jobCategories,
   jobs,
@@ -12,12 +23,28 @@ import {
 import { getPublishedJobs } from "../../lib/publishedJobs";
 
 export function JobsBrowser() {
+  const { user } = useWorkerAuth();
+  const { progress } = useWorkerOnboarding();
+  const userKey = getWorkerUserKey(user);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [experience, setExperience] = useState<ExperienceLevel | "all">("all");
   const [payType, setPayType] = useState<Job["payType"] | "all">("all");
+  const [sort, setSort] = useState<"recent" | "match">("match");
   const [showFilters, setShowFilters] = useState(false);
   const [allJobs, setAllJobs] = useState<Job[]>(jobs);
+
+  const workerContext = user
+    ? buildWorkerContext({
+        displayName: getWorkerDisplayName(user),
+        profile: user.profile,
+        onboardingComplete: isOnboardingComplete(progress),
+        completedSteps: progress.completedSteps,
+      })
+    : null;
+
+  const { matches, loading: matchesLoading, source: matchSource } =
+    useAiJobMatches(workerContext, userKey, allJobs);
 
   useEffect(() => {
     function refresh() {
@@ -36,7 +63,7 @@ export function JobsBrowser() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return allJobs.filter((job) => {
+    const list = allJobs.filter((job) => {
       if (category !== "All" && job.category !== category) return false;
       if (experience !== "all" && job.experienceLevel !== experience)
         return false;
@@ -50,7 +77,19 @@ export function JobsBrowser() {
         job.category.toLowerCase().includes(q)
       );
     });
-  }, [search, category, experience, payType, allJobs]);
+
+    if (sort === "match" && userKey) {
+      return [...list].sort((a, b) => {
+        const scoreA = matches[a.slug]?.score ?? 0;
+        const scoreB = matches[b.slug]?.score ?? 0;
+        return scoreB - scoreA;
+      });
+    }
+
+    return [...list].sort(
+      (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
+    );
+  }, [search, category, experience, payType, allJobs, sort, userKey, matches]);
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8">
@@ -190,18 +229,43 @@ export function JobsBrowser() {
           />
         </div>
 
-        <p className="mt-4 text-sm text-[var(--muted)]">
-          <span className="font-semibold text-[var(--brand-dark)]">
-            {filtered.length}
-          </span>{" "}
-          jobs found
-          {category !== "All" && (
-            <span>
-              {" "}
-              in <span className="font-semibold">{category}</span>
-            </span>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-[var(--muted)]">
+            <span className="font-semibold text-[var(--brand-dark)]">
+              {filtered.length}
+            </span>{" "}
+            jobs found
+            {category !== "All" && (
+              <span>
+                {" "}
+                in <span className="font-semibold">{category}</span>
+              </span>
+            )}
+          </p>
+          {userKey && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
+                Sort
+              </label>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as "recent" | "match")}
+                className="rounded-lg border border-black/10 bg-white px-2 py-1 text-xs font-semibold text-zinc-700"
+              >
+                <option value="match">AI best match</option>
+                <option value="recent">Most recent</option>
+              </select>
+              {matchesLoading && (
+                <span className="text-[11px] text-zinc-400">Scoring...</span>
+              )}
+              {!matchesLoading && matchSource && (
+                <span className="text-[11px] font-semibold text-[#1a5c42]">
+                  ✦ {matchSource === "ai" ? "AI" : "Smart"} match
+                </span>
+              )}
+            </div>
           )}
-        </p>
+        </div>
 
         <div className="mt-4 space-y-3">
           {filtered.length === 0 ? (
@@ -214,7 +278,9 @@ export function JobsBrowser() {
               </p>
             </div>
           ) : (
-            filtered.map((job) => <JobCard key={job.id} job={job} />)
+            filtered.map((job) => (
+              <JobCard key={job.id} job={job} match={matches[job.slug]} />
+            ))
           )}
         </div>
       </div>

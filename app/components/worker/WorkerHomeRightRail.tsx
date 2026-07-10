@@ -36,6 +36,26 @@ export function WorkerHomeRightRail() {
 
       <div className="overflow-hidden rounded-lg border border-zinc-300/60 bg-white shadow-sm">
         <div className="border-b border-zinc-100 px-4 py-3">
+          <h2 className="text-sm font-bold text-zinc-800">✦ AI career tips</h2>
+        </div>
+        <ul className="divide-y divide-zinc-100">
+          <li className="px-4 py-3">
+            <p className="text-xs font-bold text-zinc-800">Use the career assistant</p>
+            <p className="mt-0.5 text-[11px] leading-5 text-zinc-500">
+              Open the AI panel (bottom-left) for help with exams, pay, and profile tips.
+            </p>
+          </li>
+          <li className="px-4 py-3">
+            <p className="text-xs font-bold text-zinc-800">Sort by AI best match</p>
+            <p className="mt-0.5 text-[11px] leading-5 text-zinc-500">
+              Jobs page ranks roles by how well they fit your skills and location.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-zinc-300/60 bg-white shadow-sm">
+        <div className="border-b border-zinc-100 px-4 py-3">
           <h2 className="text-sm font-bold text-zinc-800">Worker playbook</h2>
         </div>
         <ul className="divide-y divide-zinc-100">
