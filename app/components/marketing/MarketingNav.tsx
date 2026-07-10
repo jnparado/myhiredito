@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { MyHireditoLogo } from "../brand/MyHireditoLogo";
 import { HowWeHelpMegaMenu } from "./HowWeHelpMegaMenu";
 import { PlatformMegaMenu } from "./PlatformMegaMenu";
 import { ResourcesMegaMenu } from "./ResourcesMegaMenu";
@@ -48,8 +49,10 @@ export function MarketingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const pathname = usePathname();
+  const isWorkersContext =
+    pathname === "/worker" || (pathname?.startsWith("/worker/jobs") ?? false);
+  const isEmployersView = !isWorkersContext;
   const isWorkersLanding = pathname === "/worker";
-  const isEmployersView = !isWorkersLanding;
 
   return (
     <nav
@@ -57,13 +60,7 @@ export function MarketingNav() {
       onMouseLeave={() => setOpenMenu(null)}
     >
       <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 lg:gap-6 lg:px-6">
-        <Link
-          href="/"
-          className="shrink-0 font-brand text-2xl font-bold text-white lg:text-[1.75rem]"
-          aria-label="MyHiredito home"
-        >
-          MyHiredito
-        </Link>
+        <MyHireditoLogo href="/" theme="dark" size="lg" />
 
         <div className="hidden items-center rounded-full border border-white/20 bg-white/5 p-0.5 md:flex">
           <Link
@@ -79,7 +76,7 @@ export function MarketingNav() {
           <Link
             href="/worker"
             className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-              isWorkersLanding
+              isWorkersContext
                 ? "bg-[#1db954] text-white"
                 : "text-zinc-400 hover:text-white"
             }`}
@@ -192,7 +189,7 @@ export function MarketingNav() {
             <Link
               href="/worker"
               className={`flex-1 rounded-full py-2 text-center text-[11px] font-bold uppercase ${
-                isWorkersLanding ? "bg-[#1db954] text-white" : "text-zinc-400"
+                isWorkersContext ? "bg-[#1db954] text-white" : "text-zinc-400"
               }`}
               onClick={() => setMobileOpen(false)}
             >

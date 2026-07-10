@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { MyHireditoLogo } from "./brand/MyHireditoLogo";
 
 const HIDE_CHROME_PATHS = new Set([
   "/employer/login",
@@ -16,8 +17,10 @@ const HIDE_CHROME_PATHS = new Set([
 function shouldHideAllChrome(pathname: string | null): boolean {
   if (!pathname) return false;
   if (HIDE_CHROME_PATHS.has(pathname)) return true;
-  if (/^\/worker\/jobs\/[^/]+$/.test(pathname)) return true;
+  if (/^\/worker\/jobs\/[^/]+(\/assessment)?$/.test(pathname)) return true;
   if (pathname === "/worker/dashboard" || pathname === "/worker/jobs") return true;
+  if (pathname?.startsWith("/worker/messages")) return true;
+  if (pathname?.startsWith("/worker/onboarding")) return true;
   return false;
 }
 
@@ -38,21 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!hideHeader && (
         <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-6">
-            <Link
-              href="/"
-              className="flex shrink-0 items-center gap-2 font-bold text-zinc-900"
-              aria-label="MyHiredito home"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/myhiredito-logo.png"
-                alt="MyHiredito"
-                width={32}
-                height={32}
-                className="h-8 w-8 shrink-0 rounded-md object-contain"
-              />
-              <span className="text-lg">MyHiredito</span>
-            </Link>
+            <MyHireditoLogo href="/" theme="light" size="md" />
 
             <div className="hidden items-center gap-1 rounded-full border border-zinc-200 p-0.5 md:flex">
               <Link
@@ -161,17 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!hideFooter && (
         <footer className="mt-auto border-t border-zinc-200 bg-white">
           <div className="mx-auto w-full max-w-7xl px-6 py-16">
-            <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/myhiredito-logo.png"
-                alt="MyHiredito"
-                width={32}
-                height={32}
-                className="h-8 w-8 rounded-md object-contain"
-              />
-              <span className="text-lg font-bold text-zinc-900">MyHiredito</span>
-            </div>
+            <MyHireditoLogo href="/" theme="light" size="md" />
             <p className="mt-2 text-sm text-zinc-500">
               The workforce platform for staffing.
             </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MyHireditoLogo } from "../brand/MyHireditoLogo";
 
 type AuthVariant = "worker" | "employer";
 type AuthMode = "login" | "signup";
@@ -73,13 +74,7 @@ export function AuthShell({
         </div>
 
         <div className="relative z-10 flex flex-1 flex-col p-10 xl:p-14">
-          <Link
-            href="/"
-            className="font-brand text-2xl font-bold text-white"
-            aria-label="MyHiredito home"
-          >
-            MyHiredito
-          </Link>
+          <MyHireditoLogo href="/" theme="dark" size="lg" />
 
           <div className="mt-auto max-w-lg">
             <p className="text-xs font-bold uppercase tracking-widest text-[#1db954]">
@@ -112,12 +107,8 @@ export function AuthShell({
       <div className="flex flex-1 flex-col bg-zinc-50">
         <header className="border-b-2 border-[#1db954] bg-[#0f1115] px-4 py-3 lg:border-b-0 lg:bg-zinc-50 lg:px-8 lg:py-6">
           <div className="mx-auto flex max-w-md items-center justify-between lg:max-w-lg">
-            <Link
-              href="/"
-              className="font-brand text-xl font-bold text-white lg:text-zinc-900"
-            >
-              MyHiredito
-            </Link>
+            <MyHireditoLogo href="/" theme="dark" size="md" className="lg:hidden" />
+            <MyHireditoLogo href="/" theme="light" size="md" className="hidden lg:inline-flex" />
             <div className="flex items-center rounded-full border border-white/20 bg-white/5 p-0.5 lg:border-zinc-200 lg:bg-white">
               <Link
                 href="/"

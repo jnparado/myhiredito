@@ -35,10 +35,10 @@ export function JobsBrowser() {
   }, [search, category, experience, payType]);
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row">
-      {/* Sidebar filters */}
-      <aside className="w-full shrink-0 lg:w-56">
-        <div className="sticky top-24 space-y-6 rounded-xl border border-black/5 bg-white p-5">
+    <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+      {/* Sidebar filters — sticky while scrolling job list */}
+      <aside className="sticky top-4 z-10 w-full shrink-0 lg:top-6 lg:w-56">
+        <div className="max-h-[calc(100vh-2rem)] space-y-6 overflow-y-auto rounded-xl border border-black/5 bg-white p-5 lg:max-h-[calc(100vh-3rem)]">
           <div>
             <label className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
               Category

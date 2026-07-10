@@ -8,7 +8,7 @@ function VisitCta({ className = "" }: { className?: string }) {
       <Link href="/worker/signup" className="font-semibold text-[var(--brand)] hover:underline">
         MyHiredito
       </Link>
-      , get verified, and start picking up shifts in your market.
+      , get verified, and start applying to jobs that fit your skills.
     </p>
   );
 }
@@ -25,14 +25,14 @@ export function WorkersLandingPage() {
                 Built for flexible workers
               </p>
               <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight text-zinc-900 sm:text-5xl lg:text-6xl">
-                Flexible shifts.
+                Flexible work.
                 <br />
                 Fair pay.
                 <br />
                 Your schedule.
               </h1>
               <p className="mt-6 max-w-lg text-base leading-7 text-zinc-600">
-                MyHiredito connects you with open shifts at healthcare sites,
+                MyHiredito connects you with open roles at healthcare sites,
                 restaurants, warehouses, and event venues — with verified pay
                 rates, clear requirements, and a profile that grows with every
                 job you complete.
@@ -42,7 +42,7 @@ export function WorkersLandingPage() {
               </p>
               <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--brand)]/30 bg-[var(--brand-light)] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[var(--brand-dark)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--brand)]" />
-                Smart shift matching
+                Smart job matching
               </div>
               <div className="mt-8">
                 <VisitCta />
@@ -58,7 +58,7 @@ export function WorkersLandingPage() {
                   href="/worker/jobs"
                   className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-zinc-900 px-8 text-sm font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
                 >
-                  Browse Open Shifts
+                  Browse Jobs
                 </Link>
               </div>
             </div>
@@ -68,7 +68,7 @@ export function WorkersLandingPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/workers-hero.png"
-                  alt="MyHiredito workers ready for their next shift"
+                  alt="MyHiredito workers ready for their next role"
                   className="h-full w-full object-cover object-center"
                 />
               </div>
@@ -93,23 +93,23 @@ export function WorkersLandingPage() {
             Your profile shows what you can do — not just what you claim.
           </h2>
           <p className="mt-4 max-w-2xl text-lg text-zinc-600">
-            Every completed shift, rating, and certification is stored on your
+            Every completed role, rating, and certification is stored on your
             MyHiredito profile. Employers see real performance data before they
             invite you, so strong workers get noticed faster.
           </p>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
               {
-                title: "Choose your hours",
-                desc: "Accept shifts that fit your week. Work occasionally or pick up steady hours — there are no minimum shift requirements.",
+                title: "Choose your opportunities",
+                desc: "Apply to full-time, part-time, or contract roles that fit your week. Work occasionally or build toward steady hours — there are no minimum requirements.",
               },
               {
                 title: "Grow your profile",
-                desc: "Skills, certifications, and reliability scores update automatically as you complete more shifts.",
+                desc: "Skills, certifications, and reliability scores update automatically as you complete more roles.",
               },
               {
                 title: "Get paid quickly",
-                desc: "Track earnings after each shift and receive direct deposit payouts without waiting for a biweekly cycle.",
+                desc: "Track earnings after each job and receive direct deposit payouts without waiting for a biweekly cycle.",
               },
             ].map((card) => (
               <div
@@ -146,13 +146,13 @@ export function WorkersLandingPage() {
               },
               {
                 step: "3",
-                title: "Pick open shifts",
-                desc: "Browse roles near you, review pay and requirements, and accept the shifts you want.",
+                title: "Apply to matched jobs",
+                desc: "Once verification is complete, browse roles suited to your skills and experience — then apply to the jobs you want.",
               },
               {
                 step: "4",
-                title: "Work and get rated",
-                desc: "Clock in on site, finish the shift, get paid, and build your verified track record.",
+                title: "Get hired and build your record",
+                desc: "Interview, start the role, get paid, and grow your verified work history on MyHiredito.",
               },
             ].map((item) => (
               <div key={item.step} className="rounded-xl border border-zinc-200 bg-white p-6">
@@ -175,20 +175,20 @@ export function WorkersLandingPage() {
                 Worker dashboard
               </p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-                See nearby shifts, pay, and details in one place.
+                See nearby jobs, pay, and details in one place.
               </h2>
               <p className="mt-4 text-zinc-600">
                 MyHiredito shows open roles ranked by fit, distance, and pay so
-                you can make quick decisions. Confirm a shift, view directions,
-                clock in, and track what you&apos;ve earned — all from your
+                you can make informed decisions. Review requirements, submit
+                applications, and track what you&apos;ve earned — all from your
                 dashboard.
               </p>
               <ul className="mt-8 space-y-4">
                 {[
-                  "Shift list filtered by role and distance",
-                  "Upfront hourly rate and estimated total pay",
-                  "On-site clock-in and shift status updates",
-                  "Full-time job offers from employers you already know",
+                  "Job list filtered by role and distance",
+                  "Upfront pay range and role requirements",
+                  "Application status and interview updates",
+                  "Full-time offers from employers you already know",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm text-zinc-700">
                     <span className="mt-0.5 text-[var(--brand)]">●</span>
@@ -201,7 +201,7 @@ export function WorkersLandingPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/myhiredito-shift-board.png"
-                alt="MyHiredito open shifts dashboard preview"
+                alt="MyHiredito jobs dashboard preview"
                 className="h-full w-full object-cover"
               />
             </div>
@@ -217,7 +217,7 @@ export function WorkersLandingPage() {
                 Career growth
               </p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-zinc-900">
-                Gig shifts can become long-term opportunities.
+                Gig work can become long-term opportunities.
               </h2>
               <p className="mt-4 text-zinc-700">
                 Many workers use MyHiredito to try employers before committing
@@ -270,7 +270,7 @@ export function WorkersLandingPage() {
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
               {
-                quote: "I stack two or three CNA shifts around nursing school. The schedule flexibility is exactly what I needed.",
+                quote: "I applied to CNA roles around nursing school and landed a part-time job that fits my schedule.",
                 name: "Priya",
                 role: "CNA · San Antonio, TX",
               },
@@ -280,7 +280,7 @@ export function WorkersLandingPage() {
                 role: "Warehouse Lead · Chicago, IL",
               },
               {
-                quote: "I like seeing the pay and requirements before I accept. No surprises when I arrive on site.",
+                quote: "I like seeing the pay and requirements before I apply. No surprises when I interview.",
                 name: "Jordan",
                 role: "Event Staff · Atlanta, GA",
               },
@@ -307,7 +307,7 @@ export function WorkersLandingPage() {
             {[
               {
                 q: "How do I get started?",
-                a: "Create a free MyHiredito profile, complete verification, and browse open shifts in your area.",
+                a: "Create a free MyHiredito profile, complete verification, and start applying to jobs in your area.",
               },
               {
                 q: "What does verification include?",
@@ -315,11 +315,11 @@ export function WorkersLandingPage() {
               },
               {
                 q: "When do I get paid?",
-                a: "Earnings are tracked per shift and paid by direct deposit based on the employer's payout schedule.",
+                a: "Earnings are tracked per role and paid by direct deposit based on the employer's payout schedule.",
               },
               {
                 q: "Can I work in more than one category?",
-                a: "Yes. Add multiple skills to your profile and accept shifts across healthcare, hospitality, events, and more.",
+                a: "Yes. Add multiple skills to your profile and apply to jobs across healthcare, hospitality, events, and more.",
               },
             ].map((item) => (
               <details
@@ -341,7 +341,7 @@ export function WorkersLandingPage() {
       <section className="border-t border-zinc-100 bg-[var(--brand-light)] py-20 text-center">
         <div className="mx-auto max-w-2xl px-6">
           <h2 className="text-3xl font-bold text-zinc-900 sm:text-4xl">
-            Ready to find your next shift?
+            Ready to find your next job?
           </h2>
           <div className="mt-6">
             <VisitCta />

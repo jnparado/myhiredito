@@ -11,6 +11,12 @@ import {
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
 import { getSupabaseClient } from "@/app/lib/supabaseClient";
+import {
+  isDemoCredentials,
+  setDemoWorkerSession,
+  WORKER_DEMO_EMAIL,
+  WORKER_DEMO_PASSWORD,
+} from "@/app/lib/workerDemoAuth";
 
 export default function WorkerLoginPage() {
   const router = useRouter();
@@ -31,6 +37,13 @@ export default function WorkerLoginPage() {
     setError(null);
     setLoading(true);
     try {
+      if (isDemoCredentials(email, password)) {
+        setDemoWorkerSession();
+        router.push("/worker/dashboard");
+        router.refresh();
+        return;
+      }
+
       const supabase = getSupabaseClient();
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -104,6 +117,19 @@ export default function WorkerLoginPage() {
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Logging in..." : "Log In"}
         </button>
+
+        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <p className="font-semibold text-zinc-800">Demo worker login</p>
+          <p className="mt-1">
+            Email: <span className="font-mono text-zinc-900">{WORKER_DEMO_EMAIL}</span>
+          </p>
+          <p>
+            Password: <span className="font-mono text-zinc-900">{WORKER_DEMO_PASSWORD}</span>
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            Use these credentials to preview the worker account UI without Supabase.
+          </p>
+        </div>
       </form>
     </AuthShell>
   );

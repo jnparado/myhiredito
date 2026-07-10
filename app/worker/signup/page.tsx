@@ -11,6 +11,7 @@ import {
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
 import { getSupabaseClient } from "@/app/lib/supabaseClient";
+import { resetWorkerOnboarding } from "@/app/lib/workerOnboarding";
 
 export default function WorkerSignupPage() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function WorkerSignupPage() {
         options: { data: { role: "worker" } },
       });
       if (authError) throw authError;
+      resetWorkerOnboarding(email.trim().toLowerCase());
       router.push("/worker/dashboard");
       router.refresh();
     } catch (err: unknown) {

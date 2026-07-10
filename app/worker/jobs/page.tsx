@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { JobsBrowser } from "./JobsBrowser";
-import { WorkerShell } from "../../components/worker/WorkerShell";
+import { JobsPageShell } from "../../components/worker/JobsPageShell";
 import { jobs } from "../../lib/jobs";
 
 export const metadata = {
@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function JobsPage() {
   return (
-    <WorkerShell>
+    <JobsPageShell>
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -31,6 +31,6 @@ export default function JobsPage() {
 
         <JobsBrowser />
       </div>
-    </WorkerShell>
+    </JobsPageShell>
   );
 }
