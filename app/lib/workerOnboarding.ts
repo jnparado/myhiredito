@@ -1,13 +1,13 @@
 import type { WorkerAuthUser } from "./workerAuth";
 import {
   fetchOnboardingProgress,
-  formDataToCertificateInput,
-  formDataToIdentityInput,
+  formDataToPaymentInput,
   formDataToProfileInput,
+  formDataToSkillsCertificatesInput,
   markOnboardingStepCompleteInDb,
-  saveCertificateOnboarding,
-  saveIdentityOnboarding,
+  savePaymentOnboarding,
   saveProfileOnboarding,
+  saveSkillsCertificatesOnboarding,
   updateOnboardingProgressRow,
 } from "./supabase/workerRepository";
 import type { OnboardingStepId as DbOnboardingStepId } from "./supabase/types";
@@ -33,25 +33,25 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: "profile",
     step: 1,
     label: "Complete your profile",
-    description: "Add your skills, work history, and availability",
+    description: "Add your contact info and availability",
     icon: "👤",
     href: "/worker/onboarding/profile",
   },
   {
-    id: "government-id",
+    id: "skills-certificates",
     step: 2,
-    label: "Upload government ID",
-    description: "Driver's license, passport, or national ID for verification",
-    icon: "🪪",
-    href: "/worker/onboarding/id",
+    label: "Skills, experience & certificates",
+    description: "Work history, skills, and professional credentials",
+    icon: "📜",
+    href: "/worker/onboarding/skills-certificates",
   },
   {
-    id: "certificates",
+    id: "payment-method",
     step: 3,
-    label: "Add certificates & licenses",
-    description: "CNA, RN, BLS, or other role-specific credentials",
-    icon: "📜",
-    href: "/worker/onboarding/certificates",
+    label: "Add payment method",
+    description: "Bank account or debit card to receive pay after shifts",
+    icon: "💳",
+    href: "/worker/onboarding/payment",
   },
 ];
 
@@ -125,22 +125,17 @@ export async function saveOnboardingStep(
     case "profile":
       await saveProfileOnboarding(userKey, formDataToProfileInput(formData));
       break;
-    case "government-id": {
-      const input = formDataToIdentityInput(formData);
-      if (!input.idFront) {
-        throw new Error("Please upload the front of your ID.");
-      }
-      await saveIdentityOnboarding(userKey, input);
-      break;
-    }
-    case "certificates": {
-      const input = formDataToCertificateInput(formData);
-      if (!input.certificateFile) {
+    case "skills-certificates": {
+      const input = formDataToSkillsCertificatesInput(formData);
+      if (!input.certificate.certificateFile) {
         throw new Error("Please upload your certificate file.");
       }
-      await saveCertificateOnboarding(userKey, input);
+      await saveSkillsCertificatesOnboarding(userKey, input);
       break;
     }
+    case "payment-method":
+      await savePaymentOnboarding(userKey, formDataToPaymentInput(formData));
+      break;
     default:
       await markOnboardingStepComplete(user, userKey, stepId);
   }

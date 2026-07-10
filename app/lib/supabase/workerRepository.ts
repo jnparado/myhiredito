@@ -2,11 +2,12 @@ import { getSupabaseClient } from "@/app/lib/supabaseClient";
 import type {
   AvailabilityType,
   CertificateOnboardingInput,
-  IdentityOnboardingInput,
   OnboardingProgressRow,
   OnboardingStepId,
+  PaymentOnboardingInput,
   ProfileOnboardingInput,
   ProfileRow,
+  SkillsCertificatesOnboardingInput,
 } from "./types";
 
 function parseSkills(skills: string): string[] {
@@ -14,6 +15,14 @@ function parseSkills(skills: string): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function normalizeCompletedSteps(steps: string[]): OnboardingStepId[] {
+  return steps.map((step) => {
+    if (step === "government-id") return "skills-certificates";
+    if (step === "certificates") return "payment-method";
+    return step as OnboardingStepId;
+  });
 }
 
 function displayNameFromParts(firstName: string, lastName: string): string {
@@ -94,7 +103,13 @@ export async function fetchOnboardingProgress(
     .maybeSingle();
 
   if (error) throw error;
-  return data as OnboardingProgressRow | null;
+  if (!data) return null;
+  return {
+    ...(data as OnboardingProgressRow),
+    completed_steps: normalizeCompletedSteps(
+      (data as OnboardingProgressRow).completed_steps as unknown as string[],
+    ),
+  };
 }
 
 export async function updateOnboardingProgressRow(
@@ -154,7 +169,7 @@ export async function saveProfileOnboarding(
       last_name: input.lastName.trim(),
       display_name: displayName,
       phone: input.phone.trim(),
-      skills: parseSkills(input.skills),
+      location: input.location.trim() || null,
       availability: input.availability as AvailabilityType,
       last_active_at: new Date().toISOString(),
     })
@@ -165,81 +180,76 @@ export async function saveProfileOnboarding(
   await markOnboardingStepCompleteInDb(workerId, "profile");
 }
 
-export async function saveIdentityOnboarding(
+export async function saveSkillsCertificatesOnboarding(
   workerId: string,
-  input: IdentityOnboardingInput,
+  input: SkillsCertificatesOnboardingInput,
 ): Promise<void> {
   const supabase = getSupabaseClient();
+  const cert = input.certificate;
 
-  let frontPath: string | null = null;
-  let backPath: string | null = null;
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({
+      skills: parseSkills(input.skills),
+      headline: `${input.yearsExperience.trim()} years experience`,
+      bio: input.workHistory.trim(),
+      last_active_at: new Date().toISOString(),
+    })
+    .eq("id", workerId);
 
-  if (input.idFront) {
-    frontPath = await uploadWorkerFile(
-      "identity-documents",
-      workerId,
-      input.idFront,
-      "front",
-    );
-  }
-
-  if (input.idBack) {
-    backPath = await uploadWorkerFile(
-      "identity-documents",
-      workerId,
-      input.idBack,
-      "back",
-    );
-  }
-
-  const { error } = await supabase.from("identity_documents").upsert(
-    {
-      worker_id: workerId,
-      id_type: input.idType,
-      id_number: input.idNumber.trim(),
-      expiry_date: input.idExpiry || null,
-      front_file_url: frontPath,
-      back_file_url: backPath,
-      verification_status: "pending",
-    },
-    { onConflict: "worker_id" },
-  );
-
-  if (error) throw error;
-
-  await markOnboardingStepCompleteInDb(workerId, "government-id");
-}
-
-export async function saveCertificateOnboarding(
-  workerId: string,
-  input: CertificateOnboardingInput,
-): Promise<void> {
-  const supabase = getSupabaseClient();
+  if (profileError) throw profileError;
 
   let filePath: string | null = null;
-  if (input.certificateFile) {
+  if (cert.certificateFile) {
     filePath = await uploadWorkerFile(
       "certificates",
       workerId,
-      input.certificateFile,
+      cert.certificateFile,
       "certificate",
     );
   }
 
   const { error } = await supabase.from("worker_certificates").insert({
     worker_id: workerId,
-    certificate_name: input.certificateName.trim(),
-    issuing_body: input.issuingBody.trim(),
-    issue_date: input.issueDate || null,
-    expiry_date: input.expiryDate || null,
-    license_number: input.licenseNumber.trim(),
+    certificate_name: cert.certificateName.trim(),
+    issuing_body: cert.issuingBody.trim(),
+    issue_date: cert.issueDate || null,
+    expiry_date: cert.expiryDate || null,
+    license_number: cert.licenseNumber.trim(),
     file_url: filePath,
     verification_status: "pending",
   });
 
   if (error) throw error;
 
-  await markOnboardingStepCompleteInDb(workerId, "certificates");
+  await markOnboardingStepCompleteInDb(workerId, "skills-certificates");
+}
+
+export async function savePaymentOnboarding(
+  workerId: string,
+  input: PaymentOnboardingInput,
+): Promise<void> {
+  const supabase = getSupabaseClient();
+  const profile = await fetchProfile(workerId);
+  const seeking = profile?.seeking ?? [];
+  const withoutPayout = seeking.filter((item) => !item.startsWith("payout"));
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      seeking: [
+        ...withoutPayout,
+        `payout:${input.paymentMethod}`,
+        `payout-holder:${input.accountHolder.trim()}`,
+        `payout-last4:${input.accountLast4.trim()}`,
+      ],
+      last_active_at: new Date().toISOString(),
+    })
+    .eq("id", workerId);
+
+  if (error) throw error;
+
+  await markOnboardingStepCompleteInDb(workerId, "payment-method");
 }
 
 export function formDataToProfileInput(formData: FormData): ProfileOnboardingInput {
@@ -248,38 +258,40 @@ export function formDataToProfileInput(formData: FormData): ProfileOnboardingInp
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
     phone: String(formData.get("phone") ?? ""),
-    skills: String(formData.get("skills") ?? ""),
+    location: String(formData.get("location") ?? ""),
     availability,
   };
 }
 
-export function formDataToIdentityInput(formData: FormData): IdentityOnboardingInput {
-  const idFront = formData.get("idFront");
-  const idBack = formData.get("idBack");
-
-  return {
-    idType: String(formData.get("idType") ?? "") as IdentityOnboardingInput["idType"],
-    idNumber: String(formData.get("idNumber") ?? ""),
-    idExpiry: String(formData.get("idExpiry") ?? ""),
-    idFront: idFront instanceof File && idFront.size > 0 ? idFront : null,
-    idBack: idBack instanceof File && idBack.size > 0 ? idBack : null,
-  };
-}
-
-export function formDataToCertificateInput(
+export function formDataToSkillsCertificatesInput(
   formData: FormData,
-): CertificateOnboardingInput {
+): SkillsCertificatesOnboardingInput {
   const certificateFile = formData.get("certificateFile");
 
   return {
-    certificateName: String(formData.get("certificateName") ?? ""),
-    issuingBody: String(formData.get("issuingBody") ?? ""),
-    issueDate: String(formData.get("issueDate") ?? ""),
-    expiryDate: String(formData.get("expiryDate") ?? "") || undefined,
-    licenseNumber: String(formData.get("licenseNumber") ?? ""),
-    certificateFile:
-      certificateFile instanceof File && certificateFile.size > 0
-        ? certificateFile
-        : null,
+    yearsExperience: String(formData.get("yearsExperience") ?? ""),
+    skills: String(formData.get("skills") ?? ""),
+    workHistory: String(formData.get("workHistory") ?? ""),
+    certificate: {
+      certificateName: String(formData.get("certificateName") ?? ""),
+      issuingBody: String(formData.get("issuingBody") ?? ""),
+      issueDate: String(formData.get("issueDate") ?? ""),
+      expiryDate: String(formData.get("expiryDate") ?? "") || undefined,
+      licenseNumber: String(formData.get("licenseNumber") ?? ""),
+      certificateFile:
+        certificateFile instanceof File && certificateFile.size > 0
+          ? certificateFile
+          : null,
+    },
+  };
+}
+
+export function formDataToPaymentInput(formData: FormData): PaymentOnboardingInput {
+  return {
+    paymentMethod: String(
+      formData.get("paymentMethod") ?? "",
+    ) as PaymentOnboardingInput["paymentMethod"],
+    accountHolder: String(formData.get("accountHolder") ?? ""),
+    accountLast4: String(formData.get("accountLast4") ?? ""),
   };
 }

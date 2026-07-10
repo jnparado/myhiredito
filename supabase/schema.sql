@@ -2,7 +2,7 @@
 
 create type user_role as enum ('worker', 'employer', 'admin');
 create type availability_type as enum ('full-time', 'part-time', 'weekends', 'flexible');
-create type onboarding_step as enum ('profile', 'government-id', 'certificates');
+create type onboarding_step as enum ('profile', 'skills-certificates', 'payment-method');
 create type id_document_type as enum (
   'drivers-license',
   'passport',

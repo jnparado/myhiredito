@@ -97,7 +97,7 @@ export function EmployerShell({
     <div className="flex min-h-screen flex-col bg-[#f0f0f0]">
       <header className="bg-[#0f1115] text-white">
         <div className="flex items-center justify-between border-b-2 border-[#1db954] px-4 py-2.5 lg:px-6">
-          <MyHireditoLogo href="/" theme="dark" size="md" />
+          <MyHireditoLogo href="/employer/dashboard" theme="dark" size="md" />
 
           <nav className="flex flex-1 items-center justify-center gap-1 overflow-x-auto px-2 sm:gap-2 lg:gap-4">
             {navItems.map((item) => {

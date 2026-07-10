@@ -1,6 +1,6 @@
 export type UserRole = "worker" | "employer" | "admin";
 export type AvailabilityType = "full-time" | "part-time" | "weekends" | "flexible";
-export type OnboardingStepId = "profile" | "government-id" | "certificates";
+export type OnboardingStepId = "profile" | "skills-certificates" | "payment-method";
 export type IdDocumentType =
   | "drivers-license"
   | "passport"
@@ -63,7 +63,7 @@ export type ProfileOnboardingInput = {
   firstName: string;
   lastName: string;
   phone: string;
-  skills: string;
+  location: string;
   availability: AvailabilityType;
 };
 
@@ -82,4 +82,17 @@ export type CertificateOnboardingInput = {
   expiryDate?: string;
   licenseNumber: string;
   certificateFile?: File | null;
+};
+
+export type SkillsCertificatesOnboardingInput = {
+  yearsExperience: string;
+  skills: string;
+  workHistory: string;
+  certificate: CertificateOnboardingInput;
+};
+
+export type PaymentOnboardingInput = {
+  paymentMethod: "bank-account" | "debit-card";
+  accountHolder: string;
+  accountLast4: string;
 };

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
+import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { MyHireditoLogo } from "../brand/MyHireditoLogo";
 import { HowWeHelpMegaMenu } from "./HowWeHelpMegaMenu";
 import { PlatformMegaMenu } from "./PlatformMegaMenu";
@@ -49,10 +51,18 @@ export function MarketingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const pathname = usePathname();
+  const { authenticated: workerAuthenticated } = useWorkerAuth();
+  const { authenticated: employerAuthenticated } = useEmployerAuth();
   const isWorkersContext =
     pathname === "/worker" || (pathname?.startsWith("/worker/jobs") ?? false);
   const isEmployersView = !isWorkersContext;
-  const isWorkersLanding = pathname === "/worker";
+  const logoHref = isWorkersContext
+    ? workerAuthenticated
+      ? "/worker/dashboard"
+      : "/"
+    : employerAuthenticated
+      ? "/employer/dashboard"
+      : "/";
 
   return (
     <nav
@@ -60,7 +70,7 @@ export function MarketingNav() {
       onMouseLeave={() => setOpenMenu(null)}
     >
       <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 lg:gap-6 lg:px-6">
-        <MyHireditoLogo href="/" theme="dark" size="lg" />
+        <MyHireditoLogo href={logoHref} theme="dark" size="lg" />
 
         <div className="hidden items-center rounded-full border border-white/20 bg-white/5 p-0.5 md:flex">
           <Link
@@ -139,18 +149,36 @@ export function MarketingNav() {
         </div>
 
         <div className="ml-auto hidden items-center gap-2 lg:flex">
-          <Link
-            href={isEmployersView ? "/employer/login" : "/worker/login"}
-            className="rounded bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
-          >
-            Login
-          </Link>
-          <Link
-            href={isEmployersView ? "/employer/signup" : "/worker/signup"}
-            className="rounded border border-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
-          >
-            Signup
-          </Link>
+          {isWorkersContext && workerAuthenticated ? (
+            <Link
+              href="/worker/dashboard"
+              className="rounded bg-[#1db954] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-[#1db954]/90"
+            >
+              My dashboard
+            </Link>
+          ) : isEmployersView && employerAuthenticated ? (
+            <Link
+              href="/employer/dashboard"
+              className="rounded bg-[#1db954] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-[#1db954]/90"
+            >
+              My dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href={isEmployersView ? "/employer/login" : "/worker/login"}
+                className="rounded bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
+              >
+                Login
+              </Link>
+              <Link
+                href={isEmployersView ? "/employer/signup" : "/worker/signup"}
+                className="rounded border border-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
+              >
+                Signup
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -252,19 +280,31 @@ export function MarketingNav() {
 
           <div className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-wide text-white">
             <hr className="border-white/10" />
-            <Link
-              href={isEmployersView ? "/employer/login" : "/worker/login"}
-              onClick={() => setMobileOpen(false)}
-            >
-              Login
-            </Link>
-            <Link
-              href={isEmployersView ? "/employer/signup" : "/worker/signup"}
-              className="rounded border border-white py-2.5 text-center"
-              onClick={() => setMobileOpen(false)}
-            >
-              Signup
-            </Link>
+            {isWorkersContext && workerAuthenticated ? (
+              <Link href="/worker/dashboard" onClick={() => setMobileOpen(false)}>
+                My dashboard
+              </Link>
+            ) : isEmployersView && employerAuthenticated ? (
+              <Link href="/employer/dashboard" onClick={() => setMobileOpen(false)}>
+                My dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href={isEmployersView ? "/employer/login" : "/worker/login"}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  href={isEmployersView ? "/employer/signup" : "/worker/signup"}
+                  className="rounded border border-white py-2.5 text-center"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Signup
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

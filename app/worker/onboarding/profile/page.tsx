@@ -14,7 +14,7 @@ export default function ProfileOnboardingPage() {
       <OnboardingStepLayout
         stepId="profile"
         title="Complete your profile"
-        description="Tell employers about your experience, skills, and when you're available to work."
+        description="Add your contact info and when you're available to work."
       >
         <OnboardingStepForm stepId="profile">
           <div className="grid gap-5 sm:grid-cols-2">
@@ -59,15 +59,14 @@ export default function ProfileOnboardingPage() {
           </div>
 
           <div>
-            <label htmlFor="skills" className={authLabelClass}>
-              Skills & roles
+            <label htmlFor="location" className={authLabelClass}>
+              City or area
             </label>
             <input
-              id="skills"
-              name="skills"
+              id="location"
+              name="location"
               className={authFieldClass}
-              placeholder="CNA, Patient care, BLS certified"
-              required
+              placeholder="Austin, TX"
             />
           </div>
 

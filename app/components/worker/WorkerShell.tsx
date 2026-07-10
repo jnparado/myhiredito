@@ -148,7 +148,7 @@ export function WorkerShell({
     <div className="flex min-h-screen flex-col bg-zinc-100">
       <header className="sticky top-0 z-40 border-b border-[#1db954]/30 bg-[#0f1115] text-white">
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 lg:px-6">
-          <MyHireditoLogo href="/worker" theme="dark" size="md" />
+          <MyHireditoLogo href="/worker/dashboard" theme="dark" size="md" />
 
           {/* Desktop nav */}
           <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex lg:gap-4">
