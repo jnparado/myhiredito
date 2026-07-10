@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { MyHireditoLogo } from "@/app/components/brand/MyHireditoLogo";
+import { useEmployerApplicants } from "@/app/hooks/useEmployerApplicants";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useEmployerMessages } from "@/app/hooks/useEmployerMessages";
 import { useEmployerOnboarding } from "@/app/hooks/useEmployerOnboarding";
@@ -11,6 +13,14 @@ import {
   getEmployerDisplayName,
   type EmployerAuthUser,
 } from "@/app/lib/employerAuth";
+import {
+  getIncompleteOnboardingSteps,
+  getOnboardingCompletionCount,
+} from "@/app/lib/employerOnboarding";
+import { EmployerFloatingMessagingWidget } from "./EmployerFloatingMessagingWidget";
+import { EmployerNotificationPanel } from "./EmployerNotificationPanel";
+
+type OpenPanel = "notifications" | "more" | null;
 
 const navItems = [
   { href: "/employer/dashboard?post=1", label: "Post Job", icon: "post" },
@@ -80,17 +90,49 @@ export function EmployerShell({
   const pathname = usePathname();
   const router = useRouter();
   const { user: sessionUser, signOut } = useEmployerAuth();
-  const { needsAttention: onboardingIncomplete } = useEmployerOnboarding();
+  const { needsAttention: onboardingIncomplete, progress } = useEmployerOnboarding();
   const { unreadCount: unreadMessages } = useEmployerMessages();
+  const { newCount: newApplicants } = useEmployerApplicants();
   const user = userProp ?? sessionUser;
   const displayName = user ? getEmployerDisplayName(user) : "Employer";
   const companyName = user ? getEmployerCompanyName(user) : "MyHiredito";
   const isDemo = user?.source === "demo";
+  const incompleteSteps = getIncompleteOnboardingSteps(progress);
+  const nextOnboardingStep = incompleteSteps[0];
+  const { completed, total } = getOnboardingCompletionCount(progress);
+  const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
+  const headerMenusRef = useRef<HTMLDivElement>(null);
+
+  const notificationCount =
+    (onboardingIncomplete ? 1 : 0) + unreadMessages + newApplicants;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        headerMenusRef.current &&
+        !headerMenusRef.current.contains(event.target as Node)
+      ) {
+        setOpenPanel(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function togglePanel(panel: Exclude<OpenPanel, null>) {
+    setOpenPanel((current) => (current === panel ? null : panel));
+  }
 
   async function handleSignOut() {
+    setOpenPanel(null);
     await signOut();
     router.push("/employer/login");
     router.refresh();
+  }
+
+  function openMessagingPopup() {
+    window.dispatchEvent(new Event("myhiredito-employer-open-messaging"));
   }
 
   return (
@@ -136,24 +178,143 @@ export function EmployerShell({
             })}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <Link
-              href="/employer/messages"
-              className="relative text-white/70 hover:text-white"
-              aria-label="Messages"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-              </svg>
-              {(onboardingIncomplete || unreadMessages > 0) && (
-                <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#0f1115]" />
+          <div
+            ref={headerMenusRef}
+            className="relative flex shrink-0 items-center gap-1 sm:gap-2"
+          >
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => togglePanel("notifications")}
+                className={`relative rounded-md p-1.5 transition ${
+                  openPanel === "notifications"
+                    ? "bg-white/10 text-white"
+                    : "text-white/70 hover:text-white"
+                }`}
+                aria-label="Notifications"
+                aria-expanded={openPanel === "notifications"}
+              >
+                {notificationCount > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#0f1115]">
+                    {notificationCount > 9 ? "9+" : notificationCount}
+                  </span>
+                )}
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+              </button>
+
+              {openPanel === "notifications" && (
+                <EmployerNotificationPanel
+                  unreadMessages={unreadMessages}
+                  newApplicants={newApplicants}
+                  onboardingIncomplete={onboardingIncomplete}
+                  nextStep={nextOnboardingStep}
+                  completed={completed}
+                  total={total}
+                  onClose={() => setOpenPanel(null)}
+                  onOpenMessages={openMessagingPopup}
+                />
               )}
-            </Link>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="hidden items-center gap-2 border-l border-white/20 pl-3 sm:flex"
-              title="Sign out"
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => togglePanel("more")}
+                className={`rounded-md p-1.5 transition ${
+                  openPanel === "more"
+                    ? "bg-white/10 text-white"
+                    : "text-white/70 hover:text-white"
+                }`}
+                aria-label="More options"
+                aria-expanded={openPanel === "more"}
+              >
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+
+              {openPanel === "more" && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-[min(14rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-zinc-900 shadow-xl sm:w-56">
+                  <div className="border-b border-zinc-100 px-4 py-3">
+                    <p className="truncate text-sm font-bold text-zinc-900">{displayName}</p>
+                    <p className="truncate text-xs text-zinc-500">
+                      {isDemo ? companyName : "Employer account"}
+                    </p>
+                  </div>
+                  <Link
+                    href="/employer/dashboard"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/employer/profile"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    My profile
+                  </Link>
+                  <Link
+                    href="/employer/applicants"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Applicants
+                    {newApplicants > 0 && (
+                      <span className="ml-2 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        {newApplicants}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    href="/employer/messages"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Messages
+                    {unreadMessages > 0 && (
+                      <span className="ml-2 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        {unreadMessages}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    href="/employer/dashboard?post=1"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Post a job
+                  </Link>
+                  {onboardingIncomplete && (
+                    <Link
+                      href={nextOnboardingStep?.href ?? "/employer/dashboard"}
+                      onClick={() => setOpenPanel(null)}
+                      className="block px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+                    >
+                      Finish onboarding
+                    </Link>
+                  )}
+                  <div className="my-1 border-t border-zinc-100" />
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="block w-full px-4 py-2.5 text-left text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href="/employer/profile"
+              className="relative hidden items-center gap-2 border-l border-white/20 pl-3 sm:flex"
+              title="Go to profile"
             >
               <div className="text-right">
                 <div className="text-xs font-semibold leading-tight">
@@ -169,12 +330,14 @@ export function EmployerShell({
                   <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#0f1115]" />
                 )}
               </div>
-            </button>
+            </Link>
           </div>
         </div>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-14">{children}</main>
+
+      <EmployerFloatingMessagingWidget />
     </div>
   );
 }
