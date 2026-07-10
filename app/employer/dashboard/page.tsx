@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { EmployerAccountShell } from "../../components/employer/EmployerAccountShell";
 import { EmployerDashboardGreeting } from "../../components/employer/EmployerDashboardGreeting";
-import {
-  EmployerOnboardingAlert,
-  EmployerOnboardingTasks,
-} from "../../components/employer/EmployerOnboardingTasks";
+import { EmployerOnboardingAlert } from "../../components/employer/EmployerOnboardingAlert";
+import { EmployerOnboardingTaskList } from "../../components/employer/EmployerOnboardingTaskList";
 
 const actions = [
   {
@@ -144,7 +142,7 @@ export default function EmployerDashboardPage() {
               </div>
             </div>
 
-            <EmployerOnboardingTasks />
+            <EmployerOnboardingTaskList />
           </div>
         </div>
       </div>

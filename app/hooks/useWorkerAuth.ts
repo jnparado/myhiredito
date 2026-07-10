@@ -1,18 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createSupabaseBrowserClient } from "@/app/lib/supabase/client";
-import { isSupabaseConfigured } from "@/app/lib/supabase/env";
+import { getSupabaseClient } from "@/app/lib/supabaseClient";
 import {
   getWorkerAuthUser,
-  getWorkerUserId,
   signOutWorker,
   type WorkerAuthUser,
 } from "@/app/lib/workerAuth";
-import {
-  hydrateWorkerOnboardingFromDb,
-  setWorkerOnboardingSyncUserId,
-} from "@/app/lib/workerOnboarding";
 
 export function useWorkerAuth() {
   const [user, setUser] = useState<WorkerAuthUser | null | undefined>(
@@ -22,12 +16,6 @@ export function useWorkerAuth() {
   const refresh = useCallback(async () => {
     const nextUser = await getWorkerAuthUser();
     setUser(nextUser);
-
-    const userId = getWorkerUserId(nextUser);
-    setWorkerOnboardingSyncUserId(userId);
-    if (userId) {
-      await hydrateWorkerOnboardingFromDb(userId);
-    }
   }, []);
 
   useEffect(() => {
@@ -40,30 +28,26 @@ export function useWorkerAuth() {
     window.addEventListener("myhiredito-worker-auth", onAuthChange);
     window.addEventListener("storage", onAuthChange);
 
-    if (isSupabaseConfigured()) {
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const supabase = getSupabaseClient();
+      const { data } = supabase.auth.onAuthStateChange(() => {
         refresh();
       });
-
-      return () => {
-        subscription.unsubscribe();
-        window.removeEventListener("myhiredito-worker-auth", onAuthChange);
-        window.removeEventListener("storage", onAuthChange);
-      };
+      subscription = data.subscription;
+    } catch {
+      // Supabase not configured.
     }
 
     return () => {
       window.removeEventListener("myhiredito-worker-auth", onAuthChange);
       window.removeEventListener("storage", onAuthChange);
+      subscription?.unsubscribe();
     };
   }, [refresh]);
 
   async function signOut() {
     await signOutWorker();
-    setWorkerOnboardingSyncUserId(null);
     setUser(null);
   }
 

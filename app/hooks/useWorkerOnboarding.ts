@@ -1,24 +1,51 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useWorkerAuth } from "./useWorkerAuth";
 import {
-  getWorkerOnboardingState,
-  isWorkerOnboardingComplete,
-  type WorkerOnboardingState,
+  getDefaultOnboardingProgress,
+  getOnboardingProgress,
+  getWorkerUserKey,
+  type OnboardingProgress,
 } from "@/app/lib/workerOnboarding";
 
 export function useWorkerOnboarding() {
-  const [state, setState] = useState<WorkerOnboardingState | null>(null);
+  const { user, loading: authLoading } = useWorkerAuth();
+  const userKey = getWorkerUserKey(user);
+  const [progress, setProgress] = useState<OnboardingProgress>(
+    getDefaultOnboardingProgress(),
+  );
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(() => {
-    setState(getWorkerOnboardingState());
-  }, []);
+  const refresh = useCallback(async () => {
+    if (!user || !userKey) {
+      setProgress(getDefaultOnboardingProgress());
+      setReady(!authLoading);
+      return;
+    }
+
+    try {
+      setError(null);
+      const next = await getOnboardingProgress(user, userKey);
+      setProgress(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load onboarding.");
+      setProgress(getDefaultOnboardingProgress());
+    } finally {
+      setReady(true);
+    }
+  }, [authLoading, user, userKey]);
 
   useEffect(() => {
-    refresh();
+    if (authLoading) return;
+    setReady(false);
+    void refresh();
+  }, [authLoading, refresh]);
 
+  useEffect(() => {
     function onChange() {
-      refresh();
+      void refresh();
     }
 
     window.addEventListener("myhiredito-worker-onboarding", onChange);
@@ -29,16 +56,12 @@ export function useWorkerOnboarding() {
     };
   }, [refresh]);
 
-  const complete = state ? isWorkerOnboardingComplete(state) : false;
-  const completedCount = state?.completedSteps.length ?? 0;
-
   return {
-    state,
-    loading: state === null,
-    isComplete: complete,
-    completedCount,
-    totalSteps: 3,
-    needsAttention: state ? !complete : false,
+    user,
+    userKey,
+    progress,
+    loading: authLoading || !ready,
+    error,
     refresh,
   };
 }

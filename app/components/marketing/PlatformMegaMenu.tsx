@@ -48,26 +48,25 @@ export function PlatformMegaMenu() {
   const rightCol = products.slice(4);
 
   return (
-    <div className="absolute left-0 right-0 top-full z-50 border-t border-zinc-200 bg-white shadow-2xl">
-      <div className="mx-auto grid max-w-[1400px] lg:grid-cols-[1fr_300px]">
-        {/* Left — white */}
-        <div className="bg-white px-8 py-8 lg:px-10">
-          <p className="font-mono text-[11px] font-medium uppercase tracking-widest text-zinc-400">
+    <div className="absolute left-0 right-0 top-full z-50 border-t border-zinc-200 bg-white shadow-xl">
+      <div className="mx-auto grid max-w-5xl lg:grid-cols-[1fr_200px]">
+        <div className="bg-white px-5 py-4 lg:px-6">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-widest text-zinc-400">
             What we offer
           </p>
-          <div className="mt-8 grid gap-10 sm:grid-cols-2">
+          <div className="mt-3 grid gap-6 sm:grid-cols-2">
             {[leftCol, rightCol].map((col, i) => (
-              <div key={i} className="space-y-8">
+              <div key={i} className="space-y-3">
                 {col.map((item) => (
                   <Link
                     key={item.title}
                     href={item.href}
                     className="group block"
                   >
-                    <div className="font-mono text-xs font-bold uppercase tracking-wide text-zinc-900 group-hover:text-[#1db954]">
+                    <div className="font-mono text-[10px] font-bold uppercase tracking-wide text-zinc-900 group-hover:text-[#1db954]">
                       {item.title}
                     </div>
-                    <p className="mt-1.5 text-sm leading-6 text-zinc-600 group-hover:text-zinc-800">
+                    <p className="mt-0.5 text-xs leading-5 text-zinc-500 group-hover:text-zinc-700">
                       {item.desc}
                     </p>
                   </Link>
@@ -77,19 +76,18 @@ export function PlatformMegaMenu() {
           </div>
         </div>
 
-        {/* Right — light gray */}
-        <div className="hidden border-l border-zinc-200 bg-zinc-100 px-8 py-8 lg:block">
-          <div className="overflow-hidden rounded-xl">
+        <div className="hidden border-l border-zinc-200 bg-zinc-50 px-4 py-4 lg:block">
+          <div className="overflow-hidden rounded-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=600&q=80"
+              src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&q=80"
               alt="Professional at work"
-              className="aspect-[4/3] w-full object-cover"
+              className="aspect-[5/4] w-full object-cover"
             />
           </div>
           <Link
             href="/worker/jobs"
-            className="mt-5 inline-flex font-mono text-xs font-bold uppercase tracking-wide text-[#1db954] transition hover:text-[#17a34a]"
+            className="mt-3 inline-flex font-mono text-[10px] font-bold uppercase tracking-wide text-[#1db954] transition hover:text-[#17a34a]"
           >
             Explore the Marketplace →
           </Link>

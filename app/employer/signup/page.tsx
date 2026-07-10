@@ -12,7 +12,7 @@ import {
 } from "@/app/components/auth/AuthShell";
 import { signUpWithRole } from "@/app/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
-import { resetEmployerOnboardingState } from "@/app/lib/employerOnboarding";
+import { resetEmployerOnboarding } from "@/app/lib/employerOnboarding";
 
 export default function EmployerSignupPage() {
   const router = useRouter();
@@ -46,7 +46,9 @@ export default function EmployerSignupPage() {
         nextPath: "/employer/dashboard",
       });
 
-      resetEmployerOnboardingState();
+      if (data.user?.id) {
+        resetEmployerOnboarding(data.user.id);
+      }
 
       if (data.user && !data.session) {
         setMessage("Account created. Check your email to confirm, then log in.");

@@ -1,24 +1,44 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useEmployerAuth } from "./useEmployerAuth";
 import {
-  getEmployerOnboardingState,
-  isEmployerOnboardingComplete,
-  type EmployerOnboardingState,
+  getDefaultOnboardingProgress,
+  getEmployerUserKey,
+  getOnboardingProgress,
+  isOnboardingComplete,
+  type OnboardingProgress,
 } from "@/app/lib/employerOnboarding";
 
 export function useEmployerOnboarding() {
-  const [state, setState] = useState<EmployerOnboardingState | null>(null);
+  const { user, loading: authLoading } = useEmployerAuth();
+  const userKey = getEmployerUserKey(user);
+  const [progress, setProgress] = useState<OnboardingProgress>(
+    getDefaultOnboardingProgress(),
+  );
+  const [ready, setReady] = useState(false);
 
-  const refresh = useCallback(() => {
-    setState(getEmployerOnboardingState());
-  }, []);
+  const refresh = useCallback(async () => {
+    if (!user || !userKey) {
+      setProgress(getDefaultOnboardingProgress());
+      setReady(!authLoading);
+      return;
+    }
+
+    const next = await getOnboardingProgress(user, userKey);
+    setProgress(next);
+    setReady(true);
+  }, [authLoading, user, userKey]);
 
   useEffect(() => {
-    refresh();
+    if (authLoading) return;
+    setReady(false);
+    void refresh();
+  }, [authLoading, refresh]);
 
+  useEffect(() => {
     function onChange() {
-      refresh();
+      void refresh();
     }
 
     window.addEventListener("myhiredito-employer-onboarding", onChange);
@@ -29,15 +49,18 @@ export function useEmployerOnboarding() {
     };
   }, [refresh]);
 
-  const complete = state ? isEmployerOnboardingComplete(state) : false;
+  const isComplete = ready && isOnboardingComplete(progress);
 
   return {
-    state,
-    loading: state === null,
-    isComplete: complete,
-    completedCount: state?.completedSteps.length ?? 0,
+    user,
+    userKey,
+    progress,
+    state: progress,
+    loading: authLoading || !ready,
+    isComplete,
+    completedCount: progress.completedSteps.length,
     totalSteps: 3,
-    needsAttention: state ? !complete : false,
+    needsAttention: ready && !isComplete,
     refresh,
   };
 }

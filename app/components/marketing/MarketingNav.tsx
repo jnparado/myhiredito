@@ -140,13 +140,13 @@ export function MarketingNav() {
 
         <div className="ml-auto hidden items-center gap-2 lg:flex">
           <Link
-            href="/worker/login"
+            href={isEmployersView ? "/employer/login" : "/worker/login"}
             className="rounded bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
           >
             Login
           </Link>
           <Link
-            href="/worker/signup"
+            href={isEmployersView ? "/employer/signup" : "/worker/signup"}
             className="rounded border border-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
           >
             Signup
@@ -252,9 +252,14 @@ export function MarketingNav() {
 
           <div className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-wide text-white">
             <hr className="border-white/10" />
-            <Link href="/worker/login" onClick={() => setMobileOpen(false)}>Login</Link>
             <Link
-              href="/worker/signup"
+              href={isEmployersView ? "/employer/login" : "/worker/login"}
+              onClick={() => setMobileOpen(false)}
+            >
+              Login
+            </Link>
+            <Link
+              href={isEmployersView ? "/employer/signup" : "/worker/signup"}
               className="rounded border border-white py-2.5 text-center"
               onClick={() => setMobileOpen(false)}
             >

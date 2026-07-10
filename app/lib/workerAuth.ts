@@ -1,23 +1,13 @@
-import { createSupabaseBrowserClient } from "./supabase/client";
-import { isSupabaseConfigured } from "./supabase/env";
-import { profileDisplayName, fetchProfile } from "./supabase/profiles";
-import { signOutSupabase } from "./supabase/auth";
-import type { Profile } from "./supabase/database.types";
-import {
-  clearDemoWorkerSession,
-  getDemoWorkerSession,
-  type WorkerDemoUser,
-} from "./workerDemoAuth";
+import { getSupabaseClient } from "./supabaseClient";
+import { fetchProfile } from "./supabase/workerRepository";
 
-export type WorkerAuthUser =
-  | {
-      source: "supabase";
-      id: string;
-      email: string;
-      displayName: string;
-      profile: Profile | null;
-    }
-  | { source: "demo"; user: WorkerDemoUser };
+export type WorkerAuthUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  firstName?: string | null;
+  lastName?: string | null;
+};
 
 function displayNameFromEmail(email: string): string {
   const local = email.split("@")[0] ?? "Worker";
@@ -29,27 +19,31 @@ function displayNameFromEmail(email: string): string {
 }
 
 export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
-  const demo = getDemoWorkerSession();
-  if (demo) return { source: "demo", user: demo };
-
-  if (!isSupabaseConfigured()) return null;
-
   try {
-    const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    const email = user?.email;
-    if (!user || !email) return null;
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.auth.getSession();
+    const sessionUser = data.session?.user;
+    const email = sessionUser?.email;
+    if (!sessionUser?.id || !email) return null;
 
-    const profile = await fetchProfile(user.id);
-    if (profile && profile.role !== "worker") return null;
+    let profile = null;
+    try {
+      profile = await fetchProfile(sessionUser.id);
+    } catch {
+      // Profile table may be unavailable; still allow session auth.
+    }
+
+    const displayName =
+      profile?.display_name?.trim() ||
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() ||
+      displayNameFromEmail(email);
 
     return {
-      source: "supabase",
-      id: user.id,
+      id: sessionUser.id,
       email,
-      displayName: profileDisplayName(profile, email) || displayNameFromEmail(email),
-      profile,
+      displayName,
+      firstName: profile?.first_name,
+      lastName: profile?.last_name,
     };
   } catch {
     return null;
@@ -57,15 +51,23 @@ export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
 }
 
 export async function signOutWorker(): Promise<void> {
-  clearDemoWorkerSession();
-  await signOutSupabase();
+  try {
+    const supabase = getSupabaseClient();
+    await supabase.auth.signOut();
+  } catch {
+    // Ignore when Supabase is not configured.
+  }
 }
 
 export function getWorkerDisplayName(user: WorkerAuthUser): string {
-  return user.source === "demo" ? user.user.displayName : user.displayName;
+  return user.displayName;
 }
 
-export function getWorkerUserId(user: WorkerAuthUser | null): string | null {
-  if (!user) return null;
-  return user.source === "supabase" ? user.id : null;
+export function getWorkerId(user: WorkerAuthUser | null): string | null {
+  return user?.id ?? null;
+}
+
+export function notifyWorkerAuthChange(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("myhiredito-worker-auth"));
 }

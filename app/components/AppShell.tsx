@@ -17,9 +17,13 @@ const HIDE_CHROME_PATHS = new Set([
 function shouldHideAllChrome(pathname: string | null): boolean {
   if (!pathname) return false;
   if (HIDE_CHROME_PATHS.has(pathname)) return true;
-  if (/^\/worker\/jobs\/[^/]+$/.test(pathname)) return true;
+  if (/^\/worker\/jobs\/[^/]+(\/assessment)?$/.test(pathname)) return true;
   if (pathname === "/worker/dashboard" || pathname === "/worker/jobs") return true;
+  if (pathname === "/worker/connect") return true;
+  if (pathname?.startsWith("/worker/messages")) return true;
+  if (pathname?.startsWith("/worker/onboarding")) return true;
   if (pathname === "/employer/dashboard") return true;
+  if (pathname?.startsWith("/employer/onboarding")) return true;
   return false;
 }
 

@@ -10,14 +10,12 @@ import {
   authFieldClass,
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
-import { signInWithRole } from "@/app/lib/supabase/auth";
-import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
+import { getSupabaseClient } from "@/app/lib/supabaseClient";
 import {
-  isDemoCredentials,
-  setDemoWorkerSession,
-  WORKER_DEMO_EMAIL,
-  WORKER_DEMO_PASSWORD,
-} from "@/app/lib/workerDemoAuth";
+  ensureOnboardingProgress,
+  ensureWorkerProfile,
+} from "@/app/lib/supabase/workerRepository";
+import { notifyWorkerAuthChange } from "@/app/lib/workerAuth";
 
 export default function WorkerLoginPage() {
   const router = useRouter();
@@ -38,18 +36,21 @@ export default function WorkerLoginPage() {
     setError(null);
     setLoading(true);
     try {
-      if (isDemoCredentials(email, password)) {
-        setDemoWorkerSession();
-        router.push("/worker/dashboard");
-        router.refresh();
-        return;
+      const supabase = getSupabaseClient();
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (authError) throw authError;
+
+      const userId = data.user?.id;
+      const userEmail = data.user?.email ?? email.trim().toLowerCase();
+      if (userId) {
+        await ensureWorkerProfile(userId, userEmail);
+        await ensureOnboardingProgress(userId);
       }
 
-      if (!isSupabaseConfigured()) {
-        throw new Error("Supabase is not configured. Use demo login or set .env.local.");
-      }
-
-      await signInWithRole({ email, password, role: "worker" });
+      notifyWorkerAuthChange();
       router.push("/worker/dashboard");
       router.refresh();
     } catch (err: unknown) {
@@ -117,19 +118,6 @@ export default function WorkerLoginPage() {
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Logging in..." : "Log In"}
         </button>
-
-        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-          <p className="font-semibold text-zinc-800">Demo worker login</p>
-          <p className="mt-1">
-            Email: <span className="font-mono text-zinc-900">{WORKER_DEMO_EMAIL}</span>
-          </p>
-          <p>
-            Password: <span className="font-mono text-zinc-900">{WORKER_DEMO_PASSWORD}</span>
-          </p>
-          <p className="mt-2 text-xs text-zinc-500">
-            Use these credentials to preview the worker account UI without Supabase.
-          </p>
-        </div>
       </form>
     </AuthShell>
   );

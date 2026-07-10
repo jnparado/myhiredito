@@ -4,28 +4,6 @@ import type {
   EmployerOnboardingState,
   EmployerOnboardingStepId,
 } from "../employerOnboarding";
-import type {
-  WorkerOnboardingState,
-  OnboardingStepId,
-} from "../workerOnboarding";
-
-function mapWorkerRow(row: {
-  completed_steps: string[];
-  dismissed: boolean;
-  personal: unknown;
-  location_skills: unknown;
-  payment: unknown;
-}): WorkerOnboardingState {
-  return {
-    completedSteps: row.completed_steps as OnboardingStepId[],
-    dismissed: row.dismissed,
-    data: {
-      personal: row.personal as WorkerOnboardingState["data"]["personal"],
-      locationSkills: row.location_skills as WorkerOnboardingState["data"]["locationSkills"],
-      payment: row.payment as WorkerOnboardingState["data"]["payment"],
-    },
-  };
-}
 
 function mapEmployerRow(row: {
   completed_steps: string[];
@@ -45,41 +23,6 @@ function mapEmployerRow(row: {
         row.business_details as EmployerOnboardingState["data"]["businessDetails"],
     },
   };
-}
-
-export async function fetchWorkerOnboardingFromDb(
-  userId: string,
-): Promise<WorkerOnboardingState | null> {
-  if (!isSupabaseConfigured()) return null;
-
-  const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase
-    .from("worker_onboarding")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return mapWorkerRow(data);
-}
-
-export async function saveWorkerOnboardingToDb(
-  userId: string,
-  state: WorkerOnboardingState,
-): Promise<boolean> {
-  if (!isSupabaseConfigured()) return false;
-
-  const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase.from("worker_onboarding").upsert({
-    user_id: userId,
-    completed_steps: state.completedSteps,
-    dismissed: state.dismissed,
-    personal: state.data.personal ?? null,
-    location_skills: state.data.locationSkills ?? null,
-    payment: state.data.payment ?? null,
-  });
-
-  return !error;
 }
 
 export async function fetchEmployerOnboardingFromDb(
@@ -115,20 +58,6 @@ export async function saveEmployerOnboardingToDb(
   });
 
   return !error;
-}
-
-export async function resetWorkerOnboardingInDb(userId: string): Promise<void> {
-  if (!isSupabaseConfigured()) return;
-
-  const supabase = createSupabaseBrowserClient();
-  await supabase.from("worker_onboarding").upsert({
-    user_id: userId,
-    completed_steps: [],
-    dismissed: false,
-    personal: null,
-    location_skills: null,
-    payment: null,
-  });
 }
 
 export async function resetEmployerOnboardingInDb(userId: string): Promise<void> {
