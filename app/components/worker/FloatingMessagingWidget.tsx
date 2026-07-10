@@ -81,9 +81,9 @@ export function FloatingMessagingWidget() {
   }
 
   return (
-    <div className="fixed bottom-0 right-4 z-[60] w-[288px] sm:right-6">
+    <div className="fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[55] sm:bottom-0 sm:left-auto sm:right-4 sm:w-[288px] lg:bottom-0">
       {isOpen && (
-        <div className="mb-0 overflow-hidden rounded-t-xl border border-b-0 border-zinc-200 bg-white shadow-2xl">
+        <div className="mb-0 overflow-hidden rounded-t-xl border border-b-0 border-zinc-200 bg-white shadow-2xl sm:rounded-t-xl">
           {activeConversation ? (
             <>
               <div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2.5">
@@ -113,7 +113,7 @@ export function FloatingMessagingWidget() {
                 </div>
               </div>
 
-              <div className="h-72 space-y-3 overflow-y-auto bg-zinc-50 px-3 py-3">
+              <div className="h-[min(18rem,50vh)] space-y-3 overflow-y-auto bg-zinc-50 px-3 py-3 sm:h-72">
                 {activeConversation.messages.length === 0 ? (
                   <p className="px-2 py-6 text-center text-xs text-zinc-500">
                     Start the conversation.

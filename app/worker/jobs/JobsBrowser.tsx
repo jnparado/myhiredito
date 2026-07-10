@@ -15,6 +15,7 @@ export function JobsBrowser() {
   const [category, setCategory] = useState("All");
   const [experience, setExperience] = useState<ExperienceLevel | "all">("all");
   const [payType, setPayType] = useState<Job["payType"] | "all">("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -35,10 +36,39 @@ export function JobsBrowser() {
   }, [search, category, experience, payType]);
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-      {/* Sidebar filters — sticky while scrolling job list */}
-      <aside className="sticky top-4 z-10 w-full shrink-0 lg:top-6 lg:w-56">
-        <div className="max-h-[calc(100vh-2rem)] space-y-6 overflow-y-auto rounded-xl border border-black/5 bg-white p-5 lg:max-h-[calc(100vh-3rem)]">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8">
+      {/* Mobile category chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
+        {jobCategories.slice(0, 6).map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => setCategory(cat)}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+              category === cat
+                ? "bg-[var(--brand)] text-white"
+                : "border border-zinc-200 bg-white text-zinc-600"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setShowFilters((open) => !open)}
+          className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700"
+        >
+          {showFilters ? "Hide filters" : "More filters"}
+        </button>
+      </div>
+
+      {/* Sidebar filters */}
+      <aside
+        className={`w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-56 ${
+          showFilters ? "block" : "hidden lg:block"
+        }`}
+      >
+        <div className="max-h-none space-y-6 overflow-y-auto rounded-xl border border-black/5 bg-white p-4 sm:p-5 lg:max-h-[calc(100vh-3rem)]">
           <div>
             <label className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
               Category

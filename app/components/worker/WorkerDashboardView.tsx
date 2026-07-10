@@ -85,13 +85,13 @@ export function WorkerDashboardView() {
   }
 
   return (
-    <div className="min-h-full bg-[var(--surface)] pb-10">
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+    <div className="min-h-full bg-[var(--surface)] pb-4 sm:pb-10">
+      <div className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-6 sm:py-6">
         {/* Welcome */}
         <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-r from-[#0f1115] via-[#1a2e24] to-[var(--brand-dark)] px-6 py-8 text-white sm:px-8">
+          <div className="bg-gradient-to-r from-[#0f1115] via-[#1a2e24] to-[var(--brand-dark)] px-4 py-6 text-white sm:px-8 sm:py-8">
             <p className="text-sm font-medium text-white/70">Worker dashboard</p>
-            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
+            <h1 className="mt-1 text-xl font-bold sm:text-2xl lg:text-3xl">
               Welcome back, {firstName}
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">

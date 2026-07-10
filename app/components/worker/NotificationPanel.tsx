@@ -80,7 +80,7 @@ export function NotificationPanel({
   const hasContent = unreadMessages > 0 || onboardingIncomplete;
 
   return (
-    <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-zinc-200 bg-white text-zinc-900 shadow-xl">
+    <div className="fixed inset-x-3 top-[calc(100%+0.5rem)] z-50 w-auto overflow-hidden rounded-xl border border-zinc-200 bg-white text-zinc-900 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:w-80">
       <div className="border-b border-zinc-100 px-4 py-3">
         <h3 className="text-sm font-bold text-zinc-900">Notifications</h3>
       </div>

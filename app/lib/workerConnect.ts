@@ -203,23 +203,44 @@ export const employerContacts: EmployerContact[] = [
 ];
 
 const PINNED_KEY = "myhiredito-connect-pinned";
+const EMPTY_PINNED: string[] = [];
+
+let pinnedCache: string[] = EMPTY_PINNED;
+let pinnedCacheRaw: string | null = null;
+
+function readPinnedPeerIds(): string[] {
+  if (typeof window === "undefined") return EMPTY_PINNED;
+
+  const raw = localStorage.getItem(PINNED_KEY);
+  if (raw === pinnedCacheRaw) return pinnedCache;
+
+  pinnedCacheRaw = raw;
+  if (!raw) {
+    pinnedCache = EMPTY_PINNED;
+    return pinnedCache;
+  }
+
+  try {
+    pinnedCache = JSON.parse(raw) as string[];
+  } catch {
+    pinnedCache = EMPTY_PINNED;
+  }
+
+  return pinnedCache;
+}
 
 export function getPinnedPeerIds(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(PINNED_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
+  return readPinnedPeerIds();
 }
 
 export function togglePinnedPeer(id: string): string[] {
-  const current = getPinnedPeerIds();
+  const current = readPinnedPeerIds();
   const next = current.includes(id)
     ? current.filter((item) => item !== id)
     : [...current, id];
   localStorage.setItem(PINNED_KEY, JSON.stringify(next));
+  pinnedCacheRaw = JSON.stringify(next);
+  pinnedCache = next;
   return next;
 }
 

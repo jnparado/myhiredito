@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   connectSpecialties,
@@ -16,19 +16,6 @@ import {
 
 type Tab = "workers" | "employers";
 type SortKey = "match" | "active" | "exam";
-
-function subscribePinned(callback: () => void) {
-  window.addEventListener("storage", callback);
-  window.addEventListener("myhiredito-pinned-change", callback);
-  return () => {
-    window.removeEventListener("storage", callback);
-    window.removeEventListener("myhiredito-pinned-change", callback);
-  };
-}
-
-function getPinnedSnapshot() {
-  return getPinnedPeerIds();
-}
 
 function PeerAvatar({ name }: { name: string }) {
   const initials = name
@@ -77,7 +64,7 @@ function WorkerCard({
   onTogglePin: (id: string) => void;
 }) {
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-[var(--brand)]/30">
+    <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-[var(--brand)]/30 sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <PeerAvatar name={peer.name} />
 
@@ -159,7 +146,7 @@ function WorkerCard({
 
 function EmployerCard({ employer }: { employer: EmployerContact }) {
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-[var(--brand)]/30">
+    <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-[var(--brand)]/30 sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0f1115] text-lg font-bold text-white">
@@ -214,15 +201,26 @@ export function ConnectView() {
   const [sort, setSort] = useState<SortKey>("match");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [pinnedIds, setPinnedIds] = useState<string[]>([]);
 
-  const pinnedIds = useSyncExternalStore(
-    subscribePinned,
-    getPinnedSnapshot,
-    () => [] as string[],
-  );
+  useEffect(() => {
+    function refreshPinned() {
+      setPinnedIds(getPinnedPeerIds());
+    }
+
+    refreshPinned();
+    window.addEventListener("storage", refreshPinned);
+    window.addEventListener("myhiredito-pinned-change", refreshPinned);
+    return () => {
+      window.removeEventListener("storage", refreshPinned);
+      window.removeEventListener("myhiredito-pinned-change", refreshPinned);
+    };
+  }, []);
 
   function handleTogglePin(id: string) {
     togglePinnedPeer(id);
+    setPinnedIds(getPinnedPeerIds());
     window.dispatchEvent(new Event("myhiredito-pinned-change"));
   }
 
@@ -274,10 +272,10 @@ export function ConnectView() {
   const resultCount = tab === "workers" ? filteredWorkers.length : filteredEmployers.length;
 
   return (
-    <div className="min-h-full bg-[var(--surface)] pb-10">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="min-h-full bg-[var(--surface)] pb-6 sm:pb-10">
+      <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6">
         {/* Header */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-[var(--brand)]">
@@ -319,11 +317,11 @@ export function ConnectView() {
           </div>
 
           {/* Tabs — segmented control, not full-width bar */}
-          <div className="mt-6 inline-flex rounded-xl border border-zinc-200 bg-[var(--surface)] p-1">
+          <div className="mt-4 flex w-full rounded-xl border border-zinc-200 bg-[var(--surface)] p-1 sm:mt-6 sm:inline-flex">
             <button
               type="button"
               onClick={() => setTab("workers")}
-              className={`rounded-lg px-5 py-2 text-sm font-semibold transition ${
+              className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-none sm:px-5 ${
                 tab === "workers"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-800"
@@ -334,7 +332,7 @@ export function ConnectView() {
             <button
               type="button"
               onClick={() => setTab("employers")}
-              className={`rounded-lg px-5 py-2 text-sm font-semibold transition ${
+              className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-none sm:px-5 ${
                 tab === "employers"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-800"
@@ -345,10 +343,39 @@ export function ConnectView() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
-          {/* Sidebar filters — vertical, not horizontal icon row */}
-          <aside className="w-full shrink-0 lg:sticky lg:top-6 lg:w-56">
-            <div className="space-y-5 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+        {/* Mobile specialty chips */}
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+          {connectSpecialties.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setSpecialty(item)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                specialty === item
+                  ? "bg-[var(--brand)] text-white"
+                  : "border border-zinc-200 bg-white text-zinc-600"
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setShowFilters((open) => !open)}
+            className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700"
+          >
+            {showFilters ? "Hide" : "Filters"}
+          </button>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-4 sm:mt-6 sm:gap-6 lg:flex-row lg:items-start">
+          {/* Sidebar filters */}
+          <aside
+            className={`w-full shrink-0 lg:sticky lg:top-6 lg:w-56 ${
+              showFilters ? "block" : "hidden lg:block"
+            }`}
+          >
+            <div className="space-y-5 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
                   Specialty

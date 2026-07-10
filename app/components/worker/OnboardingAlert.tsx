@@ -21,7 +21,7 @@ export function OnboardingAlert() {
   return (
     <div
       role="alert"
-      className="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-4 sm:px-5"
+      className="mb-4 rounded-lg border border-red-300 bg-red-50 px-3 py-3 sm:mb-6 sm:px-4 sm:py-4"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">

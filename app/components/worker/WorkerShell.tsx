@@ -18,11 +18,19 @@ import { FloatingMessagingWidget } from "./FloatingMessagingWidget";
 
 type OpenPanel = "notifications" | "more" | null;
 
-const navItems = [
+const desktopNavItems = [
   { href: "/worker/jobs", label: "Browse", icon: "browse" },
   { href: "/worker/dashboard", label: "Home", icon: "home" },
   { href: "/worker/connect", label: "Circle", icon: "connect" },
   { href: "/worker/dashboard#applications", label: "Applications", icon: "applications" },
+  { href: "/worker/messages", label: "Messages", icon: "messages" },
+  { href: "/worker/onboarding/profile", label: "Profile", icon: "profile" },
+];
+
+const mobileNavItems = [
+  { href: "/worker/dashboard", label: "Home", icon: "home" },
+  { href: "/worker/jobs", label: "Browse", icon: "browse" },
+  { href: "/worker/connect", label: "Circle", icon: "connect" },
   { href: "/worker/messages", label: "Messages", icon: "messages" },
   { href: "/worker/onboarding/profile", label: "Profile", icon: "profile" },
 ];
@@ -73,6 +81,13 @@ function NavIcon({ type }: { type: string }) {
         </svg>
       );
   }
+}
+
+function isNavActive(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  if (href === "/worker/dashboard") return pathname === "/worker/dashboard";
+  if (href.includes("#")) return false;
+  return pathname.startsWith(href);
 }
 
 export function WorkerShell({
@@ -133,33 +148,25 @@ export function WorkerShell({
   return (
     <div className="flex min-h-screen flex-col bg-zinc-100">
       <header className="sticky top-0 z-40 border-b border-[#1db954]/30 bg-[#0f1115] text-white">
-        <div className="flex items-center justify-between px-4 py-2.5 lg:px-6">
+        <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 lg:px-6">
           <MyHireditoLogo href="/worker" theme="dark" size="md" />
 
-          <nav className="flex flex-1 items-center justify-center gap-1 overflow-x-auto px-2 sm:gap-2 lg:gap-4">
-            {navItems.map((item) => {
-              const active =
-                item.href === "/worker/dashboard"
-                  ? pathname === "/worker/dashboard"
-                  : item.href.includes("#")
-                    ? false
-                    : (pathname?.startsWith(item.href) ?? false);
+          {/* Desktop nav */}
+          <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex lg:gap-4">
+            {desktopNavItems.map((item) => {
+              const active = isNavActive(pathname, item.href);
               return (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className={`flex shrink-0 flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium transition sm:px-3 sm:text-xs ${
-                    active
-                      ? "text-white"
-                      : "text-white/60 hover:text-white/90"
+                  className={`flex shrink-0 flex-col items-center gap-0.5 px-3 py-1 text-xs font-medium transition ${
+                    active ? "text-white" : "text-white/60 hover:text-white/90"
                   }`}
                 >
                   <NavIcon type={item.icon} />
                   <span
                     className={
-                      active
-                        ? "border-b-2 border-[var(--brand)] pb-0.5"
-                        : ""
+                      active ? "border-b-2 border-[var(--brand)] pb-0.5" : ""
                     }
                   >
                     {item.label}
@@ -171,7 +178,7 @@ export function WorkerShell({
 
           <div
             ref={headerMenusRef}
-            className="relative flex shrink-0 items-center gap-2 sm:gap-3"
+            className="relative ml-auto flex shrink-0 items-center gap-1 sm:gap-2"
           >
             <div className="relative">
               <button
@@ -228,9 +235,9 @@ export function WorkerShell({
               </button>
 
               {openPanel === "more" && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-zinc-900 shadow-xl">
+                <div className="absolute right-0 top-full z-50 mt-2 w-[min(14rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-zinc-900 shadow-xl sm:w-56">
                   <div className="border-b border-zinc-100 px-4 py-3">
-                    <p className="text-sm font-bold text-zinc-900">{displayName}</p>
+                    <p className="truncate text-sm font-bold text-zinc-900">{displayName}</p>
                     <p className="text-xs text-zinc-500">
                       {isDemo ? "Demo worker account" : "Worker account"}
                     </p>
@@ -241,6 +248,13 @@ export function WorkerShell({
                     className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/worker/dashboard#applications"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50 lg:hidden"
+                  >
+                    Applications
                   </Link>
                   <Link
                     href="/worker/onboarding/profile"
@@ -277,13 +291,6 @@ export function WorkerShell({
                       Finish onboarding
                     </Link>
                   )}
-                  <Link
-                    href="#"
-                    onClick={() => setOpenPanel(null)}
-                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
-                  >
-                    Help & support
-                  </Link>
                   <div className="my-1 border-t border-zinc-100" />
                   <button
                     type="button"
@@ -298,12 +305,12 @@ export function WorkerShell({
 
             <Link
               href="/worker/dashboard"
-              className="relative hidden items-center gap-2 border-l border-white/20 pl-3 sm:flex"
+              className="relative hidden items-center gap-2 border-l border-white/20 pl-3 md:flex"
               title="Go to dashboard"
             >
-              <div className="text-right">
+              <div className="hidden text-right sm:block">
                 <div className="flex items-center justify-end gap-1.5">
-                  <span className="text-xs font-semibold leading-tight">
+                  <span className="max-w-[8rem] truncate text-xs font-semibold leading-tight">
                     {displayName}
                   </span>
                   {onboardingIncomplete && (
@@ -327,7 +334,49 @@ export function WorkerShell({
         </div>
       </header>
 
-      <main className="flex-1 pb-14">{children}</main>
+      <main className="flex-1 pb-[calc(9rem+env(safe-area-inset-bottom,0px))] lg:pb-14">
+        {children}
+      </main>
+
+      {/* Mobile bottom navigation */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_16px_rgba(0,0,0,0.08)] lg:hidden"
+        aria-label="Worker navigation"
+      >
+        <div className="grid grid-cols-5">
+          {mobileNavItems.map((item) => {
+            const active = isNavActive(pathname, item.href);
+            const showBadge =
+              item.icon === "messages" && unreadMessages > 0;
+
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`relative flex flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-semibold transition ${
+                  active
+                    ? "text-[var(--brand)]"
+                    : "text-zinc-500 hover:text-zinc-800"
+                }`}
+              >
+                <span className="relative">
+                  <NavIcon type={item.icon} />
+                  {showBadge && (
+                    <span className="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white">
+                      {unreadMessages > 9 ? "9+" : unreadMessages}
+                    </span>
+                  )}
+                  {item.icon === "profile" && onboardingIncomplete && (
+                    <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500" />
+                  )}
+                </span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
       <FloatingMessagingWidget />
     </div>
   );

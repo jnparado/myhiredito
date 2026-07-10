@@ -37,7 +37,13 @@ export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
     const email = sessionUser?.email;
     if (!sessionUser?.id || !email) return null;
 
-    const profile = await fetchProfile(sessionUser.id);
+    let profile = null;
+    try {
+      profile = await fetchProfile(sessionUser.id);
+    } catch {
+      // Profile table may be unavailable; still allow session auth.
+    }
+
     const displayName =
       profile?.display_name?.trim() ||
       [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() ||

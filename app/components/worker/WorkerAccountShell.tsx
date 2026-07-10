@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
+import { WorkerRouteErrorBoundary } from "./WorkerRouteErrorBoundary";
 import { WorkerShell } from "./WorkerShell";
 
 export function WorkerAccountShell({ children }: { children: React.ReactNode }) {
@@ -23,5 +24,9 @@ export function WorkerAccountShell({ children }: { children: React.ReactNode }) 
     );
   }
 
-  return <WorkerShell user={user}>{children}</WorkerShell>;
+  return (
+    <WorkerRouteErrorBoundary>
+      <WorkerShell user={user}>{children}</WorkerShell>
+    </WorkerRouteErrorBoundary>
+  );
 }

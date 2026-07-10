@@ -25,7 +25,7 @@ export function MessagesInbox() {
         <p className="text-xs font-bold uppercase tracking-widest text-[var(--brand)]">
           Inbox
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-zinc-900">Messages</h1>
+        <h1 className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">Messages</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Chat with employers, recruiters, and MyHiredito support.
         </p>

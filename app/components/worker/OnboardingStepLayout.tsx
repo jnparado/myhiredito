@@ -32,7 +32,7 @@ export function OnboardingStepLayout({
   const step = ONBOARDING_STEPS.find((item) => item.id === stepId);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-2xl px-3 py-6 sm:px-6 sm:py-8">
       <Link
         href="/worker/dashboard"
         className="inline-flex items-center gap-1 text-sm font-semibold text-zinc-500 transition hover:text-zinc-800"
@@ -48,7 +48,7 @@ export function OnboardingStepLayout({
         Complete this step to verify your account and unlock job applications.
       </div>
 
-      <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
         <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--brand)]">
           Step {step?.step ?? ""} of {ONBOARDING_STEPS.length}
         </p>
