@@ -1,14 +1,19 @@
 import { getSupabaseClient } from "@/app/lib/supabaseClient";
+import { ensureProfileForUser } from "./profiles";
 import type {
   AvailabilityType,
-  CertificateOnboardingInput,
-  OnboardingProgressRow,
   OnboardingStepId,
   PaymentOnboardingInput,
   ProfileOnboardingInput,
-  ProfileRow,
   SkillsCertificatesOnboardingInput,
 } from "./types";
+import {
+  ensureWorkerOnboardingInDb,
+  fetchWorkerOnboardingFromDb,
+  markWorkerOnboardingStepCompleteInDb,
+  saveWorkerOnboardingToDb,
+  type WorkerOnboardingRow,
+} from "./workerOnboardingDb";
 
 function parseSkills(skills: string): string[] {
   return skills
@@ -17,142 +22,72 @@ function parseSkills(skills: string): string[] {
     .filter(Boolean);
 }
 
-function normalizeCompletedSteps(steps: string[]): OnboardingStepId[] {
-  return steps.map((step) => {
-    if (step === "government-id") return "skills-certificates";
-    if (step === "certificates") return "payment-method";
-    return step as OnboardingStepId;
-  });
-}
-
 function displayNameFromParts(firstName: string, lastName: string): string {
   return `${firstName.trim()} ${lastName.trim()}`.trim();
 }
 
 async function uploadWorkerFile(
-  bucket: "identity-documents" | "certificates",
   workerId: string,
   file: File,
   label: string,
-): Promise<string> {
-  const supabase = getSupabaseClient();
-  const extension = file.name.split(".").pop() ?? "bin";
-  const path = `${workerId}/${label}-${Date.now()}.${extension}`;
+): Promise<string | null> {
+  try {
+    const supabase = getSupabaseClient();
+    const extension = file.name.split(".").pop() ?? "bin";
+    const path = `${workerId}/${label}-${Date.now()}.${extension}`;
 
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    upsert: true,
-    contentType: file.type || undefined,
-  });
+    const { error } = await supabase.storage.from("certificates").upload(path, file, {
+      upsert: true,
+      contentType: file.type || undefined,
+    });
 
-  if (error) throw error;
-  return path;
-}
-
-export async function fetchProfile(workerId: string): Promise<ProfileRow | null> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", workerId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data as ProfileRow | null;
+    if (error) return null;
+    return path;
+  } catch {
+    return null;
+  }
 }
 
 export async function ensureWorkerProfile(
   workerId: string,
   email: string,
 ): Promise<void> {
-  const supabase = getSupabaseClient();
-  const { error } = await supabase.from("profiles").upsert(
-    {
-      id: workerId,
-      email: email.trim().toLowerCase(),
-      role: "worker",
-      display_name: email.split("@")[0],
-    },
-    { onConflict: "id" },
-  );
-
-  if (error) throw error;
+  await ensureProfileForUser({
+    userId: workerId,
+    email: email.trim().toLowerCase(),
+    role: "worker",
+  });
 }
 
 export async function ensureOnboardingProgress(workerId: string): Promise<void> {
-  const supabase = getSupabaseClient();
-  const { error } = await supabase.from("onboarding_progress").upsert(
-    {
-      worker_id: workerId,
-      completed_steps: [],
-      dismissed: false,
-    },
-    { onConflict: "worker_id" },
-  );
-
-  if (error) throw error;
+  await ensureWorkerOnboardingInDb(workerId);
 }
 
 export async function fetchOnboardingProgress(
   workerId: string,
-): Promise<OnboardingProgressRow | null> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from("onboarding_progress")
-    .select("*")
-    .eq("worker_id", workerId)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return null;
-  return {
-    ...(data as OnboardingProgressRow),
-    completed_steps: normalizeCompletedSteps(
-      (data as OnboardingProgressRow).completed_steps as unknown as string[],
-    ),
-  };
+): Promise<WorkerOnboardingRow | null> {
+  return fetchWorkerOnboardingFromDb(workerId);
 }
 
 export async function updateOnboardingProgressRow(
   workerId: string,
-  updates: Partial<Pick<OnboardingProgressRow, "completed_steps" | "dismissed">>,
-): Promise<OnboardingProgressRow> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from("onboarding_progress")
-    .upsert(
-      {
-        worker_id: workerId,
-        completed_steps: updates.completed_steps ?? [],
-        dismissed: updates.dismissed ?? false,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "worker_id" },
-    )
-    .select("*")
-    .single();
-
-  if (error) throw error;
-  return data as OnboardingProgressRow;
+  updates: Partial<Pick<WorkerOnboardingRow, "completed_steps" | "dismissed">>,
+): Promise<WorkerOnboardingRow> {
+  const current = await fetchWorkerOnboardingFromDb(workerId);
+  return saveWorkerOnboardingToDb(workerId, {
+    completed_steps: updates.completed_steps ?? current?.completed_steps ?? [],
+    dismissed: updates.dismissed ?? current?.dismissed ?? false,
+    personal: current?.personal ?? null,
+    location_skills: current?.location_skills ?? null,
+    payment: current?.payment ?? null,
+  });
 }
 
 export async function markOnboardingStepCompleteInDb(
   workerId: string,
   stepId: OnboardingStepId,
-): Promise<OnboardingProgressRow> {
-  const current = await fetchOnboardingProgress(workerId);
-  const completed = current?.completed_steps ?? [];
-
-  if (completed.includes(stepId)) {
-    return (
-      current ??
-      (await updateOnboardingProgressRow(workerId, { completed_steps: completed }))
-    );
-  }
-
-  return updateOnboardingProgressRow(workerId, {
-    completed_steps: [...completed, stepId],
-    dismissed: current?.dismissed ?? false,
-  });
+): Promise<WorkerOnboardingRow> {
+  return markWorkerOnboardingStepCompleteInDb(workerId, stepId);
 }
 
 export async function saveProfileOnboarding(
@@ -160,22 +95,32 @@ export async function saveProfileOnboarding(
   input: ProfileOnboardingInput,
 ): Promise<void> {
   const supabase = getSupabaseClient();
-  const displayName = displayNameFromParts(input.firstName, input.lastName);
 
   const { error: profileError } = await supabase
     .from("profiles")
     .update({
       first_name: input.firstName.trim(),
       last_name: input.lastName.trim(),
-      display_name: displayName,
-      phone: input.phone.trim(),
-      location: input.location.trim() || null,
-      availability: input.availability as AvailabilityType,
-      last_active_at: new Date().toISOString(),
     })
     .eq("id", workerId);
 
   if (profileError) throw profileError;
+
+  const current = await fetchWorkerOnboardingFromDb(workerId);
+  await saveWorkerOnboardingToDb(workerId, {
+    completed_steps: current?.completed_steps ?? [],
+    dismissed: current?.dismissed ?? false,
+    personal: {
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      phone: input.phone.trim(),
+      location: input.location.trim(),
+      availability: input.availability,
+      displayName: displayNameFromParts(input.firstName, input.lastName),
+    },
+    location_skills: current?.location_skills ?? null,
+    payment: current?.payment ?? null,
+  });
 
   await markOnboardingStepCompleteInDb(workerId, "profile");
 }
@@ -184,43 +129,37 @@ export async function saveSkillsCertificatesOnboarding(
   workerId: string,
   input: SkillsCertificatesOnboardingInput,
 ): Promise<void> {
-  const supabase = getSupabaseClient();
   const cert = input.certificate;
-
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .update({
-      skills: parseSkills(input.skills),
-      headline: `${input.yearsExperience.trim()} years experience`,
-      bio: input.workHistory.trim(),
-      last_active_at: new Date().toISOString(),
-    })
-    .eq("id", workerId);
-
-  if (profileError) throw profileError;
-
   let filePath: string | null = null;
+
   if (cert.certificateFile) {
     filePath = await uploadWorkerFile(
-      "certificates",
       workerId,
       cert.certificateFile,
       "certificate",
     );
   }
 
-  const { error } = await supabase.from("worker_certificates").insert({
-    worker_id: workerId,
-    certificate_name: cert.certificateName.trim(),
-    issuing_body: cert.issuingBody.trim(),
-    issue_date: cert.issueDate || null,
-    expiry_date: cert.expiryDate || null,
-    license_number: cert.licenseNumber.trim(),
-    file_url: filePath,
-    verification_status: "pending",
+  const current = await fetchWorkerOnboardingFromDb(workerId);
+  await saveWorkerOnboardingToDb(workerId, {
+    completed_steps: current?.completed_steps ?? [],
+    dismissed: current?.dismissed ?? false,
+    personal: current?.personal ?? null,
+    location_skills: {
+      yearsExperience: input.yearsExperience.trim(),
+      skills: parseSkills(input.skills),
+      workHistory: input.workHistory.trim(),
+      certificate: {
+        certificateName: cert.certificateName.trim(),
+        issuingBody: cert.issuingBody.trim(),
+        issueDate: cert.issueDate || null,
+        expiryDate: cert.expiryDate || null,
+        licenseNumber: cert.licenseNumber.trim(),
+        filePath,
+      },
+    },
+    payment: current?.payment ?? null,
   });
-
-  if (error) throw error;
 
   await markOnboardingStepCompleteInDb(workerId, "skills-certificates");
 }
@@ -229,25 +168,18 @@ export async function savePaymentOnboarding(
   workerId: string,
   input: PaymentOnboardingInput,
 ): Promise<void> {
-  const supabase = getSupabaseClient();
-  const profile = await fetchProfile(workerId);
-  const seeking = profile?.seeking ?? [];
-  const withoutPayout = seeking.filter((item) => !item.startsWith("payout"));
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      seeking: [
-        ...withoutPayout,
-        `payout:${input.paymentMethod}`,
-        `payout-holder:${input.accountHolder.trim()}`,
-        `payout-last4:${input.accountLast4.trim()}`,
-      ],
-      last_active_at: new Date().toISOString(),
-    })
-    .eq("id", workerId);
-
-  if (error) throw error;
+  const current = await fetchWorkerOnboardingFromDb(workerId);
+  await saveWorkerOnboardingToDb(workerId, {
+    completed_steps: current?.completed_steps ?? [],
+    dismissed: current?.dismissed ?? false,
+    personal: current?.personal ?? null,
+    location_skills: current?.location_skills ?? null,
+    payment: {
+      paymentMethod: input.paymentMethod,
+      accountHolder: input.accountHolder.trim(),
+      accountLast4: input.accountLast4.trim(),
+    },
+  });
 
   await markOnboardingStepCompleteInDb(workerId, "payment-method");
 }

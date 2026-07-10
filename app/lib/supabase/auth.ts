@@ -2,6 +2,7 @@ import { createSupabaseBrowserClient } from "./client";
 import { isSupabaseConfigured } from "./env";
 import { ensureProfileForUser, fetchProfile } from "./profiles";
 import type { UserRole } from "./database.types";
+import { ensureWorkerOnboardingInDb } from "./workerOnboardingDb";
 
 export function getAuthCallbackUrl(nextPath: string): string {
   if (typeof window === "undefined") return nextPath;
@@ -25,9 +26,10 @@ export async function signUpWithRole({
     throw new Error("Supabase is not configured.");
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
   const supabase = createSupabaseBrowserClient();
   const result = await supabase.auth.signUp({
-    email,
+    email: normalizedEmail,
     password,
     options: {
       data: { role, ...metadata },
@@ -37,12 +39,17 @@ export async function signUpWithRole({
 
   if (result.error) throw result.error;
 
-  if (result.data.user && result.data.session) {
-    await ensureProfileForUser({
-      userId: result.data.user.id,
-      email,
-      role,
-    });
+  if (result.data.user?.id) {
+    if (result.data.session) {
+      await ensureProfileForUser({
+        userId: result.data.user.id,
+        email: normalizedEmail,
+        role,
+      });
+      if (role === "worker") {
+        await ensureWorkerOnboardingInDb(result.data.user.id);
+      }
+    }
   }
 
   return result.data;
@@ -61,9 +68,10 @@ export async function signInWithRole({
     throw new Error("Supabase is not configured.");
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: normalizedEmail,
     password,
   });
 
@@ -83,7 +91,11 @@ export async function signInWithRole({
   }
 
   if (!profile) {
-    await ensureProfileForUser({ userId, email, role });
+    await ensureProfileForUser({ userId, email: normalizedEmail, role });
+  }
+
+  if (role === "worker") {
+    await ensureWorkerOnboardingInDb(userId);
   }
 
   return data;

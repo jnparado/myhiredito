@@ -10,11 +10,8 @@ import {
   authFieldClass,
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
-import { getSupabaseClient } from "@/app/lib/supabaseClient";
-import {
-  ensureOnboardingProgress,
-  ensureWorkerProfile,
-} from "@/app/lib/supabase/workerRepository";
+import { signUpWithRole } from "@/app/lib/supabase/auth";
+import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import { notifyWorkerAuthChange } from "@/app/lib/workerAuth";
 
 export default function WorkerSignupPage() {
@@ -24,6 +21,7 @@ export default function WorkerSignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const canSubmit = useMemo(
@@ -35,36 +33,30 @@ export default function WorkerSignupPage() {
     e.preventDefault();
     if (!canSubmit) return;
     setError(null);
+    setMessage(null);
     setLoading(true);
     try {
-      const normalizedEmail = email.trim().toLowerCase();
-      const supabase = getSupabaseClient();
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password,
-        options: {
-          data: { role: "worker" },
-          emailRedirectTo: `${window.location.origin}/worker/dashboard`,
-        },
-      });
-      if (authError) throw authError;
-
-      const userId = data.user?.id;
-      if (userId && data.session) {
-        await ensureWorkerProfile(userId, normalizedEmail);
-        await ensureOnboardingProgress(userId);
+      if (!isSupabaseConfigured()) {
+        throw new Error("Supabase is not configured. Add keys to .env.local.");
       }
 
-      if (data.session) {
-        notifyWorkerAuthChange();
-        router.push("/worker/dashboard");
-        router.refresh();
+      const data = await signUpWithRole({
+        email,
+        password,
+        role: "worker",
+        nextPath: "/worker/dashboard",
+      });
+
+      if (data.user && !data.session) {
+        setMessage(
+          "Account created. Check your email to confirm your address, then log in.",
+        );
         return;
       }
 
-      setError(
-        "Account created. Check your email to confirm your address, then log in.",
-      );
+      notifyWorkerAuthChange();
+      router.push("/worker/dashboard");
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Signup failed.");
     } finally {
@@ -142,13 +134,18 @@ export default function WorkerSignupPage() {
         </label>
 
         {error && <div className={authErrorClass}>{error}</div>}
+        {message && (
+          <div className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand-light)] px-4 py-3 text-sm text-[var(--brand-dark)]">
+            {message}
+          </div>
+        )}
 
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Creating account..." : "Create Worker Account"}
         </button>
 
         <p className="text-center text-xs leading-5 text-zinc-400">
-          Create your profile, verify your ID, and start applying to open roles.
+          Create your profile, add skills and credentials, then start applying.
         </p>
       </form>
     </AuthShell>

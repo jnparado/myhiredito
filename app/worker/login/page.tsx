@@ -10,11 +10,8 @@ import {
   authFieldClass,
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
-import { getSupabaseClient } from "@/app/lib/supabaseClient";
-import {
-  ensureOnboardingProgress,
-  ensureWorkerProfile,
-} from "@/app/lib/supabase/workerRepository";
+import { signInWithRole } from "@/app/lib/supabase/auth";
+import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import { notifyWorkerAuthChange } from "@/app/lib/workerAuth";
 
 export default function WorkerLoginPage() {
@@ -36,19 +33,17 @@ export default function WorkerLoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const supabase = getSupabaseClient();
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-      if (authError) throw authError;
-
-      const userId = data.user?.id;
-      const userEmail = data.user?.email ?? email.trim().toLowerCase();
-      if (userId) {
-        await ensureWorkerProfile(userId, userEmail);
-        await ensureOnboardingProgress(userId);
+      if (!isSupabaseConfigured()) {
+        throw new Error(
+          "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.",
+        );
       }
+
+      await signInWithRole({
+        email,
+        password,
+        role: "worker",
+      });
 
       notifyWorkerAuthChange();
       router.push("/worker/dashboard");

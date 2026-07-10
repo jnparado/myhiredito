@@ -12,6 +12,7 @@ import {
 } from "@/app/components/auth/AuthShell";
 import { signInWithRole } from "@/app/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
+import { notifyEmployerAuthChange } from "@/app/lib/employerAuth";
 import {
   EMPLOYER_DEMO_EMAIL,
   EMPLOYER_DEMO_PASSWORD,
@@ -40,6 +41,7 @@ export default function EmployerLoginPage() {
     try {
       if (isEmployerDemoCredentials(email, password)) {
         setDemoEmployerSession();
+        notifyEmployerAuthChange();
         router.push("/employer/dashboard");
         router.refresh();
         return;
@@ -50,6 +52,7 @@ export default function EmployerLoginPage() {
       }
 
       await signInWithRole({ email, password, role: "employer" });
+      notifyEmployerAuthChange();
       router.push("/employer/dashboard");
       router.refresh();
     } catch (err: unknown) {

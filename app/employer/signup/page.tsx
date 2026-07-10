@@ -13,6 +13,7 @@ import {
 import { signUpWithRole } from "@/app/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import { resetEmployerOnboarding } from "@/app/lib/employerOnboarding";
+import { notifyEmployerAuthChange } from "@/app/lib/employerAuth";
 
 export default function EmployerSignupPage() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function EmployerSignupPage() {
         return;
       }
 
+      notifyEmployerAuthChange();
       router.push("/employer/dashboard");
       router.refresh();
     } catch (err: unknown) {

@@ -1,5 +1,7 @@
-import { getSupabaseClient } from "./supabaseClient";
-import { fetchProfile } from "./supabase/workerRepository";
+import { createSupabaseBrowserClient } from "./supabase/client";
+import { isSupabaseConfigured } from "./supabase/env";
+import { fetchProfile, profileDisplayName } from "./supabase/profiles";
+import type { Profile } from "./supabase/database.types";
 
 export type WorkerAuthUser = {
   id: string;
@@ -7,6 +9,7 @@ export type WorkerAuthUser = {
   displayName: string;
   firstName?: string | null;
   lastName?: string | null;
+  profile: Profile | null;
 };
 
 function displayNameFromEmail(email: string): string {
@@ -19,24 +22,26 @@ function displayNameFromEmail(email: string): string {
 }
 
 export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
+  if (!isSupabaseConfigured()) return null;
+
   try {
-    const supabase = getSupabaseClient();
-    const { data } = await supabase.auth.getSession();
-    const sessionUser = data.session?.user;
+    const supabase = createSupabaseBrowserClient();
+    const { data } = await supabase.auth.getUser();
+    const sessionUser = data.user;
     const email = sessionUser?.email;
     if (!sessionUser?.id || !email) return null;
 
-    let profile = null;
+    let profile: Profile | null = null;
     try {
       profile = await fetchProfile(sessionUser.id);
     } catch {
       // Profile table may be unavailable; still allow session auth.
     }
 
+    if (profile && profile.role !== "worker") return null;
+
     const displayName =
-      profile?.display_name?.trim() ||
-      [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() ||
-      displayNameFromEmail(email);
+      profileDisplayName(profile, email) || displayNameFromEmail(email);
 
     return {
       id: sessionUser.id,
@@ -44,6 +49,7 @@ export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
       displayName,
       firstName: profile?.first_name,
       lastName: profile?.last_name,
+      profile,
     };
   } catch {
     return null;
@@ -51,8 +57,9 @@ export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
 }
 
 export async function signOutWorker(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
   try {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
   } catch {
     // Ignore when Supabase is not configured.

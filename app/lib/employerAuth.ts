@@ -74,3 +74,8 @@ export function getEmployerUserId(user: EmployerAuthUser | null): string | null 
   if (!user) return null;
   return user.source === "supabase" ? user.id : null;
 }
+
+export function notifyEmployerAuthChange(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("myhiredito-employer-auth"));
+}
