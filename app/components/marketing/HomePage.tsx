@@ -8,38 +8,38 @@ export function HomePage() {
       {/* Hero */}
       <section>
         <MarketingNav />
-        <div className="bg-[var(--cream)]">
+        <div className="bg-[#0f1115]">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-16 pt-4 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:pb-24 lg:pt-12">
           <div>
-            <p className="text-sm font-medium text-[var(--brown-muted)]">
-              The workforce platform for staffing
+            <p className="text-sm font-medium text-zinc-400">
+              Staffing software for modern teams
             </p>
-            <h1 className="mt-6 text-4xl font-black uppercase leading-[0.95] tracking-tight text-[var(--brown-dark)] sm:text-5xl lg:text-6xl xl:text-7xl">
-              The platform
+            <h1 className="mt-6 text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl">
+              Staff smarter.
               <br />
-              that runs
+              Hire faster.
               <br />
-              your labor.
+              Stay compliant.
             </h1>
-            <p className="mt-8 max-w-lg text-base leading-7 text-[var(--brown-muted)] sm:text-lg">
-              Staffing has a labor problem — coverage gaps, compliance risk,
-              payroll chaos. MyHiredito&apos;s intelligence layer solves all of
-              it.
+            <p className="mt-8 max-w-lg text-base leading-7 text-zinc-400 sm:text-lg">
+              MyHiredito helps employers post shifts, match verified workers,
+              manage schedules, and run payroll — without juggling five
+              different tools.
             </p>
-            <p className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[var(--brown-muted)]">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--brown)]" />
-              AI-powered workforce platform
+            <p className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-zinc-400">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--brand)]" />
+              One platform for staffing operations
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/employer"
-                className="inline-flex h-12 items-center justify-center rounded-lg bg-[var(--brown-dark)] px-8 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[var(--brown)]"
+                className="inline-flex h-12 items-center justify-center rounded-lg bg-white px-8 text-sm font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
               >
                 Post a Shift
               </Link>
               <Link
                 href="/worker/jobs"
-                className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-[var(--brown)] bg-transparent px-8 text-sm font-bold uppercase tracking-wide text-[var(--brown-dark)] transition hover:bg-[var(--brown-light)]/50"
+                className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-white/40 bg-transparent px-8 text-sm font-bold uppercase tracking-wide text-white transition hover:border-white hover:bg-white/10"
               >
                 Find Work
               </Link>
@@ -47,33 +47,13 @@ export function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-[var(--brown-light)] bg-white shadow-lg sm:aspect-[3/4]">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl sm:aspect-[3/4]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=800&q=80"
-                alt="MyHiredito healthcare professional at work"
-                className="h-full w-full object-cover object-top"
+                src="/employers-hero.png"
+                alt="Employer team managing staffing on MyHiredito"
+                className="h-full w-full object-cover object-center"
               />
-            </div>
-
-            {/* Pro card overlay */}
-            <div className="absolute -bottom-4 left-4 right-4 rounded-xl border border-[var(--brown-light)] bg-white p-4 shadow-xl sm:left-auto sm:right-6 sm:w-72">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--brown)] text-lg font-bold text-white">
-                  JL
-                </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-[var(--brown-dark)]">Jordan R.</div>
-                  <div className="text-sm text-[var(--brown-muted)]">CNA · Healthcare</div>
-                  <div className="text-xs text-[var(--brown-muted)]/80">Austin, TX</div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-[var(--brown-dark)]">
-                <span className="rounded-full bg-[var(--brown-light)] px-2.5 py-1 text-[var(--brown)]">
-                  Advance Notice
-                </span>
-                <span className="text-amber-600">★ 4.9</span>
-              </div>
             </div>
           </div>
         </div>
@@ -81,7 +61,7 @@ export function HomePage() {
       </section>
 
       {/* Trust */}
-      <section className="border-b border-zinc-100 bg-zinc-50 py-8">
+      <section className="border-b-2 border-[#1db954] bg-zinc-50 py-8">
         <p className="text-center text-sm font-medium text-zinc-600">
           Join the thousands of businesses nationwide that trust and use{" "}
           <span className="font-bold text-zinc-900">MyHiredito</span>
@@ -123,9 +103,9 @@ export function HomePage() {
                 href: "/worker/jobs",
               },
               {
-                tag: "MyHireditoGo",
-                title: "Staff on Demand",
-                desc: "Post a shift in seconds. The platform finds, vets, and confirms the best-fit pro automatically.",
+                tag: "Shift Posting",
+                title: "Cover Open Roles Fast",
+                desc: "Publish shift needs, set pay and requirements, and invite qualified workers from your market.",
                 features: [
                   "No contracts, no minimums",
                   "Best-fit pro matched in under 30 minutes",
@@ -203,11 +183,11 @@ export function HomePage() {
       <section id="how-we-help" className="border-y border-zinc-100 bg-zinc-50 py-20">
         <div className="mx-auto max-w-7xl px-6">
           <h2 className="text-3xl font-bold text-zinc-900">
-            Tell us what you&apos;re trying to solve.
+            What do you need help with?
           </h2>
           <p className="mt-3 max-w-2xl text-zinc-600">
-            Whether you need one worker tonight or a workforce strategy for 50
-            locations, MyHiredito has a solution.
+            Whether you are covering one open shift or building a staffing plan
+            across multiple locations, MyHiredito has a path that fits.
           </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -254,36 +234,36 @@ export function HomePage() {
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-6">
           <p className="text-sm font-semibold uppercase tracking-wider text-[var(--brand)]">
-            Intelligence, built in
+            Automation built in
           </p>
           <h2 className="mt-3 text-3xl font-bold text-zinc-900 sm:text-4xl">
-            Four AI agents. One workforce engine.
+            Less manual work for your ops team.
           </h2>
           <p className="mt-4 max-w-2xl text-zinc-600">
-            Matching, screening, event planning, and support — each powered by a
-            purpose-built agent trained on real staffing data.
+            MyHiredito automates matching, screening, scheduling support, and
+            common admin tasks so your managers can focus on running the floor.
           </p>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
-                name: "Mara",
-                title: "Shifts filled in minutes",
-                desc: "Finds the best-fit pro for every shift in under 3 minutes.",
+                name: "Match",
+                title: "Fill open shifts faster",
+                desc: "Surface qualified workers based on skills, distance, and past performance.",
               },
               {
-                name: "Amelia",
-                title: "Candidates screened overnight",
-                desc: "Async voice + structured screening, scored and ranked in 24 hours.",
+                name: "Screen",
+                title: "Review candidates quickly",
+                desc: "Collect credentials and screening results before anyone is approved to work.",
               },
               {
-                name: "Oppy",
-                title: "Events planned automatically",
-                desc: "Visual planning for large events. Staffing gaps filled before you spot them.",
+                name: "Plan",
+                title: "Stay ahead of coverage gaps",
+                desc: "See upcoming staffing needs and spot unfilled roles before they become problems.",
               },
               {
-                name: "Support",
-                title: "Issues resolved instantly",
-                desc: "Shift questions and escalations handled around the clock.",
+                name: "Assist",
+                title: "Resolve shift issues",
+                desc: "Handle common questions and escalations without tying up your managers.",
               },
             ].map((agent) => (
               <div
@@ -421,7 +401,7 @@ export function HomePage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-white py-20">
+      <section id="how-it-works" className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-6">
           <h2 className="text-3xl font-bold text-zinc-900">
             From posting to payment, handled automatically.
@@ -492,12 +472,10 @@ export function HomePage() {
       <section className="bg-zinc-900 py-20 text-white">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h2 className="text-3xl font-bold sm:text-4xl">
-            Staff. Hire. Pay.
-            <br />
-            Stay Compliant.
+            Start staffing with MyHiredito
           </h2>
           <p className="mt-4 text-lg text-zinc-400">
-            All staffing, one platform.
+            Post shifts, hire workers, and manage payouts from one place.
           </p>
           <Link
             href="/employer/signup"

@@ -32,11 +32,24 @@ function navButtonClass(active: boolean) {
   }`;
 }
 
+function workerNavLinkClass(active: boolean) {
+  return `font-mono text-[11px] font-bold uppercase tracking-widest transition ${
+    active ? "text-white" : "text-white/80 hover:text-white"
+  }`;
+}
+
+const workerNavItems = [
+  { label: "Find Work", href: "/worker/jobs", match: (path: string | null) => !!path?.startsWith("/worker/jobs") },
+  { label: "How It Works", href: "/worker#how-it-works", match: () => false },
+  { label: "Help", href: "#", match: () => false },
+] as const;
+
 export function MarketingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const pathname = usePathname();
-  const isBusiness = !pathname?.startsWith("/worker");
+  const isWorkersLanding = pathname === "/worker";
+  const isEmployersView = !isWorkersLanding;
 
   return (
     <nav
@@ -54,73 +67,81 @@ export function MarketingNav() {
 
         <div className="hidden items-center rounded-full border border-white/20 bg-white/5 p-0.5 md:flex">
           <Link
-            href="/employer"
+            href="/"
             className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-              isBusiness ? "bg-white text-zinc-900" : "text-zinc-400 hover:text-white"
+              isEmployersView
+                ? "bg-white text-zinc-900"
+                : "text-zinc-400 hover:text-white"
             }`}
           >
-            Business
+            Employers
           </Link>
           <Link
             href="/worker"
             className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-              !isBusiness ? "bg-white text-zinc-900" : "text-zinc-400 hover:text-white"
+              isWorkersLanding
+                ? "bg-[#1db954] text-white"
+                : "text-zinc-400 hover:text-white"
             }`}
           >
-            Professional
+            Workers
           </Link>
         </div>
 
         <div className="hidden items-center gap-5 lg:flex xl:gap-6">
-          <button
-            type="button"
-            className={navButtonClass(openMenu === "platform")}
-            onMouseEnter={() => setOpenMenu("platform")}
-            onClick={() => setOpenMenu((m) => (m === "platform" ? null : "platform"))}
-          >
-            Platform
-            <ChevronDown />
-          </button>
-
-          <button
-            type="button"
-            className={navButtonClass(openMenu === "how-we-help")}
-            onMouseEnter={() => setOpenMenu("how-we-help")}
-            onClick={() => setOpenMenu((m) => (m === "how-we-help" ? null : "how-we-help"))}
-          >
-            How we help
-            <ChevronDown />
-          </button>
-
-          <button
-            type="button"
-            className={navButtonClass(openMenu === "who-we-serve")}
-            onMouseEnter={() => setOpenMenu("who-we-serve")}
-            onClick={() => setOpenMenu((m) => (m === "who-we-serve" ? null : "who-we-serve"))}
-          >
-            Who we serve
-            <ChevronDown />
-          </button>
-
-          <button
-            type="button"
-            className={navButtonClass(openMenu === "resources")}
-            onMouseEnter={() => setOpenMenu("resources")}
-            onClick={() => setOpenMenu((m) => (m === "resources" ? null : "resources"))}
-          >
-            Resources
-            <ChevronDown up={openMenu === "resources"} />
-          </button>
+          {isEmployersView ? (
+            <>
+              <button
+                type="button"
+                className={navButtonClass(openMenu === "platform")}
+                onMouseEnter={() => setOpenMenu("platform")}
+                onClick={() => setOpenMenu((m) => (m === "platform" ? null : "platform"))}
+              >
+                Platform
+                <ChevronDown />
+              </button>
+              <button
+                type="button"
+                className={navButtonClass(openMenu === "how-we-help")}
+                onMouseEnter={() => setOpenMenu("how-we-help")}
+                onClick={() => setOpenMenu((m) => (m === "how-we-help" ? null : "how-we-help"))}
+              >
+                How we help
+                <ChevronDown />
+              </button>
+              <button
+                type="button"
+                className={navButtonClass(openMenu === "who-we-serve")}
+                onMouseEnter={() => setOpenMenu("who-we-serve")}
+                onClick={() => setOpenMenu((m) => (m === "who-we-serve" ? null : "who-we-serve"))}
+              >
+                Who we serve
+                <ChevronDown />
+              </button>
+              <button
+                type="button"
+                className={navButtonClass(openMenu === "resources")}
+                onMouseEnter={() => setOpenMenu("resources")}
+                onClick={() => setOpenMenu((m) => (m === "resources" ? null : "resources"))}
+              >
+                Resources
+                <ChevronDown up={openMenu === "resources"} />
+              </button>
+            </>
+          ) : (
+            workerNavItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={workerNavLinkClass(item.match(pathname))}
+              >
+                {item.label}
+              </Link>
+            ))
+          )}
         </div>
 
         <div className="ml-auto hidden items-center gap-2 lg:flex">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded border border-white/40 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:border-white hover:bg-white/5"
-          >
-            Select Market
-            <ChevronDown />
-          </button>
           <Link
             href="/worker/login"
             className="rounded bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
@@ -128,7 +149,7 @@ export function MarketingNav() {
             Login
           </Link>
           <Link
-            href="/employer/signup"
+            href="/worker/signup"
             className="rounded border border-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
           >
             Signup
@@ -151,73 +172,92 @@ export function MarketingNav() {
         </button>
       </div>
 
-      {openMenu === "platform" && <PlatformMegaMenu />}
-      {openMenu === "how-we-help" && <HowWeHelpMegaMenu />}
-      {openMenu === "who-we-serve" && <WhoWeServeMegaMenu />}
-      {openMenu === "resources" && <ResourcesMegaMenu />}
+      {isEmployersView && openMenu === "platform" && <PlatformMegaMenu />}
+      {isEmployersView && openMenu === "how-we-help" && <HowWeHelpMegaMenu />}
+      {isEmployersView && openMenu === "who-we-serve" && <WhoWeServeMegaMenu />}
+      {isEmployersView && openMenu === "resources" && <ResourcesMegaMenu />}
 
       {mobileOpen && (
-        <div className="border-t border-white/10 px-4 py-4 lg:hidden">
+        <div className="border-t border-white/10 bg-[#0f1115] px-4 py-4 lg:hidden">
           <div className="mb-4 flex rounded-full border border-white/20 p-0.5">
             <Link
-              href="/employer"
+              href="/"
               className={`flex-1 rounded-full py-2 text-center text-[11px] font-bold uppercase ${
-                isBusiness ? "bg-white text-zinc-900" : "text-zinc-400"
+                isEmployersView ? "bg-white text-zinc-900" : "text-zinc-400"
               }`}
               onClick={() => setMobileOpen(false)}
             >
-              Business
+              Employers
             </Link>
             <Link
               href="/worker"
               className={`flex-1 rounded-full py-2 text-center text-[11px] font-bold uppercase ${
-                !isBusiness ? "bg-white text-zinc-900" : "text-zinc-400"
+                isWorkersLanding ? "bg-[#1db954] text-white" : "text-zinc-400"
               }`}
               onClick={() => setMobileOpen(false)}
             >
-              Professional
+              Workers
             </Link>
           </div>
-          <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-            What are you trying to solve?
-          </p>
-          <div className="mb-4 flex flex-col gap-3">
-            {[
-              "I need to fill a shift — fast",
-              "I want to hire full-time",
-              "I need to pay my workers",
-              "I'm a professional looking for work",
-            ].map((label) => (
-              <Link
-                key={label}
-                href={label.includes("professional") ? "/worker/jobs" : "/employer"}
-                className="text-[11px] font-bold uppercase text-white"
-                onClick={() => setMobileOpen(false)}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-          <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-            Resources
-          </p>
-          <div className="mb-4 flex flex-col gap-3">
-            {["Blog", "Customer Stories", "Help Center", "Careers"].map((label) => (
-              <Link
-                key={label}
-                href={label === "Customer Stories" ? "/#resources" : "#"}
-                className="text-[11px] font-bold uppercase text-white"
-                onClick={() => setMobileOpen(false)}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+
+          {isEmployersView ? (
+            <>
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                What are you trying to solve?
+              </p>
+              <div className="mb-4 flex flex-col gap-3">
+                {[
+                  "I need to fill a shift — fast",
+                  "I want to hire full-time",
+                  "I need to pay my workers",
+                  "I'm a professional looking for work",
+                ].map((label) => (
+                  <Link
+                    key={label}
+                    href={label.includes("professional") ? "/worker/jobs" : "/employer"}
+                    className="text-[11px] font-bold uppercase text-white"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                Resources
+              </p>
+              <div className="mb-4 flex flex-col gap-3">
+                {["Blog", "Customer Stories", "Help Center", "Careers"].map((label) => (
+                  <Link
+                    key={label}
+                    href={label === "Customer Stories" ? "/#resources" : "#"}
+                    className="text-[11px] font-bold uppercase text-white"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="mb-4 flex flex-col gap-3">
+              {workerNavItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="font-mono text-[11px] font-bold uppercase tracking-widest text-white"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-wide text-white">
             <hr className="border-white/10" />
             <Link href="/worker/login" onClick={() => setMobileOpen(false)}>Login</Link>
             <Link
-              href="/employer/signup"
+              href="/worker/signup"
               className="rounded border border-white py-2.5 text-center"
               onClick={() => setMobileOpen(false)}
             >

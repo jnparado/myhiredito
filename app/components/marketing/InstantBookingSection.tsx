@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-type Category = "all" | "kitchen" | "bar" | "events" | "foh" | "boh";
+type Category = "all" | "healthcare" | "kitchen" | "warehouse" | "events" | "hospitality";
 
 type Role = {
   id: string;
@@ -17,67 +17,67 @@ type Role = {
 
 const categories: { id: Category; label: string }[] = [
   { id: "all", label: "All" },
+  { id: "healthcare", label: "Healthcare" },
   { id: "kitchen", label: "Kitchen" },
-  { id: "bar", label: "Bar" },
+  { id: "warehouse", label: "Warehouse" },
   { id: "events", label: "Events" },
-  { id: "foh", label: "FOH" },
-  { id: "boh", label: "BOH" },
+  { id: "hospitality", label: "Hospitality" },
 ];
 
 const roles: Role[] = [
   {
+    id: "cna",
+    title: "CNA",
+    description: "Certified nursing assistants for assisted living and clinic support.",
+    category: "healthcare",
+    icon: "🏥",
+    iconBg: "bg-sky-100",
+    hourlyRate: 32,
+  },
+  {
     id: "line-cook",
     title: "Line Cook",
-    description: "Skilled culinary professionals ready for any station.",
+    description: "Experienced cooks for busy kitchen stations.",
     category: "kitchen",
-    icon: "🔪",
-    iconBg: "bg-rose-100",
+    icon: "🍳",
+    iconBg: "bg-amber-100",
     hourlyRate: 22,
   },
   {
-    id: "prep-cook",
-    title: "Prep Cook",
-    description: "Efficient prep support for fast-paced kitchens.",
-    category: "kitchen",
-    icon: "🥕",
-    iconBg: "bg-emerald-100",
-    hourlyRate: 18,
-  },
-  {
-    id: "bartender",
-    title: "Bartender",
-    description: "Full-service bar coverage for events, venues, and restaurants.",
-    category: "bar",
-    icon: "🍸",
-    iconBg: "bg-rose-100",
-    hourlyRate: 24,
+    id: "warehouse-associate",
+    title: "Warehouse Associate",
+    description: "Pick, pack, and move inventory in high-volume facilities.",
+    category: "warehouse",
+    icon: "📦",
+    iconBg: "bg-orange-100",
+    hourlyRate: 19,
   },
   {
     id: "event-staff",
     title: "Event Staff",
-    description: "General event support for a wide range of functions.",
+    description: "Setup, guest support, and breakdown for live events.",
     category: "events",
-    icon: "🪩",
+    icon: "🎪",
     iconBg: "bg-violet-100",
     hourlyRate: 17,
   },
   {
-    id: "foh-support",
-    title: "FOH Support",
-    description: "Flexible front-of-house support for fast-paced venues.",
-    category: "foh",
-    icon: "🔔",
+    id: "server",
+    title: "Server",
+    description: "Front-of-house support for restaurants and banquet service.",
+    category: "hospitality",
+    icon: "🍽️",
     iconBg: "bg-emerald-100",
     hourlyRate: 16,
   },
   {
-    id: "dishwasher",
-    title: "Dishwasher",
-    description: "Cleaning and sanitation for high-volume kitchens.",
-    category: "boh",
-    icon: "🧽",
-    iconBg: "bg-emerald-100",
-    hourlyRate: 15,
+    id: "prep-cook",
+    title: "Prep Cook",
+    description: "Prep support to keep production lines moving.",
+    category: "kitchen",
+    icon: "🥗",
+    iconBg: "bg-lime-100",
+    hourlyRate: 18,
   },
 ];
 
@@ -178,7 +178,7 @@ function RoleCard({
           href={`/employer/signup?role=${role.id}&staff=${staff}&hours=${hours}`}
           className="mt-4 flex h-11 items-center justify-center rounded bg-zinc-900 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-zinc-800"
         >
-          Add to Roster →
+          Add to Shift Plan →
         </Link>
       </div>
     </div>
@@ -212,19 +212,19 @@ export function InstantBookingSection() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-[var(--brand)]">
-              MyHireditoGo — Instant Booking
+              Quick shift posting
             </p>
-            <h2 className="mt-3 max-w-xl text-3xl font-black uppercase leading-tight tracking-tight text-zinc-900 sm:text-4xl">
-              Need staff ASAP?
+            <h2 className="mt-3 max-w-xl text-3xl font-bold leading-tight tracking-tight text-zinc-900 sm:text-4xl">
+              Need coverage soon?
               <br />
-              Book your next shift.
+              Build a shift in minutes.
             </h2>
           </div>
           <Link
             href="/employer"
             className="inline-flex h-11 shrink-0 items-center justify-center rounded bg-[var(--brand)] px-6 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-[var(--brand-strong)]"
           >
-            View All 35+ Roles →
+            View All Roles →
           </Link>
         </div>
 

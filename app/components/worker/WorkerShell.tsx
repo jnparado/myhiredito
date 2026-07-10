@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/worker/jobs", label: "Browse", icon: "+" },
-  { href: "/worker", label: "Home", icon: "home" },
+  { href: "/worker/dashboard", label: "Home", icon: "home" },
   { href: "#", label: "Pay", icon: "pay" },
   { href: "#", label: "Schedule", icon: "schedule" },
   { href: "#", label: "Connect", icon: "connect" },
@@ -86,8 +86,8 @@ export function WorkerShell({ children }: { children: React.ReactNode }) {
           <nav className="flex flex-1 items-center justify-center gap-1 overflow-x-auto px-2 sm:gap-2 lg:gap-4">
             {navItems.map((item) => {
               const active =
-                item.href === "/worker"
-                  ? pathname === "/worker"
+                item.href === "/worker/dashboard"
+                  ? pathname === "/worker/dashboard"
                   : pathname?.startsWith(item.href) && item.href !== "#";
               return (
                 <Link

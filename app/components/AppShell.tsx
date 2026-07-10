@@ -17,13 +17,13 @@ function shouldHideAllChrome(pathname: string | null): boolean {
   if (!pathname) return false;
   if (HIDE_CHROME_PATHS.has(pathname)) return true;
   if (/^\/worker\/jobs\/[^/]+$/.test(pathname)) return true;
-  if (pathname === "/worker" || pathname === "/worker/jobs") return true;
+  if (pathname === "/worker/dashboard" || pathname === "/worker/jobs") return true;
   return false;
 }
 
 function shouldHideHeader(pathname: string | null): boolean {
   if (shouldHideAllChrome(pathname)) return true;
-  if (pathname === "/") return true;
+  if (pathname === "/" || pathname === "/worker") return true;
   return false;
 }
 
@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     : "text-zinc-600 hover:text-zinc-900"
                 }`}
               >
-                Business
+                Employers
               </Link>
               <Link
                 href="/worker"
@@ -73,11 +73,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     : "text-zinc-600 hover:text-zinc-900"
                 }`}
               >
-                Professional
+                Workers
               </Link>
             </div>
 
-            <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-600 lg:flex">
+            <nav className="hidden items-center gap-5 text-[11px] font-bold uppercase tracking-wide text-zinc-600 lg:flex">
               <Link className="hover:text-zinc-900" href="/#platform">
                 Platform
               </Link>
@@ -133,13 +133,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="border-t border-zinc-100 bg-white px-4 py-4 lg:hidden">
               <div className="mb-4 flex gap-1 rounded-full border border-zinc-200 p-0.5">
                 <Link href="/employer" className="flex-1 rounded-full bg-zinc-900 py-2 text-center text-xs font-semibold text-white" onClick={() => setMenuOpen(false)}>
-                  Business
+                  Employers
                 </Link>
                 <Link href="/worker" className="flex-1 rounded-full py-2 text-center text-xs font-semibold text-zinc-600" onClick={() => setMenuOpen(false)}>
-                  Professional
+                  Workers
                 </Link>
               </div>
-              <nav className="flex flex-col gap-3 text-sm font-medium text-zinc-700">
+              <nav className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-wide text-zinc-700">
                 <Link href="/#platform" onClick={() => setMenuOpen(false)}>Platform</Link>
                 <Link href="/#how-we-help" onClick={() => setMenuOpen(false)}>How we help</Link>
                 <Link href="/employer" onClick={() => setMenuOpen(false)}>Who we serve</Link>
