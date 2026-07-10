@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useEmployerActivity } from "@/app/hooks/useEmployerActivity";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useEmployerJobs } from "@/app/hooks/useEmployerJobs";
 import { getEmployerDisplayName } from "@/app/lib/employerAuth";
@@ -9,6 +12,8 @@ import {
   getEmployerUserKeyFromAuth,
 } from "@/app/lib/employerJobs";
 import { experienceLabels } from "@/app/lib/jobs";
+
+type SortOption = "recent" | "applicants" | "active";
 
 function JobTypeLabel({ type }: { type: string }) {
   const labels: Record<string, string> = {
@@ -23,17 +28,25 @@ function FeedAction({
   icon,
   label,
   onClick,
+  href,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick?: () => void;
+  href?: string;
 }) {
+  const className =
+    "flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold text-zinc-600 transition hover:bg-zinc-50";
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {icon}
+        {label}
+      </Link>
+    );
+  }
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold text-zinc-600 transition hover:bg-zinc-50"
-    >
+    <button type="button" onClick={onClick} className={className}>
       {icon}
       {label}
     </button>
@@ -43,24 +56,44 @@ function FeedAction({
 export function EmployerJobFeed() {
   const { user } = useEmployerAuth();
   const { jobs, loading } = useEmployerJobs();
+  const { activity } = useEmployerActivity();
+  const [sort, setSort] = useState<SortOption>("recent");
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+
+  const sortedJobs = useMemo(() => {
+    const list = [...jobs];
+    if (sort === "applicants") {
+      return list.sort((a, b) => b.applicants - a.applicants);
+    }
+    if (sort === "active") {
+      return list.sort((a, b) => {
+        if (a.status === b.status) return 0;
+        return a.status === "active" ? -1 : 1;
+      });
+    }
+    return list.sort(
+      (a, b) =>
+        new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
+    );
+  }, [jobs, sort]);
 
   if (loading) {
     return (
       <div className="rounded-lg border border-zinc-300/60 bg-white p-8 text-center text-sm text-zinc-500 shadow-sm">
-        Loading your job posts...
+        Loading your feed...
       </div>
     );
   }
 
-  if (jobs.length === 0) {
+  if (jobs.length === 0 && activity.length === 0) {
     return (
       <div className="rounded-lg border border-zinc-300/60 bg-white p-10 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-2xl">
           📋
         </div>
-        <p className="text-sm font-semibold text-zinc-700">No job posts yet</p>
+        <p className="text-sm font-semibold text-zinc-700">No posts yet</p>
         <p className="mt-1 text-xs text-zinc-500">
-          Jobs you post will appear here in your hiring feed.
+          Jobs, shifts, and hiring updates will appear here.
         </p>
       </div>
     );
@@ -68,20 +101,63 @@ export function EmployerJobFeed() {
 
   const displayName = user ? getEmployerDisplayName(user) : "You";
 
+  function handleShare(slug: string) {
+    const url = `${window.location.origin}/worker/jobs/${slug}`;
+    void navigator.clipboard.writeText(url).then(() => {
+      setShareNotice("Job link copied to clipboard!");
+      setTimeout(() => setShareNotice(null), 2500);
+    });
+  }
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between px-1">
-        <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-          Sort by:
+      {shareNotice && (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+          {shareNotice}
         </p>
-        <select className="rounded border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700">
-          <option>Recent</option>
-          <option>Most applicants</option>
-          <option>Active first</option>
-        </select>
-      </div>
+      )}
 
-      {jobs.map((job) => (
+      {jobs.length > 0 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
+            Sort by:
+          </p>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortOption)}
+            className="rounded border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700"
+          >
+            <option value="recent">Recent</option>
+            <option value="applicants">Most applicants</option>
+            <option value="active">Active first</option>
+          </select>
+        </div>
+      )}
+
+      {activity.map((item) => (
+        <article
+          key={item.id}
+          className="overflow-hidden rounded-lg border border-zinc-300/60 bg-white shadow-sm"
+        >
+          <div className="px-4 py-3">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">
+              {item.type === "shift" ? "📅 Open shift" : "📢 Hiring update"}
+            </p>
+            <h3 className="mt-1 text-base font-bold text-zinc-900">{item.title}</h3>
+            <p className="mt-1 text-sm text-zinc-700">{item.body}</p>
+            {item.type === "shift" && (
+              <p className="mt-2 text-xs text-zinc-500">
+                {item.shiftDate} · {item.location} · {item.pay}
+              </p>
+            )}
+            <p className="mt-2 text-[11px] text-zinc-400">
+              {formatPostedAgo(item.postedAt)}
+            </p>
+          </div>
+        </article>
+      ))}
+
+      {sortedJobs.map((job) => (
         <article
           key={job.id}
           className="overflow-hidden rounded-lg border border-zinc-300/60 bg-white shadow-sm"
@@ -112,7 +188,7 @@ export function EmployerJobFeed() {
 
             <div className="mt-3">
               <h3 className="text-base font-bold text-zinc-900">{job.title}</h3>
-              <p className="mt-1 text-sm leading-6 text-zinc-700 line-clamp-3">
+              <p className="mt-1 line-clamp-3 text-sm leading-6 text-zinc-700">
                 {job.description}
               </p>
             </div>
@@ -127,14 +203,6 @@ export function EmployerJobFeed() {
               <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-600">
                 {experienceLabels[job.experienceLevel]}
               </span>
-              {job.skills.slice(0, 3).map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700"
-                >
-                  {skill}
-                </span>
-              ))}
             </div>
 
             <p className="mt-3 text-xs font-semibold text-zinc-500">
@@ -145,6 +213,7 @@ export function EmployerJobFeed() {
 
           <div className="flex border-t border-zinc-200">
             <FeedAction
+              href={`/employer/applicants?job=${job.id}`}
               icon={
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
@@ -159,6 +228,7 @@ export function EmployerJobFeed() {
                 </svg>
               }
               label="Share"
+              onClick={() => handleShare(job.slug)}
             />
             {job.status === "active" && user && (
               <FeedAction

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { JobCard } from "../../components/JobCard";
 import {
   experienceLabels,
@@ -9,6 +9,7 @@ import {
   type ExperienceLevel,
   type Job,
 } from "../../lib/jobs";
+import { getPublishedJobs } from "../../lib/publishedJobs";
 
 export function JobsBrowser() {
   const [search, setSearch] = useState("");
@@ -16,10 +17,26 @@ export function JobsBrowser() {
   const [experience, setExperience] = useState<ExperienceLevel | "all">("all");
   const [payType, setPayType] = useState<Job["payType"] | "all">("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [allJobs, setAllJobs] = useState<Job[]>(jobs);
+
+  useEffect(() => {
+    function refresh() {
+      const published = getPublishedJobs();
+      const slugs = new Set(published.map((j) => j.slug));
+      setAllJobs([...published, ...jobs.filter((j) => !slugs.has(j.slug))]);
+    }
+    refresh();
+    window.addEventListener("myhiredito-published-jobs", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("myhiredito-published-jobs", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return jobs.filter((job) => {
+    return allJobs.filter((job) => {
       if (category !== "All" && job.category !== category) return false;
       if (experience !== "all" && job.experienceLevel !== experience)
         return false;
@@ -33,7 +50,7 @@ export function JobsBrowser() {
         job.category.toLowerCase().includes(q)
       );
     });
-  }, [search, category, experience, payType]);
+  }, [search, category, experience, payType, allJobs]);
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8">
@@ -88,7 +105,7 @@ export function JobsBrowser() {
                   {cat}
                   {cat !== "All" && (
                     <span className="ml-1 text-xs opacity-60">
-                      ({jobs.filter((j) => j.category === cat).length})
+                      ({allJobs.filter((j) => j.category === cat).length})
                     </span>
                   )}
                 </button>

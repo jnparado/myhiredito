@@ -1,4 +1,5 @@
 import type { ExperienceLevel, JobType, PayType } from "./jobs";
+import { publishEmployerJob, syncApplicantCountToPublished, unpublishEmployerJob } from "./publishedJobs";
 import { getEmployerUserKey } from "./employerOnboarding";
 import type { EmployerAuthUser } from "./employerAuth";
 
@@ -102,12 +103,36 @@ export function createEmployerJobFromForm(
 
   const existing = getEmployerJobsLocal(userKey);
   saveEmployerJobsLocal(userKey, [job, ...existing]);
+  publishEmployerJob(job);
   return job;
 }
 
 export function closeEmployerJob(userKey: string, jobId: string): void {
+  const jobs = getEmployerJobsLocal(userKey);
+  const job = jobs.find((j) => j.id === jobId);
+  const next = jobs.map((j) =>
+    j.id === jobId ? { ...j, status: "closed" as const } : j,
+  );
+  saveEmployerJobsLocal(userKey, next);
+  if (job) unpublishEmployerJob(job.slug);
+}
+
+export function updateJobApplicantCount(
+  userKey: string,
+  jobId: string,
+  count: number,
+): void {
   const jobs = getEmployerJobsLocal(userKey).map((job) =>
-    job.id === jobId ? { ...job, status: "closed" as const } : job,
+    job.id === jobId ? { ...job, applicants: count } : job,
+  );
+  saveEmployerJobsLocal(userKey, jobs);
+  const job = jobs.find((j) => j.id === jobId);
+  if (job) syncApplicantCountToPublished(job.slug, count);
+}
+
+export function incrementJobViewCount(userKey: string, jobId: string): void {
+  const jobs = getEmployerJobsLocal(userKey).map((job) =>
+    job.id === jobId ? { ...job, views: job.views + 1 } : job,
   );
   saveEmployerJobsLocal(userKey, jobs);
 }

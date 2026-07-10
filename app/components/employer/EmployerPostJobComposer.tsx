@@ -261,9 +261,15 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
 
 type ComposerProps = {
   onOpenModal: () => void;
+  onOpenShift: () => void;
+  onOpenUpdate: () => void;
 };
 
-export function EmployerPostJobComposer({ onOpenModal }: ComposerProps) {
+export function EmployerPostJobComposer({
+  onOpenModal,
+  onOpenShift,
+  onOpenUpdate,
+}: ComposerProps) {
   const { user } = useEmployerAuth();
   const { isComplete, loading: onboardingLoading } = useEmployerOnboarding();
 
@@ -302,6 +308,7 @@ export function EmployerPostJobComposer({ onOpenModal }: ComposerProps) {
         </button>
         <button
           type="button"
+          onClick={canPost ? onOpenShift : undefined}
           disabled={!canPost}
           className="flex flex-1 items-center justify-center gap-2 border-l border-zinc-200 py-3 text-xs font-bold text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -310,6 +317,7 @@ export function EmployerPostJobComposer({ onOpenModal }: ComposerProps) {
         </button>
         <button
           type="button"
+          onClick={canPost ? onOpenUpdate : undefined}
           disabled={!canPost}
           className="flex flex-1 items-center justify-center gap-2 border-l border-zinc-200 py-3 text-xs font-bold text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
         >

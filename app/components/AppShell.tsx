@@ -24,6 +24,12 @@ function shouldHideAllChrome(pathname: string | null): boolean {
   if (pathname?.startsWith("/worker/onboarding")) return true;
   if (pathname === "/employer/dashboard") return true;
   if (pathname?.startsWith("/employer/onboarding")) return true;
+  if (pathname?.startsWith("/employer/messages")) return true;
+  if (pathname?.startsWith("/employer/applicants")) return true;
+  if (pathname?.startsWith("/employer/workers")) return true;
+  if (pathname?.startsWith("/employer/billing")) return true;
+  if (pathname?.startsWith("/employer/reports")) return true;
+  if (pathname?.startsWith("/employer/profile")) return true;
   return false;
 }
 
@@ -151,62 +157,62 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {children}
 
       {!hideFooter && (
-        <footer className="mt-auto border-t border-zinc-200 bg-white">
+        <footer className="mt-auto border-t-2 border-[#1db954] bg-[#0f1115] text-white">
           <div className="mx-auto w-full max-w-7xl px-6 py-16">
-            <MyHireditoLogo href="/" theme="light" size="md" />
-            <p className="mt-2 text-sm text-zinc-500">
+            <MyHireditoLogo href="/" theme="dark" size="md" />
+            <p className="mt-2 text-sm text-zinc-400">
               The workforce platform for staffing.
             </p>
 
             <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
               <div>
-                <div className="text-sm font-bold text-zinc-900">Products</div>
-                <div className="mt-4 space-y-2 text-sm text-zinc-600">
-                  <Link className="block hover:text-zinc-900" href="/worker/jobs">The Marketplace</Link>
-                  <Link className="block hover:text-zinc-900" href="/employer">Jobs</Link>
-                  <Link className="block hover:text-zinc-900" href="#">Pay</Link>
-                  <Link className="block hover:text-zinc-900" href="#">Compliance</Link>
+                <div className="text-sm font-bold text-white">Products</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-400">
+                  <Link className="block hover:text-white" href="/worker/jobs">The Marketplace</Link>
+                  <Link className="block hover:text-white" href="/employer">Jobs</Link>
+                  <Link className="block hover:text-white" href="#">Pay</Link>
+                  <Link className="block hover:text-white" href="#">Compliance</Link>
                 </div>
               </div>
               <div>
-                <div className="text-sm font-bold text-zinc-900">By Size</div>
-                <div className="mt-4 space-y-2 text-sm text-zinc-600">
-                  <Link className="block hover:text-zinc-900" href="/employer">SMB</Link>
-                  <Link className="block hover:text-zinc-900" href="/employer">Multi-Unit</Link>
-                  <Link className="block hover:text-zinc-900" href="/employer/signup">Enterprise</Link>
+                <div className="text-sm font-bold text-white">By Size</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-400">
+                  <Link className="block hover:text-white" href="/employer">SMB</Link>
+                  <Link className="block hover:text-white" href="/employer">Multi-Unit</Link>
+                  <Link className="block hover:text-white" href="/employer/signup">Enterprise</Link>
                 </div>
               </div>
               <div>
-                <div className="text-sm font-bold text-zinc-900">Company</div>
-                <div className="mt-4 space-y-2 text-sm text-zinc-600">
-                  <Link className="block hover:text-zinc-900" href="#">About</Link>
-                  <Link className="block hover:text-zinc-900" href="#">Careers</Link>
+                <div className="text-sm font-bold text-white">Company</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-400">
+                  <Link className="block hover:text-white" href="#">About</Link>
+                  <Link className="block hover:text-white" href="#">Careers</Link>
                 </div>
               </div>
               <div>
-                <div className="text-sm font-bold text-zinc-900">Browse by Pros</div>
-                <div className="mt-4 space-y-2 text-sm text-zinc-600">
-                  <Link className="block hover:text-zinc-900" href="/worker/jobs">View All</Link>
-                  <Link className="block hover:text-zinc-900" href="/worker/jobs">Healthcare</Link>
-                  <Link className="block hover:text-zinc-900" href="/worker/jobs">By State</Link>
+                <div className="text-sm font-bold text-white">Browse by Pros</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-400">
+                  <Link className="block hover:text-white" href="/worker/jobs">View All</Link>
+                  <Link className="block hover:text-white" href="/worker/jobs">Healthcare</Link>
+                  <Link className="block hover:text-white" href="/worker/jobs">By State</Link>
                 </div>
               </div>
               <div>
-                <div className="text-sm font-bold text-zinc-900">Resources</div>
-                <div className="mt-4 space-y-2 text-sm text-zinc-600">
-                  <Link className="block hover:text-zinc-900" href="#">Blog</Link>
-                  <Link className="block hover:text-zinc-900" href="#">Case Studies</Link>
-                  <Link className="block hover:text-zinc-900" href="#">Help Center</Link>
+                <div className="text-sm font-bold text-white">Resources</div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-400">
+                  <Link className="block hover:text-white" href="#">Blog</Link>
+                  <Link className="block hover:text-white" href="#">Case Studies</Link>
+                  <Link className="block hover:text-white" href="#">Help Center</Link>
                 </div>
               </div>
             </div>
 
-            <div className="mt-12 flex flex-col gap-4 border-t border-zinc-100 pt-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
               <div>© {new Date().getFullYear()} MyHiredito Inc. All rights reserved.</div>
               <div className="flex flex-wrap gap-4">
-                <Link className="hover:text-zinc-900" href="#">Privacy Policy</Link>
-                <Link className="hover:text-zinc-900" href="#">Terms of Use</Link>
-                <Link className="hover:text-zinc-900" href="#">Support</Link>
+                <Link className="hover:text-white" href="#">Privacy Policy</Link>
+                <Link className="hover:text-white" href="#">Terms of Use</Link>
+                <Link className="hover:text-white" href="#">Support</Link>
               </div>
             </div>
           </div>

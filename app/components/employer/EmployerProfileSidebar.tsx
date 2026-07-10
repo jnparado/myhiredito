@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEmployerApplicants } from "@/app/hooks/useEmployerApplicants";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useEmployerJobs } from "@/app/hooks/useEmployerJobs";
 import { useEmployerOnboarding } from "@/app/hooks/useEmployerOnboarding";
@@ -8,6 +9,8 @@ import {
   getEmployerCompanyName,
   getEmployerDisplayName,
 } from "@/app/lib/employerAuth";
+import { getProfileViews } from "@/app/lib/employerStats";
+import { getEmployerUserKey } from "@/app/lib/employerOnboarding";
 
 function StatRow({
   label,
@@ -45,8 +48,13 @@ function StatRow({
 
 export function EmployerProfileSidebar() {
   const { user, loading } = useEmployerAuth();
-  const { activeCount } = useEmployerJobs();
-  const { progress } = useEmployerOnboarding();
+  const { activeCount, jobs } = useEmployerJobs();
+  const { totalCount } = useEmployerApplicants();
+  const { progress, isComplete } = useEmployerOnboarding();
+  const userKey = getEmployerUserKey(user);
+  const profileViews =
+    jobs.reduce((sum, j) => sum + j.views, 0) +
+    (userKey ? getProfileViews(userKey) : 0);
 
   if (loading || !user) return null;
 
@@ -71,7 +79,7 @@ export function EmployerProfileSidebar() {
             {name.charAt(0)}
           </div>
           <Link
-            href="#"
+            href="/employer/profile"
             className="text-sm font-bold text-zinc-900 hover:text-[#1db954] hover:underline"
           >
             {name}
@@ -81,37 +89,39 @@ export function EmployerProfileSidebar() {
             <p className="mt-1 text-[11px] text-zinc-500">{location}</p>
           )}
 
-          <Link
-            href="/employer/onboarding/business-details"
-            className="mt-3 flex w-full items-center justify-center rounded-full border border-dashed border-zinc-300 py-1.5 text-xs font-bold text-zinc-600 transition hover:border-[#1db954] hover:text-[#1db954]"
-          >
-            + Add business details
-          </Link>
+          {!isComplete && (
+            <Link
+              href="/employer/onboarding/business-details"
+              className="mt-3 flex w-full items-center justify-center rounded-full border border-dashed border-zinc-300 py-1.5 text-xs font-bold text-zinc-600 transition hover:border-[#1db954] hover:text-[#1db954]"
+            >
+              + Add business details
+            </Link>
+          )}
         </div>
 
         <div className="flex border-t border-zinc-200">
-          <StatRow label="Active jobs" value={activeCount} />
-          <StatRow label="Applicants" value={0} />
-          <StatRow label="Profile views" value={0} />
+          <StatRow label="Active jobs" value={activeCount} href="/employer/dashboard" />
+          <StatRow label="Applicants" value={totalCount} href="/employer/applicants" />
+          <StatRow label="Profile views" value={profileViews} href="/employer/reports" />
         </div>
 
         <div className="border-t border-zinc-200 px-4 py-3">
           <Link
-            href="/employer/onboarding/business-details"
+            href="/employer/profile"
             className="flex items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-[#1db954]"
           >
             <span className="text-zinc-400">🏢</span>
             Company profile
           </Link>
           <Link
-            href="#"
+            href="/employer/workers"
             className="mt-2 flex items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-[#1db954]"
           >
             <span className="text-zinc-400">⭐</span>
             Saved candidates
           </Link>
           <Link
-            href="#"
+            href="/employer/applicants"
             className="mt-2 flex items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-[#1db954]"
           >
             <span className="text-zinc-400">📅</span>
@@ -125,22 +135,28 @@ export function EmployerProfileSidebar() {
           Quick links
         </p>
         <Link
-          href="#"
+          href="/employer/applicants"
           className="mt-2 block text-xs font-semibold text-zinc-700 hover:text-[#1db954]"
         >
           Review applicants
         </Link>
         <Link
-          href="#"
+          href="/employer/messages"
+          className="mt-1.5 block text-xs font-semibold text-zinc-700 hover:text-[#1db954]"
+        >
+          Messages
+        </Link>
+        <Link
+          href="/employer/billing"
           className="mt-1.5 block text-xs font-semibold text-zinc-700 hover:text-[#1db954]"
         >
           Manage billing
         </Link>
         <Link
-          href="#"
+          href="/employer/reports"
           className="mt-1.5 block text-xs font-semibold text-zinc-700 hover:text-[#1db954]"
         >
-          Help center
+          Reports & help
         </Link>
       </div>
     </aside>

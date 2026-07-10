@@ -1,7 +1,9 @@
-import { notFound } from "next/navigation";
+import { DynamicJobDetail } from "../../../components/DynamicJobDetail";
 import { JobDetailView } from "../../../components/JobDetailView";
 import { getJobDetailMeta } from "../../../lib/jobDetails";
 import { getJobBySlug, jobs } from "../../../lib/jobs";
+
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return jobs.map((job) => ({ slug: job.slug }));
@@ -28,7 +30,13 @@ export default async function JobDetailPage({
 }) {
   const { slug } = await params;
   const job = getJobBySlug(slug);
-  if (!job) notFound();
+  if (!job) {
+    return (
+      <main className="flex flex-1 flex-col">
+        <DynamicJobDetail slug={slug} />
+      </main>
+    );
+  }
 
   const meta = getJobDetailMeta(job);
 
