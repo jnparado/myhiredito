@@ -226,7 +226,7 @@ function LiveTimerHero({
             />
           </div>
           <p className="mt-1 text-[10px] text-zinc-400">
-            Keyboard & location activity monitored like Time Doctor
+            Keyboard and location activity are monitored while you work
           </p>
         </div>
 
@@ -339,10 +339,7 @@ export function WorkerShiftTracker({ compact = false }: Props) {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-[#1db954]">
-          Time Doctor style
-        </p>
-        <h1 className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">
+        <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">
           Time tracker
         </h1>
         <p className="mt-1 text-sm text-zinc-500">

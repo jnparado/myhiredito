@@ -16,10 +16,18 @@ export function WorkerAccountShell({ children }: { children: React.ReactNode }) 
     }
   }, [authenticated, loading, router]);
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f0f0f0] text-sm text-zinc-500">
         Loading your account...
+      </div>
+    );
+  }
+
+  if (!authenticated || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f0f0f0] text-sm text-zinc-500">
+        Redirecting to login...
       </div>
     );
   }

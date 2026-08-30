@@ -19,23 +19,29 @@ export function useJobApplications() {
   const [ready, setReady] = useState(false);
 
   const refresh = useCallback(() => {
-    if (!user || !userKey) {
-      setApplications([]);
-      setReady(!authLoading);
-      return;
-    }
-    const keys = getApplicationLookupKeys(user, userKey);
-    const isDemoWorker =
-      getWorkerEmail(user).toLowerCase() === WORKER_DEMO_EMAIL ||
-      getWorkerDisplayName(user).toLowerCase() === "alex rivera";
-    if (isDemoWorker) {
-      ensureDemoWorkerApplications(userKey);
-      if (userKey !== WORKER_DEMO_EMAIL) {
-        ensureDemoWorkerApplications(WORKER_DEMO_EMAIL);
+    try {
+      if (!user || !userKey) {
+        setApplications([]);
+        setReady(!authLoading);
+        return;
       }
+      const keys = getApplicationLookupKeys(user, userKey);
+      const email = getWorkerEmail(user).trim().toLowerCase();
+      const isDemoWorker =
+        email === WORKER_DEMO_EMAIL ||
+        email === "alex.rivera@email.com" ||
+        getWorkerDisplayName(user).toLowerCase() === "alex rivera";
+      if (isDemoWorker) {
+        for (const key of keys) {
+          ensureDemoWorkerApplications(key);
+        }
+      }
+      setApplications(getJobApplicationsForKeys(keys));
+    } catch {
+      setApplications([]);
+    } finally {
+      setReady(true);
     }
-    setApplications(getJobApplicationsForKeys(keys));
-    setReady(true);
   }, [authLoading, user, userKey]);
 
   useEffect(() => {

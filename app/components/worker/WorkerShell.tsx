@@ -46,7 +46,7 @@ const desktopNavItems = [
 
 const mobileNavItems = [
   { href: "/worker/dashboard", label: "Home", icon: "home" },
-  { href: "/worker/tracker", label: "Tracker", icon: "tracker" },
+  { href: "/worker/applications", label: "Applied", icon: "applications" },
   { href: "/worker/jobs", label: "Browse", icon: "browse" },
   { href: "/worker/messages", label: "Messages", icon: "messages" },
   { href: "/worker/onboarding/profile", label: "Profile", icon: "profile" },

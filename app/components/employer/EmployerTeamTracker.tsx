@@ -409,10 +409,7 @@ export function EmployerTeamTracker({ compact = false, focusWorkerId = null }: P
   if (snapshots.length === 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-[#1db954]">
-          Time Doctor style
-        </p>
-        <h1 className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">
+        <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">
           Team tracker
         </h1>
         <div className="mt-8 rounded-xl border border-zinc-200 bg-white p-10 text-center shadow-sm">
@@ -452,10 +449,7 @@ export function EmployerTeamTracker({ compact = false, focusWorkerId = null }: P
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-[#1db954]">
-          Time Doctor style
-        </p>
-        <h1 className="mt-2 text-2xl font-bold text-zinc-900 sm:text-3xl">
+        <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">
           Team tracker
         </h1>
         <p className="mt-1 text-sm text-zinc-500">

@@ -71,12 +71,45 @@ export function getAssessmentResult(
   }
 }
 
+const APPLICATION_STATUSES: JobApplicationStatus[] = [
+  "submitted",
+  "under-review",
+  "interview",
+  "hired",
+  "rejected",
+];
+
+function isJobApplication(value: unknown): value is JobApplication {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Partial<JobApplication>;
+  return typeof item.jobSlug === "string" && item.jobSlug.length > 0;
+}
+
+function normalizeApplication(item: JobApplication): JobApplication {
+  const status = APPLICATION_STATUSES.includes(item.status)
+    ? item.status
+    : "submitted";
+  return {
+    jobSlug: item.jobSlug,
+    jobTitle: item.jobTitle || "Untitled role",
+    company: item.company || "Employer",
+    category: item.category || "",
+    location: item.location || "",
+    pay: item.pay || "",
+    appliedAt: item.appliedAt || new Date().toISOString(),
+    assessment: item.assessment,
+    status,
+  };
+}
+
 export function getJobApplications(userKey: string): JobApplication[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined" || !userKey) return [];
   const raw = localStorage.getItem(applicationsKey(userKey));
   if (!raw) return [];
   try {
-    return JSON.parse(raw) as JobApplication[];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isJobApplication).map(normalizeApplication);
   } catch {
     return [];
   }
@@ -94,6 +127,7 @@ export function getApplicationLookupKeys(
   if (email) keys.add(email);
   if (
     email === WORKER_DEMO_EMAIL ||
+    email === "alex.rivera@email.com" ||
     getWorkerDisplayName(user).toLowerCase() === "alex rivera"
   ) {
     keys.add(WORKER_DEMO_EMAIL);
@@ -152,9 +186,22 @@ export function ensureDemoWorkerApplications(userKey: string): JobApplication[] 
   if (existing.length > 0) return existing;
   const seeded = demoSeedApplications();
   if (typeof window === "undefined") return seeded;
-  localStorage.setItem(applicationsKey(userKey), JSON.stringify(seeded));
-  window.dispatchEvent(new Event("myhiredito-job-applications"));
+  writeApplications(userKey, seeded);
   return seeded;
+}
+
+function writeApplications(userKey: string, applications: JobApplication[]): void {
+  if (typeof window === "undefined" || !userKey) return;
+  localStorage.setItem(applicationsKey(userKey), JSON.stringify(applications));
+}
+
+function upsertApplication(userKey: string, application: JobApplication): void {
+  const existing = getJobApplications(userKey);
+  const next = [
+    normalizeApplication(application),
+    ...existing.filter((item) => item.jobSlug !== application.jobSlug),
+  ];
+  writeApplications(userKey, next);
 }
 
 export function submitJobApplication(
@@ -169,14 +216,13 @@ export function submitJobApplication(
   },
 ): void {
   if (typeof window === "undefined") return;
-  const existing = getJobApplications(userKey);
-  const withoutDuplicate = existing.filter(
-    (item) => item.jobSlug !== application.jobSlug,
+  const extraEmail = options?.workerEmail?.trim().toLowerCase();
+  const keys = [userKey, extraEmail].filter(
+    (key, index, list): key is string => !!key && list.indexOf(key) === index,
   );
-  localStorage.setItem(
-    applicationsKey(userKey),
-    JSON.stringify([application, ...withoutDuplicate]),
-  );
+  for (const key of keys) {
+    upsertApplication(key, application);
+  }
   window.dispatchEvent(new Event("myhiredito-job-applications"));
 
   if (options?.job && options.workerName && options.workerEmail) {

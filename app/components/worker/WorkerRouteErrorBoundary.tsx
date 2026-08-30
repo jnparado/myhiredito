@@ -20,8 +20,7 @@ export class WorkerRouteErrorBoundary extends Component<Props, State> {
         <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
           <p className="text-lg font-bold text-zinc-900">This page couldn&apos;t load</p>
           <p className="mt-2 max-w-md text-sm text-zinc-600">
-            Something went wrong loading Your Circle. Reload the page or return to your
-            dashboard.
+            Something went wrong loading this page. Reload or return to your dashboard.
           </p>
           <div className="mt-6 flex gap-3">
             <button

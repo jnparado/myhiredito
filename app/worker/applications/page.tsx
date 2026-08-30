@@ -1,4 +1,4 @@
-import { WorkerAccountShell } from "@/app/components/worker/WorkerAccountShell";
+import { JobsPageShell } from "@/app/components/worker/JobsPageShell";
 import { WorkerApplicationsView } from "@/app/components/worker/WorkerApplicationsView";
 
 export const metadata = {
@@ -8,8 +8,8 @@ export const metadata = {
 
 export default function WorkerApplicationsPage() {
   return (
-    <WorkerAccountShell>
+    <JobsPageShell loadingLabel="Loading applications...">
       <WorkerApplicationsView />
-    </WorkerAccountShell>
+    </JobsPageShell>
   );
 }
