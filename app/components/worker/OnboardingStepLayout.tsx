@@ -10,6 +10,7 @@ import {
   authLabelClass,
 } from "@/app/components/auth/AuthShell";
 import {
+  isOnboardingComplete,
   ONBOARDING_STEPS,
   saveOnboardingStep,
   type OnboardingStepId,
@@ -30,6 +31,8 @@ export function OnboardingStepLayout({
   children,
 }: Props) {
   const step = ONBOARDING_STEPS.find((item) => item.id === stepId);
+  const { progress } = useWorkerOnboarding();
+  const complete = isOnboardingComplete(progress);
 
   return (
     <div className="mx-auto max-w-2xl px-3 py-6 sm:px-6 sm:py-8">
@@ -43,10 +46,17 @@ export function OnboardingStepLayout({
         Back to dashboard
       </Link>
 
-      <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        <span className="font-bold text-red-800">Onboarding required.</span>{" "}
-        Complete this step to verify your account and unlock job applications.
-      </div>
+      {complete ? (
+        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <span className="font-bold">Onboarding complete.</span>{" "}
+          You can update these details anytime. Posting and applying are unlocked.
+        </div>
+      ) : (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span className="font-bold text-red-800">Onboarding required.</span>{" "}
+          Complete this step to verify your account and unlock job applications.
+        </div>
+      )}
 
       <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
         <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--brand)]">

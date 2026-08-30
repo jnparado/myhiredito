@@ -7,8 +7,13 @@ import {
   OnboardingStepForm,
   OnboardingStepLayout,
 } from "../../../components/worker/OnboardingStepLayout";
+import { useWorkerAuth } from "../../../hooks/useWorkerAuth";
+import { getWorkerProfile } from "../../../lib/workerAuth";
 
 export default function ProfileOnboardingPage() {
+  const { user } = useWorkerAuth();
+  const profile = user ? getWorkerProfile(user) : null;
+
   return (
     <WorkerAccountShell>
       <OnboardingStepLayout
@@ -27,6 +32,7 @@ export default function ProfileOnboardingPage() {
                 name="firstName"
                 className={authFieldClass}
                 placeholder="Alex"
+                defaultValue={profile?.first_name ?? ""}
                 required
               />
             </div>
@@ -39,6 +45,7 @@ export default function ProfileOnboardingPage() {
                 name="lastName"
                 className={authFieldClass}
                 placeholder="Rivera"
+                defaultValue={profile?.last_name ?? ""}
                 required
               />
             </div>
@@ -54,6 +61,7 @@ export default function ProfileOnboardingPage() {
               type="tel"
               className={authFieldClass}
               placeholder="(555) 123-4567"
+              defaultValue={profile?.phone ?? ""}
               required
             />
           </div>
@@ -67,6 +75,7 @@ export default function ProfileOnboardingPage() {
               name="location"
               className={authFieldClass}
               placeholder="Austin, TX"
+              defaultValue={profile?.location ?? ""}
             />
           </div>
 
@@ -74,7 +83,13 @@ export default function ProfileOnboardingPage() {
             <label htmlFor="availability" className={authLabelClass}>
               Availability
             </label>
-            <select id="availability" name="availability" className={authFieldClass} required>
+            <select
+              id="availability"
+              name="availability"
+              className={authFieldClass}
+              defaultValue={profile?.availability ?? ""}
+              required
+            >
               <option value="">Select availability</option>
               <option value="full-time">Full-time</option>
               <option value="part-time">Part-time</option>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWorkerAuth } from "./useWorkerAuth";
 import { getWorkerUserKey } from "@/app/lib/workerOnboarding";
-import { WORKER_DEMO_EMAIL } from "@/app/lib/workerDemoAuth";
+import { isWorkerDemoAccount } from "@/app/lib/workerDemoAuth";
 import { getWorkerDisplayName, getWorkerEmail } from "@/app/lib/workerAuth";
 import {
   ensureDemoWorkerApplications,
@@ -26,11 +26,10 @@ export function useJobApplications() {
         return;
       }
       const keys = getApplicationLookupKeys(user, userKey);
-      const email = getWorkerEmail(user).trim().toLowerCase();
-      const isDemoWorker =
-        email === WORKER_DEMO_EMAIL ||
-        email === "alex.rivera@email.com" ||
-        getWorkerDisplayName(user).toLowerCase() === "alex rivera";
+      const isDemoWorker = isWorkerDemoAccount(
+        getWorkerEmail(user),
+        getWorkerDisplayName(user),
+      );
       if (isDemoWorker) {
         for (const key of keys) {
           ensureDemoWorkerApplications(key);

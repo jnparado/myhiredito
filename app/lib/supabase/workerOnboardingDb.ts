@@ -58,17 +58,19 @@ export async function fetchWorkerOnboardingFromDb(
 export async function ensureWorkerOnboardingInDb(workerId: string): Promise<void> {
   if (!isSupabaseConfigured()) return;
 
-  const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase.from("onboarding_progress").upsert(
-    {
-      worker_id: workerId,
-      completed_steps: [],
-      dismissed: false,
-    },
-    { onConflict: "worker_id" },
-  );
+  const existing = await fetchWorkerOnboardingFromDb(workerId);
+  if (existing) return;
 
-  if (error) throw error;
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.from("onboarding_progress").insert({
+    worker_id: workerId,
+    completed_steps: [],
+    dismissed: false,
+  });
+
+  if (error && !error.message.toLowerCase().includes("duplicate")) {
+    throw error;
+  }
 }
 
 export async function saveWorkerOnboardingToDb(

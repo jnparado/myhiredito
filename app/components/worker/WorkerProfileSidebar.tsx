@@ -6,7 +6,7 @@ import { useMessages } from "@/app/hooks/useMessages";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
 import { getEmployerViewCount } from "@/app/lib/workerFeed";
-import { getWorkerDisplayName } from "@/app/lib/workerAuth";
+import { getWorkerDisplayName, getWorkerProfile } from "@/app/lib/workerAuth";
 import {
   getIncompleteOnboardingSteps,
   getOnboardingCompletionCount,
@@ -56,6 +56,7 @@ export function WorkerProfileSidebar() {
   if (loading || !user) return null;
 
   const name = getWorkerDisplayName(user);
+  const profile = getWorkerProfile(user);
   const onboardingComplete = isOnboardingComplete(progress);
   const { completed, total } = getOnboardingCompletionCount(progress);
   const nextStep = getIncompleteOnboardingSteps(progress)[0];
@@ -76,11 +77,14 @@ export function WorkerProfileSidebar() {
             {name}
           </Link>
           <p className="mt-0.5 text-xs leading-5 text-zinc-600">
-            {onboardingComplete
-              ? "Verified worker · Open to shifts"
-              : "Worker profile · Setup in progress"}
+            {profile?.headline ||
+              (onboardingComplete
+                ? "Verified worker · Open to shifts"
+                : "Worker profile · Setup in progress")}
           </p>
-          <p className="mt-1 text-[11px] text-zinc-500">Austin, TX area</p>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            {profile?.location || "Austin, TX area"}
+          </p>
 
           {!onboardingComplete && nextStep && (
             <Link

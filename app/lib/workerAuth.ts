@@ -5,6 +5,9 @@ import type { AvailabilityType, ProfileRow } from "./supabase/types";
 import {
   clearDemoWorkerSession,
   getDemoWorkerSession,
+  isWorkerDemoAccount,
+  WORKER_DEMO_BIO,
+  WORKER_DEMO_USER,
   type WorkerDemoUser,
 } from "./workerDemoAuth";
 
@@ -50,7 +53,7 @@ function demoUserToProfile(user: WorkerDemoUser): ProfileRow {
     display_name: user.displayName,
     phone: user.phone,
     headline: user.headline,
-    bio: null,
+    bio: WORKER_DEMO_BIO,
     location: user.location,
     skills: user.skills,
     seeking: ["CNA shifts", "Home health"],
@@ -122,16 +125,56 @@ export async function signOutWorker(): Promise<void> {
   notifyWorkerAuthChange();
 }
 
+function isPlaceholderWorkerName(name: string): boolean {
+  const normalized = name.trim().toLowerCase();
+  return !normalized || normalized === "worker" || normalized === "demo worker";
+}
+
 export function getWorkerDisplayName(user: WorkerAuthUser): string {
-  return user.source === "demo" ? user.user.displayName : user.displayName;
+  if (user.source === "demo") return user.user.displayName;
+  if (isWorkerDemoAccount(user.email, user.displayName)) {
+    if (!isPlaceholderWorkerName(user.displayName)) return user.displayName;
+    return WORKER_DEMO_USER.displayName;
+  }
+  return user.displayName;
 }
 
 export function getWorkerEmail(user: WorkerAuthUser): string {
   return user.source === "demo" ? user.user.email : user.email;
 }
 
+function mergeDemoWorkerProfile(
+  user: Extract<WorkerAuthUser, { source: "supabase" }>,
+): ProfileRow {
+  const profile = user.profile;
+  const now = new Date().toISOString();
+  return {
+    id: user.id,
+    role: "worker",
+    email: user.email || WORKER_DEMO_USER.email,
+    first_name: profile?.first_name || WORKER_DEMO_USER.firstName,
+    last_name: profile?.last_name || WORKER_DEMO_USER.lastName,
+    display_name: getWorkerDisplayName(user),
+    phone: profile?.phone || WORKER_DEMO_USER.phone,
+    headline: profile?.headline || WORKER_DEMO_USER.headline,
+    bio: profile?.bio || WORKER_DEMO_BIO,
+    location: profile?.location || WORKER_DEMO_USER.location,
+    skills: profile?.skills?.length ? profile.skills : WORKER_DEMO_USER.skills,
+    seeking: profile?.seeking?.length ? profile.seeking : ["CNA shifts", "Home health"],
+    availability: profile?.availability || WORKER_DEMO_USER.availability,
+    avatar_url: profile?.avatar_url ?? null,
+    is_verified: true,
+    last_active_at: profile?.last_active_at ?? now,
+    created_at: profile?.created_at ?? now,
+    updated_at: profile?.updated_at ?? now,
+  };
+}
+
 export function getWorkerProfile(user: WorkerAuthUser): ProfileRow | null {
   if (user.source === "demo") return demoUserToProfile(user.user);
+  if (isWorkerDemoAccount(user.email, user.displayName)) {
+    return mergeDemoWorkerProfile(user);
+  }
   return user.profile;
 }
 

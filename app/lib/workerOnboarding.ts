@@ -4,6 +4,7 @@ import {
   isWorkerDemoAccount,
   WORKER_DEMO_ONBOARDING,
 } from "./workerDemoAuth";
+import { hydrateDemoWorkerClientState } from "./workerDemoSeed";
 import type { StripeBankDetails } from "./stripe/bank";
 import {
   fetchOnboardingProgress,
@@ -140,17 +141,42 @@ function isDemoWorkerUser(user: WorkerAuthUser): boolean {
   return isWorkerDemoAccount(getWorkerEmail(user), getWorkerDisplayName(user));
 }
 
+const persistedDemoOnboarding = new Set<string>();
+
+async function persistDemoOnboardingToDb(userKey: string): Promise<void> {
+  if (persistedDemoOnboarding.has(userKey)) return;
+  persistedDemoOnboarding.add(userKey);
+  try {
+    const { saveWorkerOnboardingToDb } = await import(
+      "./supabase/workerOnboardingDb"
+    );
+    await saveWorkerOnboardingToDb(userKey, {
+      completed_steps: [...WORKER_DEMO_ONBOARDING.completedSteps],
+      dismissed: WORKER_DEMO_ONBOARDING.dismissed,
+    });
+  } catch {
+    persistedDemoOnboarding.delete(userKey);
+  }
+}
+
 export async function getOnboardingProgress(
   user: WorkerAuthUser,
   userKey: string,
 ): Promise<OnboardingProgress> {
-  const local = getOnboardingProgressLocal(userKey);
   if (isDemoWorkerUser(user)) {
-    if (isOnboardingComplete(local)) return local;
-    const complete = completeDemoWorkerProgress();
-    saveOnboardingProgressLocal(userKey, complete);
-    return complete;
+    hydrateDemoWorkerClientState(userKey);
+    const local = getOnboardingProgressLocal(userKey);
+    const progress = isOnboardingComplete(local)
+      ? local
+      : completeDemoWorkerProgress();
+    if (!isOnboardingComplete(local)) {
+      saveOnboardingProgressLocal(userKey, progress);
+    }
+    void persistDemoOnboardingToDb(userKey);
+    return progress;
   }
+
+  const local = getOnboardingProgressLocal(userKey);
 
   try {
     const row = await fetchOnboardingProgress(userKey);
@@ -311,7 +337,9 @@ export function getOnboardingCompletionCount(progress: OnboardingProgress): {
   total: number;
 } {
   return {
-    completed: progress.completedSteps.length,
+    completed: ONBOARDING_STEPS.filter((step) =>
+      progress.completedSteps.includes(step.id),
+    ).length,
     total: ONBOARDING_STEPS.length,
   };
 }

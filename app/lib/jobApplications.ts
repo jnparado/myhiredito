@@ -2,7 +2,7 @@ import type { AssessmentResult } from "./jobAssessments";
 import type { Job } from "./jobs";
 import { jobs } from "./jobs";
 import { syncApplicationToEmployerPipeline } from "./applicationBridge";
-import { WORKER_DEMO_EMAIL } from "./workerDemoAuth";
+import { isWorkerDemoAccount, WORKER_DEMO_EMAIL } from "./workerDemoAuth";
 import type { WorkerAuthUser } from "./workerAuth";
 import { getWorkerDisplayName, getWorkerEmail } from "./workerAuth";
 
@@ -125,11 +125,7 @@ export function getApplicationLookupKeys(
 
   const email = getWorkerEmail(user).trim().toLowerCase();
   if (email) keys.add(email);
-  if (
-    email === WORKER_DEMO_EMAIL ||
-    email === "alex.rivera@email.com" ||
-    getWorkerDisplayName(user).toLowerCase() === "alex rivera"
-  ) {
+  if (isWorkerDemoAccount(email, getWorkerDisplayName(user))) {
     keys.add(WORKER_DEMO_EMAIL);
   }
   return [...keys];

@@ -7,8 +7,20 @@ import {
   OnboardingStepForm,
   OnboardingStepLayout,
 } from "../../../components/worker/OnboardingStepLayout";
+import { useWorkerAuth } from "../../../hooks/useWorkerAuth";
+import { getWorkerDisplayName, getWorkerEmail } from "../../../lib/workerAuth";
+import {
+  isWorkerDemoAccount,
+  WORKER_DEMO_CERTIFICATES,
+} from "../../../lib/workerDemoAuth";
 
 export default function SkillsCertificatesOnboardingPage() {
+  const { user } = useWorkerAuth();
+  const demo =
+    !!user &&
+    isWorkerDemoAccount(getWorkerEmail(user), getWorkerDisplayName(user));
+  const defaults = demo ? WORKER_DEMO_CERTIFICATES : null;
+
   return (
     <WorkerAccountShell>
       <OnboardingStepLayout
@@ -28,6 +40,7 @@ export default function SkillsCertificatesOnboardingPage() {
               min={0}
               className={authFieldClass}
               placeholder="3"
+              defaultValue={defaults?.yearsExperience ?? ""}
               required
             />
           </div>
@@ -41,6 +54,7 @@ export default function SkillsCertificatesOnboardingPage() {
               name="skills"
               className={authFieldClass}
               placeholder="CNA, Patient care, BLS certified"
+              defaultValue={defaults?.skills ?? ""}
               required
             />
           </div>
@@ -55,6 +69,7 @@ export default function SkillsCertificatesOnboardingPage() {
               rows={4}
               className={authFieldClass}
               placeholder="Summarize recent roles, employers, and responsibilities."
+              defaultValue={defaults?.workHistory ?? ""}
               required
             />
           </div>
@@ -75,6 +90,7 @@ export default function SkillsCertificatesOnboardingPage() {
                   name="certificateName"
                   className={authFieldClass}
                   placeholder="CNA, RN, BLS, Forklift Operator"
+                  defaultValue={defaults?.certificateName ?? ""}
                   required
                 />
               </div>
@@ -88,6 +104,7 @@ export default function SkillsCertificatesOnboardingPage() {
                   name="issuingBody"
                   className={authFieldClass}
                   placeholder="State Board of Nursing, American Heart Association"
+                  defaultValue={defaults?.issuingBody ?? ""}
                   required
                 />
               </div>
@@ -102,6 +119,7 @@ export default function SkillsCertificatesOnboardingPage() {
                     name="issueDate"
                     type="date"
                     className={authFieldClass}
+                    defaultValue={defaults?.issueDate ?? ""}
                     required
                   />
                 </div>
@@ -114,6 +132,7 @@ export default function SkillsCertificatesOnboardingPage() {
                     name="expiryDate"
                     type="date"
                     className={authFieldClass}
+                    defaultValue={defaults?.expiryDate ?? ""}
                   />
                 </div>
               </div>
@@ -127,6 +146,7 @@ export default function SkillsCertificatesOnboardingPage() {
                   name="licenseNumber"
                   className={authFieldClass}
                   placeholder="Enter license or certificate ID"
+                  defaultValue={defaults?.licenseNumber ?? ""}
                   required
                 />
               </div>
@@ -141,8 +161,13 @@ export default function SkillsCertificatesOnboardingPage() {
                   type="file"
                   accept="image/*,.pdf"
                   className="block w-full text-sm text-zinc-600 file:mr-4 file:rounded file:border-0 file:bg-[var(--brand-light)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--brand-dark)] hover:file:bg-[var(--brand)]/20"
-                  required
+                  required={!defaults}
                 />
+                {defaults && (
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    Demo account already has {defaults.certificateName} on file.
+                  </p>
+                )}
               </div>
             </div>
           </div>

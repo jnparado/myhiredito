@@ -2,6 +2,10 @@ import type { AvailabilityType } from "./supabase/types";
 
 export const WORKER_DEMO_EMAIL = "worker@demo.com";
 export const WORKER_DEMO_PASSWORD = "demo123";
+export const WORKER_DEMO_EMAIL_ALIASES = [
+  WORKER_DEMO_EMAIL,
+  "alex.rivera@email.com",
+] as const;
 
 export type WorkerDemoUser = {
   email: string;
@@ -27,6 +31,26 @@ export const WORKER_DEMO_USER: WorkerDemoUser = {
   skills: ["CNA", "Patient Care", "CPR", "Vital Signs"],
 };
 
+export const WORKER_DEMO_BIO =
+  "CNA with 3 years in assisted living and home health. CPR/BLS current. Available for Austin-area per-diem shifts.";
+
+export const WORKER_DEMO_CERTIFICATES = {
+  yearsExperience: "3",
+  skills: "CNA, Patient Care, CPR, Vital Signs",
+  workHistory:
+    "CNA at Sunrise Senior Care (2023–present). Previously home health aide in Austin providing daily living support and medication reminders.",
+  certificateName: "Certified Nursing Assistant",
+  issuingBody: "Texas Health and Human Services",
+  issueDate: "2023-03-15",
+  expiryDate: "2027-03-15",
+  licenseNumber: "TX-CNA-482910",
+};
+
+export const WORKER_DEMO_PAYOUT = {
+  provider: "paypal" as const,
+  handle: "alex.rivera@email.com",
+};
+
 const SESSION_KEY = "myhiredito_worker_demo_session";
 const ONBOARDING_PREFIX = "myhiredito_worker_onboarding_";
 
@@ -37,7 +61,11 @@ export const WORKER_DEMO_ONBOARDING = {
 
 export function isWorkerDemoAccount(email: string, displayName?: string): boolean {
   const normalized = email.trim().toLowerCase();
-  if (normalized === WORKER_DEMO_EMAIL || normalized === "alex.rivera@email.com") {
+  if (
+    WORKER_DEMO_EMAIL_ALIASES.includes(
+      normalized as (typeof WORKER_DEMO_EMAIL_ALIASES)[number],
+    )
+  ) {
     return true;
   }
   return displayName?.trim().toLowerCase() === "alex rivera";
