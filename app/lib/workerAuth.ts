@@ -1,16 +1,24 @@
 import { createSupabaseBrowserClient } from "./supabase/client";
 import { isSupabaseConfigured } from "./supabase/env";
 import { fetchProfile as fetchWorkerProfile } from "./supabase/workerRepository";
-import type { ProfileRow } from "./supabase/types";
+import type { AvailabilityType, ProfileRow } from "./supabase/types";
+import {
+  clearDemoWorkerSession,
+  getDemoWorkerSession,
+  type WorkerDemoUser,
+} from "./workerDemoAuth";
 
-export type WorkerAuthUser = {
-  id: string;
-  email: string;
-  displayName: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  profile: ProfileRow | null;
-};
+export type WorkerAuthUser =
+  | {
+      source: "supabase";
+      id: string;
+      email: string;
+      displayName: string;
+      firstName?: string | null;
+      lastName?: string | null;
+      profile: ProfileRow | null;
+    }
+  | { source: "demo"; user: WorkerDemoUser };
 
 function displayNameFromEmail(email: string): string {
   const local = email.split("@")[0] ?? "Worker";
@@ -31,8 +39,36 @@ function profileDisplayName(profile: ProfileRow | null, email: string): string {
   );
 }
 
+function demoUserToProfile(user: WorkerDemoUser): ProfileRow {
+  const now = new Date().toISOString();
+  return {
+    id: "demo-worker",
+    role: "worker",
+    email: user.email,
+    first_name: user.firstName,
+    last_name: user.lastName,
+    display_name: user.displayName,
+    phone: user.phone,
+    headline: user.headline,
+    bio: null,
+    location: user.location,
+    skills: user.skills,
+    seeking: ["CNA shifts", "Home health"],
+    availability: user.availability as AvailabilityType,
+    avatar_url: null,
+    is_verified: true,
+    last_active_at: now,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
 export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
-  if (!isSupabaseConfigured()) return null;
+  if (!isSupabaseConfigured()) {
+    const demo = getDemoWorkerSession();
+    if (demo) return { source: "demo", user: demo };
+    return null;
+  }
 
   try {
     const supabase = createSupabaseBrowserClient();
@@ -41,33 +77,40 @@ export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
 
     const sessionUser = data.session?.user;
     const email = sessionUser?.email;
-    if (!sessionUser?.id || !email) return null;
+    if (sessionUser?.id && email) {
+      let profile: ProfileRow | null = null;
+      try {
+        profile = await fetchWorkerProfile(sessionUser.id);
+      } catch {
+        // Profile table may be unavailable; still allow session auth.
+      }
 
-    let profile: ProfileRow | null = null;
-    try {
-      profile = await fetchWorkerProfile(sessionUser.id);
-    } catch {
-      // Profile table may be unavailable; still allow session auth.
+      const metadataRole = sessionUser.user_metadata?.role as string | undefined;
+      if (profile && profile.role !== "worker") return null;
+      if (!profile && metadataRole && metadataRole !== "worker") return null;
+
+      return {
+        source: "supabase",
+        id: sessionUser.id,
+        email,
+        displayName: profileDisplayName(profile, email),
+        firstName: profile?.first_name,
+        lastName: profile?.last_name,
+        profile,
+      };
     }
-
-    const metadataRole = sessionUser.user_metadata?.role as string | undefined;
-    if (profile && profile.role !== "worker") return null;
-    if (!profile && metadataRole && metadataRole !== "worker") return null;
-
-    return {
-      id: sessionUser.id,
-      email,
-      displayName: profileDisplayName(profile, email),
-      firstName: profile?.first_name,
-      lastName: profile?.last_name,
-      profile,
-    };
   } catch {
-    return null;
+    // Fall through to demo session below.
   }
+
+  const demo = getDemoWorkerSession();
+  if (demo) return { source: "demo", user: demo };
+
+  return null;
 }
 
 export async function signOutWorker(): Promise<void> {
+  clearDemoWorkerSession();
   if (!isSupabaseConfigured()) return;
   try {
     const supabase = createSupabaseBrowserClient();
@@ -78,11 +121,17 @@ export async function signOutWorker(): Promise<void> {
 }
 
 export function getWorkerDisplayName(user: WorkerAuthUser): string {
-  return user.displayName;
+  return user.source === "demo" ? user.user.displayName : user.displayName;
+}
+
+export function getWorkerProfile(user: WorkerAuthUser): ProfileRow | null {
+  if (user.source === "demo") return demoUserToProfile(user.user);
+  return user.profile;
 }
 
 export function getWorkerId(user: WorkerAuthUser | null): string | null {
-  return user?.id ?? null;
+  if (!user) return null;
+  return user.source === "supabase" ? user.id : null;
 }
 
 export function notifyWorkerAuthChange(): void {

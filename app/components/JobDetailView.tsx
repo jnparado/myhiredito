@@ -19,6 +19,7 @@ import {
   type JobDetailMeta,
 } from "../lib/jobDetails";
 import type { Job } from "../lib/jobs";
+import { getWorkerDisplayName, getWorkerProfile } from "@/app/lib/workerAuth";
 import { getWorkerUserKey, isOnboardingComplete } from "@/app/lib/workerOnboarding";
 
 type Props = {
@@ -42,8 +43,8 @@ export function JobDetailView({ job, meta }: Props) {
   const onboardingComplete = isOnboardingComplete(progress);
   const workerContext = user
     ? buildWorkerContext({
-        displayName: user.displayName,
-        profile: user.profile,
+        displayName: getWorkerDisplayName(user),
+        profile: getWorkerProfile(user),
         onboardingComplete,
         completedSteps: progress.completedSteps,
       })

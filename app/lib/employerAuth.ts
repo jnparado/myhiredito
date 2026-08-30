@@ -2,7 +2,7 @@ import { createSupabaseBrowserClient } from "./supabase/client";
 import { isSupabaseConfigured } from "./supabase/env";
 import { profileDisplayName, fetchProfile } from "./supabase/profiles";
 import { signOutSupabase } from "./supabase/auth";
-import type { Profile } from "./supabase/database.types";
+import type { Profile, UserRole } from "./supabase/database.types";
 import {
   clearDemoEmployerSession,
   getDemoEmployerSession,
@@ -29,31 +29,39 @@ function displayNameFromEmail(email: string): string {
 }
 
 export async function getEmployerAuthUser(): Promise<EmployerAuthUser | null> {
-  const demo = getDemoEmployerSession();
-  if (demo) return { source: "demo", user: demo };
-
-  if (!isSupabaseConfigured()) return null;
+  if (!isSupabaseConfigured()) {
+    const demo = getDemoEmployerSession();
+    if (demo) return { source: "demo", user: demo };
+    return null;
+  }
 
   try {
     const supabase = createSupabaseBrowserClient();
     const { data } = await supabase.auth.getUser();
     const user = data.user;
     const email = user?.email;
-    if (!user || !email) return null;
+    if (user && email) {
+      const profile = await fetchProfile(user.id);
+      const metadataRole = user.user_metadata?.role as UserRole | undefined;
+      if (profile && profile.role !== "employer") return null;
+      if (!profile && metadataRole && metadataRole !== "employer") return null;
 
-    const profile = await fetchProfile(user.id);
-    if (profile && profile.role !== "employer") return null;
-
-    return {
-      source: "supabase",
-      id: user.id,
-      email,
-      displayName: profileDisplayName(profile, email) || displayNameFromEmail(email),
-      profile,
-    };
+      return {
+        source: "supabase",
+        id: user.id,
+        email,
+        displayName: profileDisplayName(profile, email) || displayNameFromEmail(email),
+        profile,
+      };
+    }
   } catch {
-    return null;
+    // Fall through to demo session below.
   }
+
+  const demo = getDemoEmployerSession();
+  if (demo) return { source: "demo", user: demo };
+
+  return null;
 }
 
 export async function signOutEmployer(): Promise<void> {

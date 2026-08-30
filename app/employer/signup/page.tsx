@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { formatAuthError } from "@/app/lib/authErrors";
+import { beginSupabaseAuth } from "@/app/lib/authSession";
 import {
   AuthShell,
   authButtonClass,
@@ -37,8 +39,12 @@ export default function EmployerSignupPage() {
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
-        throw new Error("Supabase is not configured. Add keys to .env.local.");
+        throw new Error(
+          "Supabase is not configured. Use demo login or set .env.local.",
+        );
       }
+
+      beginSupabaseAuth();
 
       const data = await signUpWithRole({
         email,
@@ -60,7 +66,7 @@ export default function EmployerSignupPage() {
       router.push("/employer/dashboard");
       router.refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Signup failed.");
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -149,6 +155,17 @@ export default function EmployerSignupPage() {
         <p className="text-center text-xs leading-5 text-zinc-400">
           Complete onboarding after signup to verify your business and post jobs.
         </p>
+
+        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <p className="font-semibold text-zinc-800">Just exploring?</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Use the demo employer account on the{" "}
+            <Link href="/employer/login" className="font-bold text-[#1db954] hover:underline">
+              login page
+            </Link>{" "}
+            — no signup required.
+          </p>
+        </div>
       </form>
     </AuthShell>
   );

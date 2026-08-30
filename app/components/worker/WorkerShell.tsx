@@ -22,6 +22,7 @@ type OpenPanel = "notifications" | "more" | null;
 const desktopNavItems = [
   { href: "/worker/jobs", label: "Browse", icon: "browse" },
   { href: "/worker/dashboard", label: "Home", icon: "home" },
+  { href: "/worker/tracker", label: "Tracker", icon: "tracker" },
   { href: "/worker/connect", label: "Circle", icon: "connect" },
   { href: "/worker/dashboard#applications", label: "Applications", icon: "applications" },
   { href: "/worker/messages", label: "Messages", icon: "messages" },
@@ -30,8 +31,8 @@ const desktopNavItems = [
 
 const mobileNavItems = [
   { href: "/worker/dashboard", label: "Home", icon: "home" },
+  { href: "/worker/tracker", label: "Tracker", icon: "tracker" },
   { href: "/worker/jobs", label: "Browse", icon: "browse" },
-  { href: "/worker/connect", label: "Circle", icon: "connect" },
   { href: "/worker/messages", label: "Messages", icon: "messages" },
   { href: "/worker/onboarding/profile", label: "Profile", icon: "profile" },
 ];
@@ -75,6 +76,13 @@ function NavIcon({ type }: { type: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
         </svg>
       );
+    case "tracker":
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+        </svg>
+      );
     default:
       return (
         <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -88,6 +96,7 @@ function isNavActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
   if (href === "/worker/dashboard") return pathname === "/worker/dashboard";
   if (href.includes("#")) return false;
+  if (href === "/worker/tracker") return pathname.startsWith("/worker/tracker");
   return pathname.startsWith(href);
 }
 
@@ -274,6 +283,13 @@ export function WorkerShell({
                         {unreadMessages}
                       </span>
                     )}
+                  </Link>
+                  <Link
+                    href="/worker/tracker"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Shift tracker
                   </Link>
                   <Link
                     href="/worker/jobs"

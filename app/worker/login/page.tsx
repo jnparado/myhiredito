@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { formatAuthError } from "@/app/lib/authErrors";
+import { beginDemoAuth, beginSupabaseAuth } from "@/app/lib/authSession";
 import {
   AuthShell,
   authButtonClass,
@@ -13,6 +15,12 @@ import {
 import { signInWithRole } from "@/app/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import { notifyWorkerAuthChange } from "@/app/lib/workerAuth";
+import {
+  isWorkerDemoCredentials,
+  setDemoWorkerSession,
+  WORKER_DEMO_EMAIL,
+  WORKER_DEMO_PASSWORD,
+} from "@/app/lib/workerDemoAuth";
 
 export default function WorkerLoginPage() {
   const router = useRouter();
@@ -33,11 +41,22 @@ export default function WorkerLoginPage() {
     setError(null);
     setLoading(true);
     try {
+      if (isWorkerDemoCredentials(email, password)) {
+        await beginDemoAuth();
+        setDemoWorkerSession();
+        notifyWorkerAuthChange();
+        router.push("/worker/dashboard");
+        router.refresh();
+        return;
+      }
+
       if (!isSupabaseConfigured()) {
         throw new Error(
-          "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.",
+          "Supabase is not configured. Use demo login or set .env.local.",
         );
       }
+
+      beginSupabaseAuth();
 
       await signInWithRole({
         email,
@@ -49,7 +68,7 @@ export default function WorkerLoginPage() {
       router.push("/worker/dashboard");
       router.refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -113,6 +132,30 @@ export default function WorkerLoginPage() {
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Logging in..." : "Log In"}
         </button>
+
+        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          <p className="font-semibold text-zinc-800">Demo worker login</p>
+          <p className="mt-1">
+            Email: <span className="font-mono text-zinc-900">{WORKER_DEMO_EMAIL}</span>
+          </p>
+          <p>
+            Password: <span className="font-mono text-zinc-900">{WORKER_DEMO_PASSWORD}</span>
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            Preview the worker dashboard, jobs, messaging, and shift tracker.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail(WORKER_DEMO_EMAIL);
+              setPassword(WORKER_DEMO_PASSWORD);
+              setError(null);
+            }}
+            className="mt-3 text-xs font-bold text-[#1db954] hover:underline"
+          >
+            Fill demo credentials
+          </button>
+        </div>
       </form>
     </AuthShell>
   );

@@ -5,7 +5,7 @@ import { useAiAssistant } from "@/app/hooks/useAiAssistant";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
 import { buildWorkerContext } from "@/app/hooks/useAiJobMatches";
-import { getWorkerDisplayName } from "@/app/lib/workerAuth";
+import { getWorkerDisplayName, getWorkerProfile } from "@/app/lib/workerAuth";
 import {
   getOnboardingCompletionCount,
   getWorkerUserKey,
@@ -29,7 +29,7 @@ export function WorkerAiAssistant() {
   const workerContext = user
     ? buildWorkerContext({
         displayName: getWorkerDisplayName(user),
-        profile: user.profile,
+        profile: getWorkerProfile(user),
         onboardingComplete: isOnboardingComplete(progress),
         completedSteps: progress.completedSteps,
       })

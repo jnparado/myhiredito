@@ -8,7 +8,7 @@ import {
 } from "../../hooks/useAiJobMatches";
 import { useWorkerAuth } from "../../hooks/useWorkerAuth";
 import { useWorkerOnboarding } from "../../hooks/useWorkerOnboarding";
-import { getWorkerDisplayName } from "../../lib/workerAuth";
+import { getWorkerDisplayName, getWorkerProfile } from "@/app/lib/workerAuth";
 import {
   getWorkerUserKey,
   isOnboardingComplete,
@@ -37,7 +37,7 @@ export function JobsBrowser() {
   const workerContext = user
     ? buildWorkerContext({
         displayName: getWorkerDisplayName(user),
-        profile: user.profile,
+        profile: getWorkerProfile(user),
         onboardingComplete: isOnboardingComplete(progress),
         completedSteps: progress.completedSteps,
       })

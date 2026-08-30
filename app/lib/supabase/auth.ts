@@ -1,5 +1,6 @@
 import { createSupabaseBrowserClient } from "./client";
 import { isSupabaseConfigured } from "./env";
+import { formatAuthError } from "../authErrors";
 import { ensureProfileForUser, fetchProfile } from "./profiles";
 import type { UserRole } from "./database.types";
 import { ensureWorkerOnboardingInDb } from "./workerOnboardingDb";
@@ -37,7 +38,9 @@ export async function signUpWithRole({
     },
   });
 
-  if (result.error) throw result.error;
+  if (result.error) {
+    throw new Error(formatAuthError(result.error));
+  }
 
   if (result.data.user?.id) {
     if (result.data.session) {
@@ -75,7 +78,9 @@ export async function signInWithRole({
     password,
   });
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(formatAuthError(error));
+  }
 
   const userId = data.user?.id;
   if (!userId) throw new Error("Login failed. No user returned.");

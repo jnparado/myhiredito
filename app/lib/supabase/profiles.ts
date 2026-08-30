@@ -27,25 +27,29 @@ export async function ensureProfileForUser({
 }): Promise<Profile | null> {
   if (!isSupabaseConfigured()) return null;
 
-  const supabase = createSupabaseBrowserClient();
   const existing = await fetchProfile(userId);
   if (existing) return existing;
 
+  const supabase = createSupabaseBrowserClient();
+  const normalizedEmail = email.trim().toLowerCase();
   const { data, error } = await supabase
     .from("profiles")
     .upsert(
       {
         id: userId,
         role,
-        email: email.trim().toLowerCase(),
-        display_name: email.split("@")[0],
-      },
+        email: normalizedEmail,
+        display_name: normalizedEmail.split("@")[0],
+      } as Record<string, unknown>,
       { onConflict: "id" },
     )
     .select("*")
     .single();
 
-  if (error) return null;
+  if (error) {
+    return fetchProfile(userId);
+  }
+
   return data;
 }
 

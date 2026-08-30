@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { formatAuthError } from "@/app/lib/authErrors";
+import { beginDemoAuth, beginSupabaseAuth } from "@/app/lib/authSession";
 import {
   AuthShell,
   authButtonClass,
@@ -40,6 +42,7 @@ export default function EmployerLoginPage() {
     setLoading(true);
     try {
       if (isEmployerDemoCredentials(email, password)) {
+        await beginDemoAuth();
         setDemoEmployerSession();
         notifyEmployerAuthChange();
         router.push("/employer/dashboard");
@@ -51,12 +54,14 @@ export default function EmployerLoginPage() {
         throw new Error("Supabase is not configured. Use demo login or set .env.local.");
       }
 
+      beginSupabaseAuth();
+
       await signInWithRole({ email, password, role: "employer" });
       notifyEmployerAuthChange();
       router.push("/employer/dashboard");
       router.refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -130,8 +135,19 @@ export default function EmployerLoginPage() {
             Password: <span className="font-mono text-zinc-900">{EMPLOYER_DEMO_PASSWORD}</span>
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            Use these credentials to preview the employer account and onboarding.
+            Preview the employer dashboard, applicants, and messaging.
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail(EMPLOYER_DEMO_EMAIL);
+              setPassword(EMPLOYER_DEMO_PASSWORD);
+              setError(null);
+            }}
+            className="mt-3 text-xs font-bold text-[#1db954] hover:underline"
+          >
+            Fill demo credentials
+          </button>
         </div>
       </form>
     </AuthShell>
