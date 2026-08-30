@@ -49,14 +49,20 @@ export function WorkersLandingPage() {
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="/worker/signup"
-                  className="inline-flex h-12 items-center justify-center rounded-lg bg-[var(--brand)] px-8 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[var(--brand-strong)]"
+                  href="/worker/login"
+                  className="inline-flex h-12 items-center justify-center rounded-lg bg-zinc-900 px-8 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-zinc-800"
                 >
-                  Create Profile
+                  Login
+                </Link>
+                <Link
+                  href="/worker/signup"
+                  className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-zinc-900 px-8 text-sm font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
+                >
+                  Signup
                 </Link>
                 <Link
                   href="/worker/jobs"
-                  className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-zinc-900 px-8 text-sm font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
+                  className="inline-flex h-12 items-center justify-center rounded-lg bg-[var(--brand)] px-8 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[var(--brand-strong)]"
                 >
                   Browse Jobs
                 </Link>

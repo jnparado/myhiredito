@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MyHireditoLogo } from "@/app/components/brand/MyHireditoLogo";
-import { ProfileDropdownMenu } from "@/app/components/shared/ProfileDropdownMenu";
+import { GuestAuthButtons } from "@/app/components/shared/GuestAuthButtons";
 import { getWorkerDisplayName, getWorkerEmail, type WorkerAuthUser } from "@/app/lib/workerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
@@ -19,6 +19,11 @@ import { FloatingMessagingWidget } from "./FloatingMessagingWidget";
 import { WorkerAiAssistant } from "./WorkerAiAssistant";
 
 type OpenPanel = "notifications" | "more" | "profile" | null;
+
+const guestNavItems = [
+  { href: "/worker/jobs", label: "Browse", icon: "browse" },
+  { href: "/worker#how-it-works", label: "How It Works", icon: "home" },
+];
 
 const desktopNavItems = [
   { href: "/worker/jobs", label: "Browse", icon: "browse" },
@@ -160,11 +165,15 @@ export function WorkerShell({
     <div className="flex min-h-screen flex-col bg-zinc-100">
       <header className="sticky top-0 z-40 border-b border-[#1db954]/30 bg-[#0f1115] text-white">
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 lg:px-6">
-          <MyHireditoLogo href="/worker/dashboard" theme="dark" size="md" />
+          <MyHireditoLogo
+            href={user ? "/worker/dashboard" : "/worker"}
+            theme="dark"
+            size="md"
+          />
 
           {/* Desktop nav */}
           <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex lg:gap-4">
-            {desktopNavItems.map((item) => {
+            {(user ? desktopNavItems : guestNavItems).map((item) => {
               const active = isNavActive(pathname, item.href);
               return (
                 <Link
@@ -191,6 +200,10 @@ export function WorkerShell({
             ref={headerMenusRef}
             className="relative ml-auto flex shrink-0 items-center gap-1 sm:gap-2"
           >
+            {!user ? (
+              <GuestAuthButtons role="worker" />
+            ) : (
+              <>
             <div className="relative">
               <button
                 type="button"
@@ -331,15 +344,17 @@ export function WorkerShell({
                 manageAccountsLabel="Manage User Accounts"
               />
             )}
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 pb-[calc(9rem+env(safe-area-inset-bottom,0px))] lg:pb-14">
+      <main className={`flex-1 ${user ? "pb-[calc(9rem+env(safe-area-inset-bottom,0px))] lg:pb-14" : "pb-14"}`}>
         {children}
       </main>
 
-      {/* Mobile bottom navigation */}
+      {user && (
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_16px_rgba(0,0,0,0.08)] lg:hidden"
         aria-label="Worker navigation"
@@ -377,9 +392,14 @@ export function WorkerShell({
           })}
         </div>
       </nav>
+      )}
 
-      <FloatingMessagingWidget />
-      <WorkerAiAssistant />
+      {user && (
+        <>
+          <FloatingMessagingWidget />
+          <WorkerAiAssistant />
+        </>
+      )}
     </div>
   );
 }

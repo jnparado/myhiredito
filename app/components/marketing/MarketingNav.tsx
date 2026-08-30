@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
+import { GuestAuthButtons } from "@/app/components/shared/GuestAuthButtons";
 import { MyHireditoLogo } from "../brand/MyHireditoLogo";
 import { HowWeHelpMegaMenu } from "./HowWeHelpMegaMenu";
 import { PlatformMegaMenu } from "./PlatformMegaMenu";
@@ -51,16 +52,19 @@ export function MarketingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const pathname = usePathname();
-  const { authenticated: workerAuthenticated } = useWorkerAuth();
-  const { authenticated: employerAuthenticated } = useEmployerAuth();
-  const isWorkersContext =
-    pathname === "/worker" || (pathname?.startsWith("/worker/jobs") ?? false);
+  const { authenticated: workerAuthenticated, loading: workerLoading } =
+    useWorkerAuth();
+  const { authenticated: employerAuthenticated, loading: employerLoading } =
+    useEmployerAuth();
+  const isWorkersContext = pathname?.startsWith("/worker") ?? false;
   const isEmployersView = !isWorkersContext;
-  const logoHref = isWorkersContext
-    ? workerAuthenticated
-      ? "/worker/dashboard"
-      : "/"
-    : employerAuthenticated
+  const showWorkerAccountLinks =
+    isWorkersContext && !workerLoading && workerAuthenticated;
+  const showEmployerAccountLinks =
+    isEmployersView && !employerLoading && employerAuthenticated;
+  const logoHref = showWorkerAccountLinks
+    ? "/worker/dashboard"
+    : showEmployerAccountLinks
       ? "/employer/dashboard"
       : "/";
 
@@ -149,42 +153,30 @@ export function MarketingNav() {
         </div>
 
         <div className="ml-auto hidden items-center gap-2 lg:flex">
-          {workerAuthenticated || employerAuthenticated ? (
+          {showWorkerAccountLinks ? (
             <>
-              {workerAuthenticated && (
-                <Link
-                  href="/worker/tracker"
-                  className="rounded border border-white/30 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
-                >
-                  Tracker
-                </Link>
-              )}
               <Link
-                href={
-                  workerAuthenticated
-                    ? "/worker/dashboard"
-                    : "/employer/dashboard"
-                }
+                href="/worker/tracker"
+                className="rounded border border-white/30 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
+              >
+                Tracker
+              </Link>
+              <Link
+                href="/worker/dashboard"
                 className="rounded bg-[#1db954] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-[#1db954]/90"
               >
                 My dashboard
               </Link>
             </>
+          ) : showEmployerAccountLinks ? (
+            <Link
+              href="/employer/dashboard"
+              className="rounded bg-[#1db954] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-[#1db954]/90"
+            >
+              My dashboard
+            </Link>
           ) : (
-            <>
-              <Link
-                href={isEmployersView ? "/employer/login" : "/worker/login"}
-                className="rounded bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
-              >
-                Login
-              </Link>
-              <Link
-                href={isEmployersView ? "/employer/signup" : "/worker/signup"}
-                className="rounded border border-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
-              >
-                Signup
-              </Link>
-            </>
+            <GuestAuthButtons role={isWorkersContext ? "worker" : "employer"} />
           )}
         </div>
 
@@ -287,40 +279,26 @@ export function MarketingNav() {
 
           <div className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-wide text-white">
             <hr className="border-white/10" />
-            {workerAuthenticated || employerAuthenticated ? (
+            {showWorkerAccountLinks ? (
               <>
-                {workerAuthenticated && (
-                  <Link href="/worker/tracker" onClick={() => setMobileOpen(false)}>
-                    Tracker
-                  </Link>
-                )}
-                <Link
-                  href={
-                    workerAuthenticated
-                      ? "/worker/dashboard"
-                      : "/employer/dashboard"
-                  }
-                  onClick={() => setMobileOpen(false)}
-                >
+                <Link href="/worker/tracker" onClick={() => setMobileOpen(false)}>
+                  Tracker
+                </Link>
+                <Link href="/worker/dashboard" onClick={() => setMobileOpen(false)}>
                   My dashboard
                 </Link>
               </>
+            ) : showEmployerAccountLinks ? (
+              <Link href="/employer/dashboard" onClick={() => setMobileOpen(false)}>
+                My dashboard
+              </Link>
             ) : (
-              <>
-                <Link
-                  href={isEmployersView ? "/employer/login" : "/worker/login"}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Login
-                </Link>
-                <Link
-                  href={isEmployersView ? "/employer/signup" : "/worker/signup"}
-                  className="rounded border border-white py-2.5 text-center"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Signup
-                </Link>
-              </>
+              <div className="flex flex-col gap-3">
+                <GuestAuthButtons
+                  role={isWorkersContext ? "worker" : "employer"}
+                  onNavigate={() => setMobileOpen(false)}
+                />
+              </div>
             )}
           </div>
         </div>

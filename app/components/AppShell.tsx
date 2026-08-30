@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
+import { GuestAuthButtons, guestAuthRoleFromPath } from "./shared/GuestAuthButtons";
 import { MyHireditoLogo } from "./brand/MyHireditoLogo";
 
 const HIDE_CHROME_PATHS = new Set([
@@ -38,7 +39,7 @@ function shouldHideAllChrome(pathname: string | null): boolean {
 
 function shouldHideHeader(pathname: string | null): boolean {
   if (shouldHideAllChrome(pathname)) return true;
-  if (pathname === "/" || pathname === "/worker") return true;
+  if (pathname === "/" || pathname === "/worker" || pathname === "/employer") return true;
   return false;
 }
 
@@ -47,9 +48,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const hideHeader = shouldHideHeader(pathname);
   const hideFooter = shouldHideAllChrome(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { authenticated: workerAuthenticated } = useWorkerAuth();
-  const { authenticated: employerAuthenticated } = useEmployerAuth();
-  const isAuthenticated = workerAuthenticated || employerAuthenticated;
+  const { authenticated: workerAuthenticated, loading: workerLoading } =
+    useWorkerAuth();
+  const { authenticated: employerAuthenticated, loading: employerLoading } =
+    useEmployerAuth();
+  const showWorkerAccountLinks = !workerLoading && workerAuthenticated;
+  const showEmployerAccountLinks = !employerLoading && employerAuthenticated;
+  const guestRole = guestAuthRoleFromPath(pathname);
 
   return (
     <>
@@ -97,47 +102,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="hidden items-center gap-2 lg:flex">
-              {isAuthenticated ? (
+              {guestRole === "worker" && showWorkerAccountLinks ? (
                 <>
-                  {workerAuthenticated && (
-                    <Link
-                      href="/worker/tracker"
-                      className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
-                    >
-                      Tracker
-                    </Link>
-                  )}
                   <Link
-                    href={
-                      workerAuthenticated
-                        ? "/worker/dashboard"
-                        : "/employer/dashboard"
-                    }
+                    href="/worker/tracker"
+                    className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+                  >
+                    Tracker
+                  </Link>
+                  <Link
+                    href="/worker/dashboard"
                     className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
                   >
                     My dashboard
                   </Link>
                 </>
+              ) : guestRole === "employer" && showEmployerAccountLinks ? (
+                <Link
+                  href="/employer/dashboard"
+                  className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+                >
+                  My dashboard
+                </Link>
               ) : (
                 <>
-                  <Link
-                    href="/worker/login"
-                    className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/employer/signup"
-                    className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
-                  >
-                    Signup
-                  </Link>
-                  <Link
-                    href="/employer"
-                    className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-                  >
-                    Post a Shift
-                  </Link>
+                  <GuestAuthButtons role={guestRole} theme="light" />
+                  {guestRole === "employer" && (
+                    <Link
+                      href="/employer"
+                      className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+                    >
+                      Post a Shift
+                    </Link>
+                  )}
                 </>
               )}
             </div>
@@ -174,32 +171,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/employer" onClick={() => setMenuOpen(false)}>Who we serve</Link>
                 <Link href="/#resources" onClick={() => setMenuOpen(false)}>Resources</Link>
                 <hr className="border-zinc-100" />
-                {isAuthenticated ? (
+                {guestRole === "worker" && showWorkerAccountLinks ? (
                   <>
-                    {workerAuthenticated && (
-                      <Link href="/worker/tracker" onClick={() => setMenuOpen(false)}>
-                        Tracker
-                      </Link>
-                    )}
+                    <Link href="/worker/tracker" onClick={() => setMenuOpen(false)}>
+                      Tracker
+                    </Link>
                     <Link
-                      href={
-                        workerAuthenticated
-                          ? "/worker/dashboard"
-                          : "/employer/dashboard"
-                      }
+                      href="/worker/dashboard"
                       className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white"
                       onClick={() => setMenuOpen(false)}
                     >
                       My dashboard
                     </Link>
                   </>
+                ) : guestRole === "employer" && showEmployerAccountLinks ? (
+                  <Link
+                    href="/employer/dashboard"
+                    className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    My dashboard
+                  </Link>
                 ) : (
                   <>
-                    <Link href="/worker/login" onClick={() => setMenuOpen(false)}>Login</Link>
-                    <Link href="/employer/signup" onClick={() => setMenuOpen(false)}>Signup</Link>
-                    <Link href="/employer" className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white" onClick={() => setMenuOpen(false)}>
-                      Post a Shift
-                    </Link>
+                    <GuestAuthButtons
+                      role={guestRole}
+                      theme="light"
+                      onNavigate={() => setMenuOpen(false)}
+                    />
+                    {guestRole === "employer" && (
+                      <Link
+                        href="/employer"
+                        className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Post a Shift
+                      </Link>
+                    )}
                   </>
                 )}
               </nav>

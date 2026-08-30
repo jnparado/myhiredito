@@ -21,6 +21,7 @@ import {
 } from "@/app/lib/employerOnboarding";
 import { EmployerFloatingMessagingWidget } from "./EmployerFloatingMessagingWidget";
 import { EmployerNotificationPanel } from "./EmployerNotificationPanel";
+import { GuestAuthButtons } from "@/app/components/shared/GuestAuthButtons";
 
 type OpenPanel = "notifications" | "more" | "profile" | null;
 
@@ -142,8 +143,13 @@ export function EmployerShell({
     <div className="flex min-h-screen flex-col bg-[#f0f0f0]">
       <header className="bg-[#0f1115] text-white">
         <div className="flex items-center justify-between border-b-2 border-[#1db954] px-4 py-2.5 lg:px-6">
-          <MyHireditoLogo href="/employer/dashboard" theme="dark" size="md" />
+          <MyHireditoLogo
+            href={user ? "/employer/dashboard" : "/"}
+            theme="dark"
+            size="md"
+          />
 
+          {user && (
           <nav className="flex flex-1 items-center justify-center gap-1 overflow-x-auto px-2 sm:gap-2 lg:gap-4">
             {navItems.map((item) => {
               const active =
@@ -180,11 +186,16 @@ export function EmployerShell({
               );
             })}
           </nav>
+          )}
 
           <div
             ref={headerMenusRef}
-            className="relative flex shrink-0 items-center gap-1 sm:gap-2"
+            className="relative ml-auto flex shrink-0 items-center gap-1 sm:gap-2"
           >
+            {!user ? (
+              <GuestAuthButtons role="employer" />
+            ) : (
+              <>
             <div className="relative">
               <button
                 type="button"
@@ -299,7 +310,6 @@ export function EmployerShell({
               )}
             </div>
 
-            {user && (
               <ProfileDropdownMenu
                 displayName={displayName}
                 email={userEmail}
@@ -318,6 +328,7 @@ export function EmployerShell({
                 ]}
                 manageAccountsHref="/employer/workers"
               />
+              </>
             )}
           </div>
         </div>
@@ -325,7 +336,7 @@ export function EmployerShell({
 
       <main className="flex-1 pb-14">{children}</main>
 
-      <EmployerFloatingMessagingWidget />
+      {user && <EmployerFloatingMessagingWidget />}
     </div>
   );
 }
