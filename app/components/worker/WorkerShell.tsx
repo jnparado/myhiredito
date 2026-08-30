@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MyHireditoLogo } from "@/app/components/brand/MyHireditoLogo";
-import { getWorkerDisplayName, type WorkerAuthUser } from "@/app/lib/workerAuth";
+import { ProfileDropdownMenu } from "@/app/components/shared/ProfileDropdownMenu";
+import { getWorkerDisplayName, getWorkerEmail, type WorkerAuthUser } from "@/app/lib/workerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";
 import { useMessages } from "@/app/hooks/useMessages";
@@ -17,7 +18,7 @@ import { NotificationPanel } from "./NotificationPanel";
 import { FloatingMessagingWidget } from "./FloatingMessagingWidget";
 import { WorkerAiAssistant } from "./WorkerAiAssistant";
 
-type OpenPanel = "notifications" | "more" | null;
+type OpenPanel = "notifications" | "more" | "profile" | null;
 
 const desktopNavItems = [
   { href: "/worker/jobs", label: "Browse", icon: "browse" },
@@ -114,6 +115,7 @@ export function WorkerShell({
   const { unreadCount: unreadMessages } = useMessages();
   const user = userProp ?? sessionUser;
   const displayName = user ? getWorkerDisplayName(user) : "Worker";
+  const userEmail = user ? getWorkerEmail(user) : "";
   const onboardingIncomplete =
     !onboardingLoading && user && !isOnboardingComplete(progress);
   const incompleteSteps = getIncompleteOnboardingSteps(progress);
@@ -266,13 +268,6 @@ export function WorkerShell({
                     Applications
                   </Link>
                   <Link
-                    href="/worker/onboarding/profile"
-                    onClick={() => setOpenPanel(null)}
-                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
-                  >
-                    My profile
-                  </Link>
-                  <Link
                     href="/worker/messages"
                     onClick={() => setOpenPanel(null)}
                     className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
@@ -307,45 +302,35 @@ export function WorkerShell({
                       Finish onboarding
                     </Link>
                   )}
-                  <div className="my-1 border-t border-zinc-100" />
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="block w-full px-4 py-2.5 text-left text-sm text-zinc-700 transition hover:bg-zinc-50"
-                  >
-                    Sign out
-                  </button>
                 </div>
               )}
             </div>
 
-            <Link
-              href="/worker/dashboard"
-              className="relative hidden items-center gap-2 border-l border-white/20 pl-3 md:flex"
-              title="Go to dashboard"
-            >
-              <div className="hidden text-right sm:block">
-                <div className="flex items-center justify-end gap-1.5">
-                  <span className="max-w-[8rem] truncate text-xs font-semibold leading-tight">
-                    {displayName}
-                  </span>
-                  {onboardingIncomplete && (
-                    <span className="rounded bg-red-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
-                      Incomplete
-                    </span>
-                  )}
-                </div>
-                <div className="text-[10px] text-white/60">
-                  MyHiredito
-                </div>
-              </div>
-              <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-semibold">
-                {onboardingIncomplete && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#2b2b2b]" />
-                )}
-                {displayName.charAt(0)}
-              </div>
-            </Link>
+            {user && (
+              <ProfileDropdownMenu
+                displayName={displayName}
+                email={userEmail}
+                roleLabel="worker"
+                open={openPanel === "profile"}
+                onToggle={() => togglePanel("profile")}
+                onClose={() => setOpenPanel(null)}
+                onSignOut={handleSignOut}
+                items={[
+                  {
+                    href: "/worker/onboarding/profile",
+                    label: "My Profile",
+                    icon: "profile",
+                  },
+                  {
+                    href: "/worker/onboarding/profile",
+                    label: "Edit Profile",
+                    icon: "edit",
+                  },
+                ]}
+                manageAccountsHref="/worker/connect"
+                manageAccountsLabel="Manage User Accounts"
+              />
+            )}
           </div>
         </div>
       </header>

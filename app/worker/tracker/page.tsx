@@ -2,8 +2,8 @@ import { WorkerAccountShell } from "@/app/components/worker/WorkerAccountShell";
 import { WorkerShiftTracker } from "@/app/components/worker/WorkerShiftTracker";
 
 export const metadata = {
-  title: "Shift Tracker | MyHiredito",
-  description: "Track your shifts, clock in, and view your schedule.",
+  title: "Time Tracker | MyHiredito",
+  description: "Track your work hours with GPS-verified clock in/out, live timer, and timesheet.",
 };
 
 export default function WorkerTrackerPage() {

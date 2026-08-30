@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MyHireditoLogo } from "@/app/components/brand/MyHireditoLogo";
+import { ProfileDropdownMenu } from "@/app/components/shared/ProfileDropdownMenu";
 import { useEmployerApplicants } from "@/app/hooks/useEmployerApplicants";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useEmployerMessages } from "@/app/hooks/useEmployerMessages";
@@ -11,6 +12,7 @@ import { useEmployerOnboarding } from "@/app/hooks/useEmployerOnboarding";
 import {
   getEmployerCompanyName,
   getEmployerDisplayName,
+  getEmployerEmail,
   type EmployerAuthUser,
 } from "@/app/lib/employerAuth";
 import {
@@ -20,7 +22,7 @@ import {
 import { EmployerFloatingMessagingWidget } from "./EmployerFloatingMessagingWidget";
 import { EmployerNotificationPanel } from "./EmployerNotificationPanel";
 
-type OpenPanel = "notifications" | "more" | null;
+type OpenPanel = "notifications" | "more" | "profile" | null;
 
 const navItems = [
   { href: "/employer/dashboard?post=1", label: "Post Job", icon: "post" },
@@ -96,6 +98,7 @@ export function EmployerShell({
   const user = userProp ?? sessionUser;
   const displayName = user ? getEmployerDisplayName(user) : "Employer";
   const companyName = user ? getEmployerCompanyName(user) : "MyHiredito";
+  const userEmail = user ? getEmployerEmail(user) : "";
   const isDemo = user?.source === "demo";
   const incompleteSteps = getIncompleteOnboardingSteps(progress);
   const nextOnboardingStep = incompleteSteps[0];
@@ -253,13 +256,6 @@ export function EmployerShell({
                     Dashboard
                   </Link>
                   <Link
-                    href="/employer/profile"
-                    onClick={() => setOpenPanel(null)}
-                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
-                  >
-                    My profile
-                  </Link>
-                  <Link
                     href="/employer/applicants"
                     onClick={() => setOpenPanel(null)}
                     className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
@@ -299,38 +295,30 @@ export function EmployerShell({
                       Finish onboarding
                     </Link>
                   )}
-                  <div className="my-1 border-t border-zinc-100" />
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="block w-full px-4 py-2.5 text-left text-sm text-zinc-700 transition hover:bg-zinc-50"
-                  >
-                    Sign out
-                  </button>
                 </div>
               )}
             </div>
 
-            <Link
-              href="/employer/profile"
-              className="relative hidden items-center gap-2 border-l border-white/20 pl-3 sm:flex"
-              title="Go to profile"
-            >
-              <div className="text-right">
-                <div className="text-xs font-semibold leading-tight">
-                  {displayName}
-                </div>
-                <div className="max-w-[120px] truncate text-[10px] text-white/60">
-                  {isDemo ? companyName : "Employer account"}
-                </div>
-              </div>
-              <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-semibold">
-                {displayName.charAt(0)}
-                {onboardingIncomplete && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#0f1115]" />
-                )}
-              </div>
-            </Link>
+            {user && (
+              <ProfileDropdownMenu
+                displayName={displayName}
+                email={userEmail}
+                roleLabel="admin"
+                open={openPanel === "profile"}
+                onToggle={() => togglePanel("profile")}
+                onClose={() => setOpenPanel(null)}
+                onSignOut={handleSignOut}
+                items={[
+                  { href: "/employer/profile", label: "My Profile", icon: "profile" },
+                  {
+                    href: "/employer/onboarding/business-details",
+                    label: "Edit Profile",
+                    icon: "edit",
+                  },
+                ]}
+                manageAccountsHref="/employer/workers"
+              />
+            )}
           </div>
         </div>
       </header>

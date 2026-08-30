@@ -1,5 +1,6 @@
 import { DynamicJobDetail } from "../../../components/DynamicJobDetail";
 import { JobDetailView } from "../../../components/JobDetailView";
+import { JobsPageShell } from "../../../components/worker/JobsPageShell";
 import { getJobDetailMeta } from "../../../lib/jobDetails";
 import { getJobBySlug, jobs } from "../../../lib/jobs";
 
@@ -30,19 +31,14 @@ export default async function JobDetailPage({
 }) {
   const { slug } = await params;
   const job = getJobBySlug(slug);
-  if (!job) {
-    return (
-      <main className="flex flex-1 flex-col">
-        <DynamicJobDetail slug={slug} />
-      </main>
-    );
-  }
-
-  const meta = getJobDetailMeta(job);
 
   return (
-    <main className="flex flex-1 flex-col">
-      <JobDetailView job={job} meta={meta} />
-    </main>
+    <JobsPageShell>
+      {job ? (
+        <JobDetailView job={job} meta={getJobDetailMeta(job)} />
+      ) : (
+        <DynamicJobDetail slug={slug} />
+      )}
+    </JobsPageShell>
   );
 }

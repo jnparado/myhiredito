@@ -17,6 +17,7 @@ import {
 } from "./EmployerPostJobComposer";
 import { EmployerProfileSidebar } from "./EmployerProfileSidebar";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
+import { useEmployerOnboarding } from "@/app/hooks/useEmployerOnboarding";
 import { getEmployerUserKey } from "@/app/lib/employerOnboarding";
 import {
   createHiringUpdate,
@@ -117,14 +118,15 @@ function UpdateModal({
 export function EmployerHomeView() {
   const searchParams = useSearchParams();
   const { user } = useEmployerAuth();
+  const { isComplete } = useEmployerOnboarding();
   const userKey = getEmployerUserKey(user);
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get("post") === "1") setJobModalOpen(true);
-  }, [searchParams]);
+    if (searchParams.get("post") === "1" && isComplete) setJobModalOpen(true);
+  }, [searchParams, isComplete]);
 
   return (
     <div className="mx-auto max-w-[1128px] px-3 py-4 sm:px-4 sm:py-6">

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
+import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { MyHireditoLogo } from "./brand/MyHireditoLogo";
 
 const HIDE_CHROME_PATHS = new Set([
@@ -30,6 +32,7 @@ function shouldHideAllChrome(pathname: string | null): boolean {
   if (pathname?.startsWith("/employer/billing")) return true;
   if (pathname?.startsWith("/employer/reports")) return true;
   if (pathname?.startsWith("/employer/profile")) return true;
+  if (pathname === "/worker/tracker") return true;
   return false;
 }
 
@@ -44,6 +47,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const hideHeader = shouldHideHeader(pathname);
   const hideFooter = shouldHideAllChrome(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { authenticated: workerAuthenticated } = useWorkerAuth();
+  const { authenticated: employerAuthenticated } = useEmployerAuth();
+  const isAuthenticated = workerAuthenticated || employerAuthenticated;
 
   return (
     <>
@@ -91,24 +97,49 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="hidden items-center gap-2 lg:flex">
-              <Link
-                href="/worker/login"
-                className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
-              >
-                Login
-              </Link>
-              <Link
-                href="/employer/signup"
-                className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
-              >
-                Signup
-              </Link>
-              <Link
-                href="/employer"
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-              >
-                Post a Shift
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  {workerAuthenticated && (
+                    <Link
+                      href="/worker/tracker"
+                      className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+                    >
+                      Tracker
+                    </Link>
+                  )}
+                  <Link
+                    href={
+                      workerAuthenticated
+                        ? "/worker/dashboard"
+                        : "/employer/dashboard"
+                    }
+                    className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+                  >
+                    My dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/worker/login"
+                    className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/employer/signup"
+                    className="px-3 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+                  >
+                    Signup
+                  </Link>
+                  <Link
+                    href="/employer"
+                    className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+                  >
+                    Post a Shift
+                  </Link>
+                </>
+              )}
             </div>
 
             <button
@@ -143,11 +174,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/employer" onClick={() => setMenuOpen(false)}>Who we serve</Link>
                 <Link href="/#resources" onClick={() => setMenuOpen(false)}>Resources</Link>
                 <hr className="border-zinc-100" />
-                <Link href="/worker/login" onClick={() => setMenuOpen(false)}>Login</Link>
-                <Link href="/employer/signup" onClick={() => setMenuOpen(false)}>Signup</Link>
-                <Link href="/employer" className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white" onClick={() => setMenuOpen(false)}>
-                  Post a Shift
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    {workerAuthenticated && (
+                      <Link href="/worker/tracker" onClick={() => setMenuOpen(false)}>
+                        Tracker
+                      </Link>
+                    )}
+                    <Link
+                      href={
+                        workerAuthenticated
+                          ? "/worker/dashboard"
+                          : "/employer/dashboard"
+                      }
+                      className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      My dashboard
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/worker/login" onClick={() => setMenuOpen(false)}>Login</Link>
+                    <Link href="/employer/signup" onClick={() => setMenuOpen(false)}>Signup</Link>
+                    <Link href="/employer" className="rounded-lg bg-zinc-900 py-2.5 text-center font-semibold text-white" onClick={() => setMenuOpen(false)}>
+                      Post a Shift
+                    </Link>
+                  </>
+                )}
               </nav>
             </div>
           )}

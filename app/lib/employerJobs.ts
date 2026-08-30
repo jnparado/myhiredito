@@ -103,7 +103,7 @@ export function createEmployerJobFromForm(
 
   const existing = getEmployerJobsLocal(userKey);
   saveEmployerJobsLocal(userKey, [job, ...existing]);
-  publishEmployerJob(job);
+  publishEmployerJob(job, userKey);
   return job;
 }
 

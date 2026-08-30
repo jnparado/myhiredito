@@ -21,6 +21,9 @@ export type Job = {
   description: string;
   responsibilities: string[];
   requirements: string[];
+  /** Set when job was posted by an employer (published to marketplace). */
+  employerUserKey?: string;
+  employerJobId?: string;
 };
 
 export const jobCategories = [

@@ -1,4 +1,6 @@
 import type { AssessmentResult } from "./jobAssessments";
+import type { Job } from "./jobs";
+import { syncApplicationToEmployerPipeline } from "./applicationBridge";
 
 export type JobApplication = {
   jobSlug: string;
@@ -60,6 +62,13 @@ export function getJobApplications(userKey: string): JobApplication[] {
 export function submitJobApplication(
   userKey: string,
   application: JobApplication,
+  options?: {
+    job?: Job;
+    workerName?: string;
+    workerEmail?: string;
+    workerSkills?: string;
+    workerLocation?: string;
+  },
 ): void {
   if (typeof window === "undefined") return;
   const existing = getJobApplications(userKey);
@@ -71,6 +80,18 @@ export function submitJobApplication(
     JSON.stringify([application, ...withoutDuplicate]),
   );
   window.dispatchEvent(new Event("myhiredito-job-applications"));
+
+  if (options?.job && options.workerName && options.workerEmail) {
+    syncApplicationToEmployerPipeline({
+      workerUserKey: userKey,
+      workerName: options.workerName,
+      workerEmail: options.workerEmail,
+      workerSkills: options.workerSkills,
+      workerLocation: options.workerLocation,
+      application,
+      job: options.job,
+    });
+  }
 }
 
 export function hasAppliedToJob(userKey: string, jobSlug: string): boolean {

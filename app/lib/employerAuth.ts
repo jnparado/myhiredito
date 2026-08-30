@@ -78,6 +78,10 @@ export function getEmployerCompanyName(user: EmployerAuthUser): string {
   return user.profile?.company_name || "Your business";
 }
 
+export function getEmployerEmail(user: EmployerAuthUser): string {
+  return user.source === "demo" ? user.user.email : user.email;
+}
+
 export function getEmployerUserId(user: EmployerAuthUser | null): string | null {
   if (!user) return null;
   return user.source === "supabase" ? user.id : null;

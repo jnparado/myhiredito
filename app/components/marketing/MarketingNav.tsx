@@ -149,20 +149,27 @@ export function MarketingNav() {
         </div>
 
         <div className="ml-auto hidden items-center gap-2 lg:flex">
-          {isWorkersContext && workerAuthenticated ? (
-            <Link
-              href="/worker/dashboard"
-              className="rounded bg-[#1db954] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-[#1db954]/90"
-            >
-              My dashboard
-            </Link>
-          ) : isEmployersView && employerAuthenticated ? (
-            <Link
-              href="/employer/dashboard"
-              className="rounded bg-[#1db954] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-[#1db954]/90"
-            >
-              My dashboard
-            </Link>
+          {workerAuthenticated || employerAuthenticated ? (
+            <>
+              {workerAuthenticated && (
+                <Link
+                  href="/worker/tracker"
+                  className="rounded border border-white/30 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-white/10"
+                >
+                  Tracker
+                </Link>
+              )}
+              <Link
+                href={
+                  workerAuthenticated
+                    ? "/worker/dashboard"
+                    : "/employer/dashboard"
+                }
+                className="rounded bg-[#1db954] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:bg-[#1db954]/90"
+              >
+                My dashboard
+              </Link>
+            </>
           ) : (
             <>
               <Link
@@ -280,14 +287,24 @@ export function MarketingNav() {
 
           <div className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-wide text-white">
             <hr className="border-white/10" />
-            {isWorkersContext && workerAuthenticated ? (
-              <Link href="/worker/dashboard" onClick={() => setMobileOpen(false)}>
-                My dashboard
-              </Link>
-            ) : isEmployersView && employerAuthenticated ? (
-              <Link href="/employer/dashboard" onClick={() => setMobileOpen(false)}>
-                My dashboard
-              </Link>
+            {workerAuthenticated || employerAuthenticated ? (
+              <>
+                {workerAuthenticated && (
+                  <Link href="/worker/tracker" onClick={() => setMobileOpen(false)}>
+                    Tracker
+                  </Link>
+                )}
+                <Link
+                  href={
+                    workerAuthenticated
+                      ? "/worker/dashboard"
+                      : "/employer/dashboard"
+                  }
+                  onClick={() => setMobileOpen(false)}
+                >
+                  My dashboard
+                </Link>
+              </>
             ) : (
               <>
                 <Link

@@ -197,9 +197,6 @@ export async function saveOnboardingStep(
       break;
     case "skills-certificates": {
       const input = formDataToSkillsCertificatesInput(formData);
-      if (!input.certificate.certificateFile) {
-        throw new Error("Please upload your certificate file.");
-      }
       await saveSkillsCertificatesOnboarding(userKey, input);
       break;
     }

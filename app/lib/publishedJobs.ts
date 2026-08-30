@@ -8,7 +8,10 @@ function dispatchChange() {
   window.dispatchEvent(new Event("myhiredito-published-jobs"));
 }
 
-export function employerJobToMarketplaceJob(job: EmployerJobPost): Job {
+export function employerJobToMarketplaceJob(
+  job: EmployerJobPost,
+  employerUserKey: string,
+): Job {
   return {
     id: job.id,
     slug: job.slug,
@@ -36,6 +39,8 @@ export function employerJobToMarketplaceJob(job: EmployerJobPost): Job {
     requirements: job.requirements
       ? job.requirements.split("\n").filter(Boolean)
       : ["Complete role assessment to apply"],
+    employerUserKey,
+    employerJobId: job.id,
   };
 }
 
@@ -50,8 +55,11 @@ export function getPublishedJobs(): Job[] {
   }
 }
 
-export function publishEmployerJob(job: EmployerJobPost): Job {
-  const marketplaceJob = employerJobToMarketplaceJob(job);
+export function publishEmployerJob(
+  job: EmployerJobPost,
+  employerUserKey: string,
+): Job {
+  const marketplaceJob = employerJobToMarketplaceJob(job, employerUserKey);
   const existing = getPublishedJobs().filter((j) => j.slug !== job.slug);
   localStorage.setItem(STORAGE_KEY, JSON.stringify([marketplaceJob, ...existing]));
   dispatchChange();

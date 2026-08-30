@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { AuthErrorBanner } from "./AuthErrorBanner";
 import { InstantBookingSection } from "./InstantBookingSection";
 import { MarketingNav } from "./MarketingNav";
 
 export function HomePage() {
   return (
     <main className="flex flex-1 flex-col">
+      <Suspense fallback={null}>
+        <AuthErrorBanner />
+      </Suspense>
       {/* Hero */}
       <section>
         <MarketingNav />

@@ -141,6 +141,27 @@ export function updateApplicantStatus(
   saveApplicants(userKey, next);
 }
 
+export function addApplicantFromApplication(
+  userKey: string,
+  applicant: Omit<JobApplicant, "id"> & { id?: string },
+): JobApplicant {
+  const existing = getApplicants(userKey);
+  const duplicate = existing.find(
+    (item) =>
+      item.workerEmail === applicant.workerEmail &&
+      item.jobSlug === applicant.jobSlug,
+  );
+  if (duplicate) return duplicate;
+
+  const created: JobApplicant = {
+    ...applicant,
+    id: applicant.id ?? `app-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  };
+
+  saveApplicants(userKey, [created, ...existing]);
+  return created;
+}
+
 export const APPLICANT_STATUS_LABELS: Record<ApplicantStatus, string> = {
   new: "New",
   reviewing: "Reviewing",

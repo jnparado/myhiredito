@@ -124,6 +124,10 @@ export function getWorkerDisplayName(user: WorkerAuthUser): string {
   return user.source === "demo" ? user.user.displayName : user.displayName;
 }
 
+export function getWorkerEmail(user: WorkerAuthUser): string {
+  return user.source === "demo" ? user.user.email : user.email;
+}
+
 export function getWorkerProfile(user: WorkerAuthUser): ProfileRow | null {
   if (user.source === "demo") return demoUserToProfile(user.user);
   return user.profile;

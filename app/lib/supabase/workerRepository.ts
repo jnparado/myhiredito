@@ -150,27 +150,34 @@ export async function saveSkillsCertificatesOnboarding(
 
   if (profileError) throw profileError;
 
-  let filePath: string | null = null;
-  if (cert.certificateFile) {
-    filePath = await uploadWorkerFile(
-      workerId,
-      cert.certificateFile,
-      "certificate",
-    );
+  const hasCertificate =
+    cert.certificateName.trim() ||
+    cert.issuingBody.trim() ||
+    cert.certificateFile;
+
+  if (hasCertificate) {
+    let filePath: string | null = null;
+    if (cert.certificateFile) {
+      filePath = await uploadWorkerFile(
+        workerId,
+        cert.certificateFile,
+        "certificate",
+      );
+    }
+
+    const { error } = await supabase.from("worker_certificates").insert({
+      worker_id: workerId,
+      certificate_name: cert.certificateName.trim() || "Professional certificate",
+      issuing_body: cert.issuingBody.trim(),
+      issue_date: cert.issueDate || null,
+      expiry_date: cert.expiryDate || null,
+      license_number: cert.licenseNumber.trim(),
+      file_url: filePath,
+      verification_status: "pending",
+    });
+
+    if (error) throw error;
   }
-
-  const { error } = await supabase.from("worker_certificates").insert({
-    worker_id: workerId,
-    certificate_name: cert.certificateName.trim(),
-    issuing_body: cert.issuingBody.trim(),
-    issue_date: cert.issueDate || null,
-    expiry_date: cert.expiryDate || null,
-    license_number: cert.licenseNumber.trim(),
-    file_url: filePath,
-    verification_status: "pending",
-  });
-
-  if (error) throw error;
 
   await markOnboardingStepCompleteInDb(workerId, "skills-certificates");
 }

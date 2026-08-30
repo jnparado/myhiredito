@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   authButtonClass,
@@ -24,7 +25,7 @@ type Props = {
 
 export function EmployerPostJobModal({ open, onClose }: Props) {
   const { user } = useEmployerAuth();
-  const { progress } = useEmployerOnboarding();
+  const { progress, isComplete, loading: onboardingLoading } = useEmployerOnboarding();
   const [loading, setLoading] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,7 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
+  const canPost = !onboardingLoading && isComplete;
   const defaultLocation = progress.data.businessDetails
     ? [progress.data.businessDetails.city, progress.data.businessDetails.state]
         .filter(Boolean)
@@ -154,6 +156,31 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
           </button>
         </div>
 
+        {!canPost ? (
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm font-semibold text-zinc-800">
+              Complete employer onboarding before posting jobs.
+            </p>
+            <p className="mt-2 text-sm text-zinc-600">
+              Verify your identity, business certificate, and company details first.
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Link
+                href="/employer/onboarding/id"
+                className="rounded-full bg-[#1db954] px-5 py-2 text-sm font-bold text-white hover:bg-[#1a5c42]"
+              >
+                Finish onboarding
+              </Link>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-bold text-zinc-600 hover:bg-zinc-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ) : (
         <form
           id="employer-post-job-form"
           className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4"
@@ -337,6 +364,7 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

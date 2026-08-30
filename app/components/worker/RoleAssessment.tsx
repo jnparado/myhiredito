@@ -21,6 +21,7 @@ import {
   submitJobApplication,
 } from "@/app/lib/jobApplications";
 import { getWorkerUserKey, isOnboardingComplete } from "@/app/lib/workerOnboarding";
+import { getWorkerDisplayName, getWorkerProfile } from "@/app/lib/workerAuth";
 import type { Job } from "@/app/lib/jobs";
 
 type Step = "intro" | "quiz" | "results";
@@ -108,19 +109,34 @@ export function RoleAssessment({ job }: Props) {
   }
 
   function handleApply() {
-    if (!userKey || !result) return;
+    if (!userKey || !result || !user) return;
 
-    submitJobApplication(userKey, {
-      jobSlug: job.slug,
-      jobTitle: job.title,
-      company: job.company,
-      category: job.category,
-      location: job.location,
-      pay: job.pay,
-      appliedAt: new Date().toISOString(),
-      assessment: result,
-      status: "submitted",
-    });
+    const workerName = getWorkerDisplayName(user);
+    const workerEmail =
+      user.source === "demo" ? user.user.email : user.email;
+    const profile = getWorkerProfile(user);
+
+    submitJobApplication(
+      userKey,
+      {
+        jobSlug: job.slug,
+        jobTitle: job.title,
+        company: job.company,
+        category: job.category,
+        location: job.location,
+        pay: job.pay,
+        appliedAt: new Date().toISOString(),
+        assessment: result,
+        status: "submitted",
+      },
+      {
+        job,
+        workerName,
+        workerEmail,
+        workerSkills: profile?.skills?.join(", "),
+        workerLocation: profile?.location ?? undefined,
+      },
+    );
     setApplied(true);
     router.push("/worker/dashboard#applications");
   }

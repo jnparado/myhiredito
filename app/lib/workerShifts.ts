@@ -203,6 +203,69 @@ export function formatShiftTime(iso: string): string {
   });
 }
 
+export function getShiftDurationMs(
+  shift: WorkerShift,
+  now = Date.now(),
+): number {
+  if (!shift.clockedInAt) return 0;
+  const start = new Date(shift.clockedInAt).getTime();
+  const end = shift.clockedOutAt
+    ? new Date(shift.clockedOutAt).getTime()
+    : now;
+  return Math.max(0, end - start);
+}
+
+export function formatDuration(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+export function formatDurationShort(ms: number): string {
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  return `${hours}h ${minutes}m`;
+}
+
+function isSameDay(dateA: string, dateB: string): boolean {
+  return dateA === dateB;
+}
+
+function weekStartDate(): string {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - date.getDay());
+  return date.toISOString().slice(0, 10);
+}
+
+export function getTodayTrackedMs(userKey: string, now = Date.now()): number {
+  const today = dateOnly(0);
+  return ensureWorkerShifts(userKey)
+    .filter((shift) => shift.clockedInAt)
+    .filter(
+      (shift) =>
+        isSameDay(shift.shiftDate, today) || shift.status === "clocked-in",
+    )
+    .reduce((sum, shift) => sum + getShiftDurationMs(shift, now), 0);
+}
+
+export function getWeekTrackedMs(userKey: string, now = Date.now()): number {
+  const weekStart = weekStartDate();
+  return ensureWorkerShifts(userKey)
+    .filter((shift) => shift.clockedInAt && shift.shiftDate >= weekStart)
+    .reduce((sum, shift) => sum + getShiftDurationMs(shift, now), 0);
+}
+
+export function getCompletedTimesheet(userKey: string): WorkerShift[] {
+  return ensureWorkerShifts(userKey)
+    .filter((shift) => shift.status === "completed" && shift.clockedInAt)
+    .sort((a, b) => b.shiftDate.localeCompare(a.shiftDate));
+}
+
 export const SHIFT_STATUS_LABELS: Record<ShiftStatus, string> = {
   scheduled: "Scheduled",
   confirmed: "Confirmed",

@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
 import { RoleAssessment } from "../../../../components/worker/RoleAssessment";
+import { DynamicRoleAssessment } from "../../../../components/worker/DynamicRoleAssessment";
 import { JobsPageShell } from "../../../../components/worker/JobsPageShell";
 import { getJobBySlug, jobs } from "../../../../lib/jobs";
 
@@ -28,11 +28,10 @@ export default async function JobAssessmentPage({
 }) {
   const { slug } = await params;
   const job = getJobBySlug(slug);
-  if (!job) notFound();
 
   return (
     <JobsPageShell>
-      <RoleAssessment job={job} />
+      {job ? <RoleAssessment job={job} /> : <DynamicRoleAssessment slug={slug} />}
     </JobsPageShell>
   );
 }
