@@ -5,14 +5,13 @@ import Link from "next/link";
 import { JobDetailView } from "@/app/components/JobDetailView";
 import { getJobDetailMeta } from "@/app/lib/jobDetails";
 import type { Job } from "@/app/lib/jobs";
-import { getPublishedJobs } from "@/app/lib/publishedJobs";
+import { resolveJobBySlug } from "@/app/lib/jobCatalog";
 
 export function DynamicJobDetail({ slug }: { slug: string }) {
   const [job, setJob] = useState<Job | null | undefined>(undefined);
 
   useEffect(() => {
-    const published = getPublishedJobs().find((j) => j.slug === slug);
-    setJob(published ?? null);
+    setJob(resolveJobBySlug(slug));
   }, [slug]);
 
   if (job === undefined) {

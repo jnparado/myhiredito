@@ -17,6 +17,12 @@ import {
 } from "@/app/lib/employerJobs";
 import { EMPLOYER_HIRING_ROLE_OPTIONS } from "@/app/lib/employerOnboarding";
 import { experienceLabels } from "@/app/lib/jobs";
+import {
+  EXTERNAL_HIRING_BOARD,
+  JOB_SOURCE_LABELS,
+  listingToJobDraft,
+  type JobSource,
+} from "@/app/lib/externalHiringBoard";
 
 type Props = {
   open: boolean;
@@ -28,6 +34,8 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
   const { progress, isComplete, loading: onboardingLoading } = useEmployerOnboarding();
   const [loading, setLoading] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -111,6 +119,58 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
     }
   }
 
+  function fillJobForm(values: Record<string, string>) {
+    const form = document.getElementById("employer-post-job-form") as HTMLFormElement | null;
+    if (!form) return;
+    for (const [name, value] of Object.entries(values)) {
+      const field = form.elements.namedItem(name) as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | HTMLSelectElement
+        | null;
+      if (field && value) field.value = value;
+    }
+  }
+
+  async function handleImportUrl() {
+    if (!importUrl.trim()) {
+      setError("Paste a LinkedIn, Indeed, ZipRecruiter, or Glassdoor job URL.");
+      return;
+    }
+    setError(null);
+    setImporting(true);
+    try {
+      const response = await fetch("/api/jobs/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: importUrl.trim() }),
+      });
+      const data = (await response.json()) as {
+        draft?: {
+          title: string;
+          description: string;
+          source: JobSource;
+          sourceUrl: string;
+        };
+        error?: string;
+      };
+      if (!response.ok || !data.draft) {
+        throw new Error(data.error ?? "Could not import that job URL.");
+      }
+      fillJobForm({
+        title: data.draft.title,
+        description: data.draft.description,
+        source: data.draft.source,
+        sourceUrl: data.draft.sourceUrl,
+        schedule: "See original listing",
+      });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Import failed.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!user) return;
@@ -186,6 +246,58 @@ export function EmployerPostJobModal({ open, onClose }: Props) {
           className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4"
           onSubmit={handleSubmit}
         >
+          <input type="hidden" name="source" defaultValue="myhiredito" />
+          <input type="hidden" name="sourceUrl" defaultValue="" />
+
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
+            <p className="text-sm font-semibold text-zinc-800">
+              Import from LinkedIn & other boards
+            </p>
+            <p className="mt-1 text-xs text-zinc-600">
+              Employers only. Paste a public job URL or pick a hiring post to republish on MyHiredito.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <input
+                value={importUrl}
+                onChange={(e) => setImportUrl(e.target.value)}
+                className={authFieldClass}
+                placeholder="https://www.linkedin.com/jobs/view/..."
+              />
+              <button
+                type="button"
+                onClick={() => void handleImportUrl()}
+                disabled={importing}
+                className="shrink-0 rounded-lg bg-zinc-900 px-3 py-2 text-xs font-bold text-white hover:bg-zinc-800 disabled:opacity-50"
+              >
+                {importing ? "Importing..." : "Import"}
+              </button>
+            </div>
+            <div className="mt-3 space-y-2">
+              {EXTERNAL_HIRING_BOARD.map((listing) => (
+                <button
+                  key={listing.id}
+                  type="button"
+                  onClick={() => {
+                    const draft = listingToJobDraft(listing);
+                    fillJobForm(draft);
+                    setError(null);
+                  }}
+                  className="flex w-full items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-left hover:border-[#1db954]"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-zinc-900">{listing.title}</p>
+                    <p className="truncate text-[11px] text-zinc-500">
+                      {listing.company} · {listing.location} · {listing.pay}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-blue-700">
+                    {JOB_SOURCE_LABELS[listing.source]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="rounded-lg border border-[#1db954]/20 bg-[#1db954]/5 px-4 py-3">
             <p className="text-sm font-semibold text-zinc-800">✦ Draft with AI</p>
             <p className="mt-1 text-xs text-zinc-600">

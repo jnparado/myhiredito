@@ -5,6 +5,7 @@ import {
   type Job,
 } from "../lib/jobs";
 import type { JobMatchResult } from "../lib/ai/types";
+import { JOB_SOURCE_LABELS } from "../lib/externalHiringBoard";
 
 const typeLabels: Record<Job["type"], string> = {
   "on-demand": "On-demand",
@@ -49,6 +50,11 @@ export function JobCard({
         {job.verified && (
           <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-light)] px-2 py-0.5 font-semibold text-[var(--brand)]">
             ✓ Payment verified
+          </span>
+        )}
+        {job.source && job.source !== "myhiredito" && (
+          <span className="rounded-full bg-blue-50 px-2 py-0.5 font-semibold text-blue-700">
+            {JOB_SOURCE_LABELS[job.source]}
           </span>
         )}
         <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 font-medium text-[var(--muted)]">

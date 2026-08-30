@@ -1,7 +1,8 @@
 import { RoleAssessment } from "../../../../components/worker/RoleAssessment";
 import { DynamicRoleAssessment } from "../../../../components/worker/DynamicRoleAssessment";
 import { JobsPageShell } from "../../../../components/worker/JobsPageShell";
-import { getJobBySlug, jobs } from "../../../../lib/jobs";
+import { jobs } from "../../../../lib/jobs";
+import { resolveJobBySlug } from "../../../../lib/jobCatalog";
 
 export function generateStaticParams() {
   return jobs.map((job) => ({ slug: job.slug }));
@@ -13,7 +14,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const job = getJobBySlug(slug);
+  const job = resolveJobBySlug(slug);
   if (!job) return { title: "Assessment Not Found | MyHiredito" };
   return {
     title: `Role Exam — ${job.title} | MyHiredito`,
@@ -27,7 +28,7 @@ export default async function JobAssessmentPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const job = getJobBySlug(slug);
+  const job = resolveJobBySlug(slug);
 
   return (
     <JobsPageShell>

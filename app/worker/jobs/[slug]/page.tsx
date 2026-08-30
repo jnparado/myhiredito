@@ -2,7 +2,8 @@ import { DynamicJobDetail } from "../../../components/DynamicJobDetail";
 import { JobDetailView } from "../../../components/JobDetailView";
 import { JobsPageShell } from "../../../components/worker/JobsPageShell";
 import { getJobDetailMeta } from "../../../lib/jobDetails";
-import { getJobBySlug, jobs } from "../../../lib/jobs";
+import { jobs } from "../../../lib/jobs";
+import { resolveJobBySlug } from "../../../lib/jobCatalog";
 
 export const dynamicParams = true;
 
@@ -16,7 +17,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const job = getJobBySlug(slug);
+  const job = resolveJobBySlug(slug);
   if (!job) return { title: "Job Not Found | MyHiredito" };
   return {
     title: `${job.title} | MyHiredito`,
@@ -30,7 +31,7 @@ export default async function JobDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const job = getJobBySlug(slug);
+  const job = resolveJobBySlug(slug);
 
   return (
     <JobsPageShell>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   authButtonClass,
@@ -98,6 +99,12 @@ export function WorkerHomeComposer() {
               : "Complete onboarding to post updates..."}
           </button>
         </div>
+        <p className="border-t border-zinc-100 px-4 py-2 text-[11px] text-zinc-500">
+          Only employers can post jobs. Workers can share availability, certs, and shift wins.{" "}
+          <Link href="/employer/signup" className="font-semibold text-[#1db954] hover:underline">
+            Hire on MyHiredito
+          </Link>
+        </p>
 
         <div className="flex border-t border-zinc-200">
           <button

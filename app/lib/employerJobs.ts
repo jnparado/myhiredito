@@ -2,6 +2,7 @@ import type { ExperienceLevel, JobType, PayType } from "./jobs";
 import { publishEmployerJob, syncApplicantCountToPublished, unpublishEmployerJob } from "./publishedJobs";
 import { getEmployerUserKey } from "./employerOnboarding";
 import type { EmployerAuthUser } from "./employerAuth";
+import type { JobSource } from "./externalHiringBoard";
 
 export type EmployerJobStatus = "active" | "draft" | "closed";
 
@@ -24,6 +25,8 @@ export type EmployerJobPost = {
   status: EmployerJobStatus;
   postedAt: string;
   companyName: string;
+  source?: JobSource;
+  sourceUrl?: string;
 };
 
 const STORAGE_PREFIX = "myhiredito_employer_jobs_";
@@ -99,6 +102,8 @@ export function createEmployerJobFromForm(
     status: "active",
     postedAt: new Date().toISOString(),
     companyName,
+    source: (String(formData.get("source") ?? "myhiredito") as JobSource) || "myhiredito",
+    sourceUrl: String(formData.get("sourceUrl") ?? "").trim() || undefined,
   };
 
   const existing = getEmployerJobsLocal(userKey);

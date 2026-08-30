@@ -41,6 +41,8 @@ export function employerJobToMarketplaceJob(
       : ["Complete role assessment to apply"],
     employerUserKey,
     employerJobId: job.id,
+    source: job.source ?? "myhiredito",
+    sourceUrl: job.sourceUrl,
   };
 }
 

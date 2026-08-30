@@ -24,6 +24,8 @@ export type Job = {
   /** Set when job was posted by an employer (published to marketplace). */
   employerUserKey?: string;
   employerJobId?: string;
+  source?: import("./externalHiringBoard").JobSource;
+  sourceUrl?: string;
 };
 
 export const jobCategories = [

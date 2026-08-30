@@ -1,6 +1,7 @@
 import type { EmployerActivity } from "./employerActivity";
 import { formatPostedAgo } from "./employerJobs";
 import { jobs, type Job } from "./jobs";
+import { listingToMarketplaceJob, EXTERNAL_HIRING_BOARD } from "./externalHiringBoard";
 import { getPublishedJobs } from "./publishedJobs";
 import type { WorkerActivity } from "./workerActivity";
 
@@ -107,8 +108,11 @@ function getAllEmployerActivity(): EmployerActivity[] {
 function mergeJobs(): Job[] {
   const published = getPublishedJobs();
   const publishedSlugs = new Set(published.map((j) => j.slug));
+  const external = EXTERNAL_HIRING_BOARD.map(listingToMarketplaceJob).filter(
+    (j) => !publishedSlugs.has(j.slug),
+  );
   const staticJobs = jobs.filter((j) => !publishedSlugs.has(j.slug));
-  return [...published, ...staticJobs];
+  return [...published, ...external, ...staticJobs];
 }
 
 function jobToFeedAuthor(job: Job): { author: string; headline: string } {
