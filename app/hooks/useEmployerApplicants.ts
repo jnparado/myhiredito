@@ -6,9 +6,7 @@ import { useEmployerJobs } from "./useEmployerJobs";
 import { getEmployerUserKey } from "@/app/lib/employerOnboarding";
 import {
   ensureApplicants,
-  getApplicantCount,
-  getApplicants,
-  getNewApplicantCount,
+  getApplicantLookupKeys,
   type JobApplicant,
 } from "@/app/lib/employerApplicants";
 import { updateJobApplicantCount } from "@/app/lib/employerJobs";
@@ -26,7 +24,10 @@ export function useEmployerApplicants() {
       setReady(!authLoading);
       return;
     }
-    const list = ensureApplicants(userKey, jobs);
+    const extraKeys = getApplicantLookupKeys(user, userKey).filter(
+      (key) => key !== userKey,
+    );
+    const list = ensureApplicants(userKey, jobs, extraKeys);
     setApplicants(list);
 
     jobs.forEach((job) => {
@@ -39,7 +40,7 @@ export function useEmployerApplicants() {
     });
 
     setReady(true);
-  }, [authLoading, jobs, userKey]);
+  }, [authLoading, jobs, user, userKey]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -63,8 +64,8 @@ export function useEmployerApplicants() {
   return {
     userKey,
     applicants,
-    totalCount: userKey ? getApplicantCount(userKey) : 0,
-    newCount: userKey ? getNewApplicantCount(userKey) : 0,
+    totalCount: applicants.filter((item) => item.status !== "rejected").length,
+    newCount: applicants.filter((item) => item.status === "new").length,
     loading: authLoading || !ready,
     refresh,
   };

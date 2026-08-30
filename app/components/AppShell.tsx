@@ -22,6 +22,7 @@ function shouldHideAllChrome(pathname: string | null): boolean {
   if (HIDE_CHROME_PATHS.has(pathname)) return true;
   if (/^\/worker\/jobs\/[^/]+(\/assessment)?$/.test(pathname)) return true;
   if (pathname === "/worker/dashboard" || pathname === "/worker/jobs") return true;
+  if (pathname === "/worker/applications") return true;
   if (pathname === "/worker/connect") return true;
   if (pathname?.startsWith("/worker/messages")) return true;
   if (pathname?.startsWith("/worker/onboarding")) return true;

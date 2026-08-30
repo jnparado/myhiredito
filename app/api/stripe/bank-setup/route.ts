@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe, isStripeConfigured } from "@/app/lib/stripe/server";
-import type { StripeBankDetails, StripeBankRole } from "@/app/lib/stripe/bank";
+import type {
+  StripeBankDetails,
+  StripeBankRole,
+  StripeCheckoutMethod,
+} from "@/app/lib/stripe/bank";
 
 function originFromRequest(request: Request): string {
   const url = new URL(request.url);
@@ -15,19 +19,38 @@ function safeReturnPath(path: unknown): string {
   return path;
 }
 
-function bankDetailsFromPaymentMethod(
+function detailsFromPaymentMethod(
   method: Stripe.PaymentMethod,
-): StripeBankDetails {
-  const bank = method.us_bank_account;
-  return {
-    paymentMethodId: method.id,
-    bankName: bank?.bank_name?.trim() || "Bank account",
-    last4: bank?.last4 ?? "0000",
-    accountHolder:
-      method.billing_details.name?.trim() ||
-      method.billing_details.email?.trim() ||
-      "Account holder",
-  };
+): StripeBankDetails | null {
+  if (method.us_bank_account) {
+    return {
+      paymentMethodId: method.id,
+      bankName: method.us_bank_account.bank_name?.trim() || "Bank account",
+      last4: method.us_bank_account.last4 ?? "0000",
+      accountHolder:
+        method.billing_details.name?.trim() ||
+        method.billing_details.email?.trim() ||
+        "Account holder",
+      kind: "bank",
+    };
+  }
+
+  if (method.card) {
+    return {
+      paymentMethodId: method.id,
+      bankName: method.card.brand
+        ? `Stripe ${method.card.brand}`
+        : "Stripe card",
+      last4: method.card.last4 ?? "0000",
+      accountHolder:
+        method.billing_details.name?.trim() ||
+        method.billing_details.email?.trim() ||
+        "Account holder",
+      kind: "stripe",
+    };
+  }
+
+  return null;
 }
 
 async function findOrCreateCustomer(
@@ -70,16 +93,17 @@ export async function GET(request: Request) {
     const method =
       paymentMethod && typeof paymentMethod !== "string" ? paymentMethod : null;
 
-    if (!method?.us_bank_account) {
+    const details = method ? detailsFromPaymentMethod(method) : null;
+    if (!details) {
       return NextResponse.json(
-        { error: "No bank account was connected." },
+        { error: "No payment method was connected." },
         { status: 400 },
       );
     }
 
     return NextResponse.json({
       configured: true,
-      bank: bankDetailsFromPaymentMethod(method),
+      bank: details,
     });
   } catch (error) {
     const message =
@@ -98,6 +122,7 @@ export async function POST(request: Request) {
       role?: StripeBankRole;
       email?: string;
       returnPath?: string;
+      method?: StripeCheckoutMethod;
     };
 
     const role: StripeBankRole =
@@ -110,15 +135,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email is required." }, { status: 400 });
     }
 
+    const method: StripeCheckoutMethod =
+      body.method === "card" ? "card" : "bank";
     const stripe = getStripe();
     const customer = await findOrCreateCustomer(stripe, email, role);
     const session = await stripe.checkout.sessions.create({
       mode: "setup",
       currency: "usd",
       customer,
-      payment_method_types: ["us_bank_account"],
+      payment_method_types: [method === "card" ? "card" : "us_bank_account"],
       setup_intent_data: {
-        metadata: { role, purpose: "bank" },
+        metadata: { role, purpose: method === "card" ? "card" : "bank" },
       },
       success_url: `${origin}${returnPath}?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${returnPath}?stripe=cancel`,

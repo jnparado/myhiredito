@@ -220,9 +220,29 @@ export async function savePaymentFromStripeBank(
   }
 
   await savePaymentOnboarding(userKey, {
-    paymentMethod: "bank-account",
+    paymentMethod: bank.kind === "stripe" ? "debit-card" : "bank-account",
     accountHolder: bank.accountHolder,
     accountLast4: bank.last4,
+  });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("myhiredito-worker-onboarding"));
+  }
+}
+
+export async function savePaymentFromWallet(
+  user: WorkerAuthUser,
+  userKey: string,
+  wallet: { provider: "paypal" | "wise"; handle: string },
+): Promise<void> {
+  if (user.source === "demo") {
+    markDemoStepComplete(userKey, "payment-method");
+    return;
+  }
+
+  await savePaymentOnboarding(userKey, {
+    paymentMethod: wallet.provider,
+    accountHolder: wallet.handle,
+    accountLast4: wallet.handle.slice(-4),
   });
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("myhiredito-worker-onboarding"));

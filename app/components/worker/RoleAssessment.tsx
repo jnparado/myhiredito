@@ -138,7 +138,7 @@ export function RoleAssessment({ job }: Props) {
       },
     );
     setApplied(true);
-    router.push("/worker/dashboard#applications");
+    router.push("/worker/applications");
   }
 
   if (authLoading || onboardingLoading) {
@@ -367,7 +367,7 @@ export function RoleAssessment({ job }: Props) {
               </button>
             ) : (
               <Link
-                href="/worker/dashboard#applications"
+                href="/worker/applications"
                 className="flex-1 rounded-lg bg-[var(--brand)] py-3 text-center text-sm font-bold text-white"
               >
                 View my applications

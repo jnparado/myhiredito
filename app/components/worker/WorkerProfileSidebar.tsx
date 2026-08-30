@@ -96,7 +96,7 @@ export function WorkerProfileSidebar() {
           <StatRow
             label="Applications"
             value={applications.length}
-            href="/worker/dashboard#applications"
+            href="/worker/applications"
           />
           <StatRow
             label="Messages"
@@ -119,7 +119,7 @@ export function WorkerProfileSidebar() {
             Saved jobs
           </Link>
           <Link
-            href="/worker/dashboard#applications"
+            href="/worker/applications"
             className="mt-2 flex items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-[#1db954]"
           >
             <span className="text-zinc-400">📋</span>

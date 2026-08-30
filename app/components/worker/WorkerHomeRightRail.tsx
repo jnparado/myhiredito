@@ -118,7 +118,7 @@ export function WorkerHomeRightRail() {
         {applications.length > 0 && (
           <div className="border-t border-zinc-100 px-4 py-3">
             <Link
-              href="/worker/dashboard#applications"
+              href="/worker/applications"
               className="text-xs font-bold text-zinc-600 hover:text-[#1db954]"
             >
               View all applications →

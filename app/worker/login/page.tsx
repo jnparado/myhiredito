@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { formatAuthError } from "@/app/lib/authErrors";
-import { beginDemoAuth, beginSupabaseAuth } from "@/app/lib/authSession";
+import { beginSupabaseAuth } from "@/app/lib/authSession";
+import { signInDemoAccount } from "@/app/lib/demoSupabaseAuth";
 import {
   AuthShell,
   authButtonClass,
@@ -19,7 +20,6 @@ import { setLastAuthRole } from "@/app/lib/authRole";
 import { markRoleSignedIn } from "@/app/lib/authState";
 import {
   isWorkerDemoCredentials,
-  setDemoWorkerSession,
   WORKER_DEMO_EMAIL,
   WORKER_DEMO_PASSWORD,
 } from "@/app/lib/workerDemoAuth";
@@ -44,10 +44,9 @@ export default function WorkerLoginPage() {
     setLoading(true);
     try {
       if (isWorkerDemoCredentials(email, password)) {
-        await beginDemoAuth();
+        await signInDemoAccount("worker");
         markRoleSignedIn("worker");
         setLastAuthRole("worker");
-        setDemoWorkerSession();
         notifyWorkerAuthChange();
         router.push("/worker/dashboard");
         router.refresh();
@@ -148,7 +147,8 @@ export default function WorkerLoginPage() {
             Password: <span className="font-mono text-zinc-900">{WORKER_DEMO_PASSWORD}</span>
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            Preview the worker dashboard, jobs, messaging, and shift tracker.
+            First login creates Alex Rivera in Supabase. After that this demo
+            account signs in from the database.
           </p>
           <button
             type="button"

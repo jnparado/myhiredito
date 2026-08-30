@@ -1,9 +1,14 @@
+import type { PaymentProvider } from "./payments/providers";
+
+export type PaymentMethodKind = PaymentProvider | "card";
+
 export type PaymentMethod = {
   id: string;
   brand: string;
   last4: string;
   expiry: string;
-  kind: "card" | "bank";
+  kind: PaymentMethodKind;
+  handle?: string;
   isDefault: boolean;
 };
 
@@ -75,7 +80,14 @@ export function saveBillingState(userKey: string, state: BillingState): void {
 
 export function addPaymentMethod(
   userKey: string,
-  card: { brand: string; last4: string; expiry: string; kind?: "card" | "bank"; id?: string },
+  card: {
+    brand: string;
+    last4: string;
+    expiry: string;
+    kind?: PaymentMethodKind;
+    id?: string;
+    handle?: string;
+  },
 ): PaymentMethod {
   const state = getBillingState(userKey);
   const method: PaymentMethod = {
@@ -84,6 +96,7 @@ export function addPaymentMethod(
     last4: card.last4,
     expiry: card.expiry,
     kind: card.kind ?? "card",
+    handle: card.handle,
     isDefault: state.paymentMethods.length === 0,
   };
   const methods = state.paymentMethods.filter((item) => item.id !== method.id);
@@ -96,14 +109,29 @@ export function addPaymentMethod(
 
 export function addBankPaymentMethod(
   userKey: string,
-  bank: { paymentMethodId: string; bankName: string; last4: string },
+  bank: { paymentMethodId: string; bankName: string; last4: string; kind?: "bank" | "stripe" },
 ): PaymentMethod {
   return addPaymentMethod(userKey, {
     id: bank.paymentMethodId,
     brand: bank.bankName,
     last4: bank.last4,
     expiry: "",
-    kind: "bank",
+    kind: bank.kind ?? "bank",
+  });
+}
+
+export function addWalletPaymentMethod(
+  userKey: string,
+  wallet: { provider: "paypal" | "wise"; handle: string },
+): PaymentMethod {
+  const label = wallet.provider === "paypal" ? "PayPal" : "Wise";
+  return addPaymentMethod(userKey, {
+    id: `${wallet.provider}-${wallet.handle}`,
+    brand: label,
+    last4: wallet.handle.slice(-4),
+    expiry: "",
+    kind: wallet.provider,
+    handle: wallet.handle,
   });
 }
 

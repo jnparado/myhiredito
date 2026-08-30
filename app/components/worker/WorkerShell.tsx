@@ -39,7 +39,7 @@ const desktopNavItems = [
   { href: "/worker/dashboard", label: "Home", icon: "home" },
   { href: "/worker/tracker", label: "Tracker", icon: "tracker" },
   { href: "/worker/connect", label: "Circle", icon: "connect" },
-  { href: "/worker/dashboard#applications", label: "Applications", icon: "applications" },
+  { href: "/worker/applications", label: "Applications", icon: "applications" },
   { href: "/worker/messages", label: "Messages", icon: "messages" },
   { href: "/worker/onboarding/profile", label: "Profile", icon: "profile" },
 ];
@@ -110,7 +110,7 @@ function NavIcon({ type }: { type: string }) {
 function isNavActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
   if (href === "/worker/dashboard") return pathname === "/worker/dashboard";
-  if (href.includes("#")) return false;
+  if (href === "/worker/applications") return pathname.startsWith("/worker/applications");
   if (href === "/worker/tracker") return pathname.startsWith("/worker/tracker");
   return pathname.startsWith(href);
 }
@@ -283,7 +283,7 @@ export function WorkerShell({
                     Dashboard
                   </Link>
                   <Link
-                    href="/worker/dashboard#applications"
+                    href="/worker/applications"
                     onClick={() => setOpenPanel(null)}
                     className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50 lg:hidden"
                   >

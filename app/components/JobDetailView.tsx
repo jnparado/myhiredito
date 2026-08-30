@@ -11,7 +11,8 @@ import {
 } from "@/app/lib/jobAssessments";
 import {
   getAssessmentResult,
-  hasAppliedToJob,
+  getApplicationLookupKeys,
+  hasAppliedToJobForKeys,
 } from "@/app/lib/jobApplications";
 import { getOrCreateEmployerConversation } from "@/app/lib/messages";
 import {
@@ -19,6 +20,10 @@ import {
   type JobDetailMeta,
 } from "../lib/jobDetails";
 import type { Job } from "../lib/jobs";
+import {
+  JOB_SOURCE_LABELS,
+  isExternalMarketplaceJob,
+} from "../lib/externalHiringBoard";
 import { getWorkerDisplayName, getWorkerProfile } from "@/app/lib/workerAuth";
 import { incrementJobViewCount } from "@/app/lib/employerJobs";
 import { getWorkerUserKey, isOnboardingComplete } from "@/app/lib/workerOnboarding";
@@ -40,7 +45,9 @@ export function JobDetailView({ job, meta }: Props) {
   const assessmentResult =
     userKey && !authLoading ? getAssessmentResult(userKey, job.slug) : null;
   const applied =
-    userKey && !authLoading ? hasAppliedToJob(userKey, job.slug) : false;
+    userKey && !authLoading
+      ? hasAppliedToJobForKeys(getApplicationLookupKeys(user, userKey), job.slug)
+      : false;
   const onboardingComplete = isOnboardingComplete(progress);
   const workerContext = user
     ? buildWorkerContext({
@@ -75,18 +82,29 @@ export function JobDetailView({ job, meta }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const applyHref = user
-    ? onboardingComplete
-      ? `/worker/jobs/${job.slug}/assessment`
-      : "/worker/dashboard"
-    : "/worker/login";
-  const applyLabel = user
-    ? applied
-      ? "View application"
-      : assessmentResult
-        ? "Apply with boost"
-        : "Take exam & apply"
-    : "Apply now";
+  const externalJob = isExternalMarketplaceJob(job);
+  const sourceLabel =
+    job.source && job.source !== "myhiredito"
+      ? JOB_SOURCE_LABELS[job.source]
+      : null;
+  const applyHref = externalJob
+    ? job.sourceUrl!
+    : user
+      ? applied
+        ? "/worker/applications"
+        : onboardingComplete
+          ? `/worker/jobs/${job.slug}/assessment`
+          : "/worker/dashboard"
+      : "/worker/login";
+  const applyLabel = externalJob
+    ? `Apply on ${sourceLabel}`
+    : user
+      ? applied
+        ? "View application"
+        : assessmentResult
+          ? "Apply with boost"
+          : "Take exam & apply"
+      : "Apply now";
 
   return (
     <div className="min-h-screen bg-white pb-28">
@@ -123,7 +141,10 @@ export function JobDetailView({ job, meta }: Props) {
             <div className="font-bold text-[var(--brand-dark)]">
               {job.company} – {meta.employmentType}
             </div>
-            <div className="text-sm text-[var(--muted)]">{job.category}</div>
+            <div className="text-sm text-[var(--muted)]">
+              {job.category}
+              {sourceLabel ? ` · ${sourceLabel}` : ""}
+            </div>
             <div className="mt-0.5 flex items-center gap-1 text-sm">
               <span className="text-amber-500">★</span>
               <span className="font-semibold text-[var(--brand-dark)]">
@@ -148,7 +169,20 @@ export function JobDetailView({ job, meta }: Props) {
           )}
         </div>
 
+        {externalJob && sourceLabel && (
+          <section className="mx-5 mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm font-bold text-[var(--brand-dark)]">
+              Listed on {sourceLabel}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-[var(--brand-dark)]/80">
+              This posting is from {sourceLabel}. Open it on their site to apply
+              with your existing {sourceLabel} profile.
+            </p>
+          </section>
+        )}
+
         {/* Role readiness exam */}
+        {!externalJob && (
         <section className="mx-5 mt-6 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand-light)] p-4">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg">
@@ -190,6 +224,7 @@ export function JobDetailView({ job, meta }: Props) {
             </div>
           </div>
         </section>
+        )}
 
         <div className="mt-6 px-5">
           <div className="text-sm font-bold tracking-wide text-[var(--brand-dark)]">
@@ -310,12 +345,23 @@ export function JobDetailView({ job, meta }: Props) {
 
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-white p-4">
         <div className="mx-auto flex max-w-md gap-2">
-          <Link
-            href={applied ? "/worker/dashboard#applications" : applyHref}
-            className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--brand)] text-sm font-bold text-white transition hover:bg-[var(--brand-strong)]"
-          >
-            {applyLabel}
-          </Link>
+          {externalJob ? (
+            <a
+              href={applyHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--brand)] text-sm font-bold text-white transition hover:bg-[var(--brand-strong)]"
+            >
+              {applyLabel}
+            </a>
+          ) : (
+            <Link
+              href={applied ? "/worker/applications" : applyHref}
+              className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--brand)] text-sm font-bold text-white transition hover:bg-[var(--brand-strong)]"
+            >
+              {applyLabel}
+            </Link>
+          )}
           {user && messageConversationId ? (
             <Link
               href={`/worker/messages/${messageConversationId}`}

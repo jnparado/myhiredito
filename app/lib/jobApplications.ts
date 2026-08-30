@@ -1,6 +1,10 @@
 import type { AssessmentResult } from "./jobAssessments";
 import type { Job } from "./jobs";
+import { jobs } from "./jobs";
 import { syncApplicationToEmployerPipeline } from "./applicationBridge";
+import { WORKER_DEMO_EMAIL } from "./workerDemoAuth";
+import type { WorkerAuthUser } from "./workerAuth";
+import { getWorkerDisplayName, getWorkerEmail } from "./workerAuth";
 
 export type JobApplicationStatus =
   | "submitted"
@@ -78,6 +82,81 @@ export function getJobApplications(userKey: string): JobApplication[] {
   }
 }
 
+export function getApplicationLookupKeys(
+  user: WorkerAuthUser | null,
+  userKey: string | null,
+): string[] {
+  const keys = new Set<string>();
+  if (userKey) keys.add(userKey);
+  if (!user) return [...keys];
+
+  const email = getWorkerEmail(user).trim().toLowerCase();
+  if (email) keys.add(email);
+  if (
+    email === WORKER_DEMO_EMAIL ||
+    getWorkerDisplayName(user).toLowerCase() === "alex rivera"
+  ) {
+    keys.add(WORKER_DEMO_EMAIL);
+  }
+  return [...keys];
+}
+
+export function getJobApplicationsForKeys(keys: string[]): JobApplication[] {
+  const bySlug = new Map<string, JobApplication>();
+  for (const key of keys) {
+    for (const application of getJobApplications(key)) {
+      const existing = bySlug.get(application.jobSlug);
+      if (
+        !existing ||
+        Date.parse(application.appliedAt) > Date.parse(existing.appliedAt)
+      ) {
+        bySlug.set(application.jobSlug, application);
+      }
+    }
+  }
+  return [...bySlug.values()].sort((a, b) =>
+    b.appliedAt.localeCompare(a.appliedAt),
+  );
+}
+
+function demoSeedApplications(): JobApplication[] {
+  const now = Date.now();
+  const cna = jobs.find((job) => job.slug === "certified-nursing-assistant") ?? jobs[0];
+  const home = jobs.find((job) => job.slug === "home-health-aide") ?? jobs[2];
+  return [
+    {
+      jobSlug: cna.slug,
+      jobTitle: cna.title,
+      company: cna.company,
+      category: cna.category,
+      location: cna.location,
+      pay: cna.pay,
+      appliedAt: new Date(now - 1000 * 60 * 60 * 18).toISOString(),
+      status: "under-review",
+    },
+    {
+      jobSlug: home.slug,
+      jobTitle: home.title,
+      company: home.company,
+      category: home.category,
+      location: home.location,
+      pay: home.pay,
+      appliedAt: new Date(now - 1000 * 60 * 60 * 4).toISOString(),
+      status: "submitted",
+    },
+  ];
+}
+
+export function ensureDemoWorkerApplications(userKey: string): JobApplication[] {
+  const existing = getJobApplications(userKey);
+  if (existing.length > 0) return existing;
+  const seeded = demoSeedApplications();
+  if (typeof window === "undefined") return seeded;
+  localStorage.setItem(applicationsKey(userKey), JSON.stringify(seeded));
+  window.dispatchEvent(new Event("myhiredito-job-applications"));
+  return seeded;
+}
+
 export function submitJobApplication(
   userKey: string,
   application: JobApplication,
@@ -115,6 +194,10 @@ export function submitJobApplication(
 
 export function hasAppliedToJob(userKey: string, jobSlug: string): boolean {
   return getJobApplications(userKey).some((item) => item.jobSlug === jobSlug);
+}
+
+export function hasAppliedToJobForKeys(keys: string[], jobSlug: string): boolean {
+  return getJobApplicationsForKeys(keys).some((item) => item.jobSlug === jobSlug);
 }
 
 export function updateWorkerApplicationStatus(

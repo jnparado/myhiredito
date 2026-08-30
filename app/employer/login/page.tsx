@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { formatAuthError } from "@/app/lib/authErrors";
-import { beginDemoAuth, beginSupabaseAuth } from "@/app/lib/authSession";
+import { beginSupabaseAuth } from "@/app/lib/authSession";
+import { signInDemoAccount } from "@/app/lib/demoSupabaseAuth";
 import {
   AuthShell,
   authButtonClass,
@@ -21,7 +22,6 @@ import {
   EMPLOYER_DEMO_EMAIL,
   EMPLOYER_DEMO_PASSWORD,
   isEmployerDemoCredentials,
-  setDemoEmployerSession,
 } from "@/app/lib/employerDemoAuth";
 
 export default function EmployerLoginPage() {
@@ -44,10 +44,9 @@ export default function EmployerLoginPage() {
     setLoading(true);
     try {
       if (isEmployerDemoCredentials(email, password)) {
-        await beginDemoAuth();
+        await signInDemoAccount("employer");
         markRoleSignedIn("employer");
         setLastAuthRole("employer");
-        setDemoEmployerSession();
         notifyEmployerAuthChange();
         router.push("/employer/dashboard");
         router.refresh();
@@ -141,7 +140,8 @@ export default function EmployerLoginPage() {
             Password: <span className="font-mono text-zinc-900">{EMPLOYER_DEMO_PASSWORD}</span>
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            Preview the employer dashboard, applicants, and messaging.
+            First login creates Jordan Lee in Supabase. After that this demo
+            account signs in from the database.
           </p>
           <button
             type="button"

@@ -1,4 +1,7 @@
 import type { EmployerJobPost } from "./employerJobs";
+import { EMPLOYER_DEMO_EMAIL } from "./employerDemoAuth";
+import type { EmployerAuthUser } from "./employerAuth";
+import { getEmployerEmail } from "./employerAuth";
 
 export type ApplicantStatus =
   | "new"
@@ -97,6 +100,29 @@ export function getApplicants(userKey: string): JobApplicant[] {
   }
 }
 
+export function getApplicantLookupKeys(
+  user: EmployerAuthUser | null,
+  userKey: string | null,
+): string[] {
+  const keys = new Set<string>();
+  if (userKey) keys.add(userKey);
+  if (!user) return [...keys];
+  const email = getEmployerEmail(user).trim().toLowerCase();
+  if (email) keys.add(email);
+  if (email === EMPLOYER_DEMO_EMAIL) keys.add(EMPLOYER_DEMO_EMAIL);
+  return [...keys];
+}
+
+export function getApplicantsForKeys(keys: string[]): JobApplicant[] {
+  const byId = new Map<string, JobApplicant>();
+  for (const key of keys) {
+    for (const applicant of getApplicants(key)) {
+      byId.set(applicant.id, applicant);
+    }
+  }
+  return [...byId.values()].sort((a, b) => b.appliedAt.localeCompare(a.appliedAt));
+}
+
 export function saveApplicants(
   userKey: string,
   applicants: JobApplicant[],
@@ -109,9 +135,10 @@ export function saveApplicants(
 export function ensureApplicants(
   userKey: string,
   jobs: EmployerJobPost[],
+  extraKeys: string[] = [],
 ): JobApplicant[] {
-  const existing = getApplicants(userKey);
-  if (existing.length > 0) return existing;
+  const merged = getApplicantsForKeys([userKey, ...extraKeys]);
+  if (merged.length > 0) return merged;
   const seeded = defaultApplicants(jobs);
   saveApplicants(userKey, seeded);
   return seeded;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { JobsBrowser } from "./JobsBrowser";
 import { JobsPageShell } from "../../components/worker/JobsPageShell";
-import { jobs } from "../../lib/jobs";
+import { getAllMarketplaceJobs } from "../../lib/jobCatalog";
 
 export const metadata = {
   title: "Browse Jobs | MyHiredito",
@@ -18,7 +18,8 @@ export default function JobsPage() {
               Find work
             </h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Browse {jobs.length}+ open jobs across healthcare, tech, design, and more.
+              Browse {getAllMarketplaceJobs().length}+ open jobs on MyHiredito,
+              LinkedIn, and Upwork.
             </p>
           </div>
           <Link

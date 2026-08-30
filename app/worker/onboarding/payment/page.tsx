@@ -11,7 +11,7 @@ export default function PaymentOnboardingPage() {
       <OnboardingStepLayout
         stepId="payment-method"
         title="Add payment method"
-        description="Connect a bank account with Stripe so you can receive pay after completed shifts."
+        description="Choose Bank, Stripe, PayPal, or Wise so you can receive pay after completed shifts."
       >
         <Suspense
           fallback={

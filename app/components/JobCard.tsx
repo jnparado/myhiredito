@@ -5,7 +5,16 @@ import {
   type Job,
 } from "../lib/jobs";
 import type { JobMatchResult } from "../lib/ai/types";
-import { JOB_SOURCE_LABELS } from "../lib/externalHiringBoard";
+import {
+  JOB_SOURCE_LABELS,
+  isExternalMarketplaceJob,
+} from "../lib/externalHiringBoard";
+
+function sourceBadgeClass(source: NonNullable<Job["source"]>) {
+  if (source === "linkedin") return "bg-[#0A66C2]/10 text-[#0A66C2]";
+  if (source === "upwork") return "bg-teal-50 text-teal-800";
+  return "bg-blue-50 text-blue-700";
+}
 
 const typeLabels: Record<Job["type"], string> = {
   "on-demand": "On-demand",
@@ -34,6 +43,9 @@ export function JobCard({
           </h2>
           <p className="mt-0.5 text-sm text-[var(--muted)]">
             {job.company} · {formatPostedAgo(job.postedAt)}
+            {isExternalMarketplaceJob(job) && job.source
+              ? ` · via ${JOB_SOURCE_LABELS[job.source]}`
+              : ""}
           </p>
         </div>
         <span className="shrink-0 text-sm font-bold text-[var(--brand-dark)]">
@@ -53,7 +65,9 @@ export function JobCard({
           </span>
         )}
         {job.source && job.source !== "myhiredito" && (
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 font-semibold text-blue-700">
+          <span
+            className={`rounded-full px-2 py-0.5 font-semibold ${sourceBadgeClass(job.source)}`}
+          >
             {JOB_SOURCE_LABELS[job.source]}
           </span>
         )}
@@ -97,7 +111,9 @@ export function JobCard({
           proposals
         </span>
         <span className="font-semibold text-[var(--brand)] group-hover:underline">
-          View job →
+          {isExternalMarketplaceJob(job) && job.source
+            ? `View on ${JOB_SOURCE_LABELS[job.source]} →`
+            : "View job →"}
         </span>
       </div>
     </Link>

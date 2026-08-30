@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { StripeBankDetails, StripeBankRole } from "@/app/lib/stripe/bank";
+import type {
+  StripeBankDetails,
+  StripeBankRole,
+  StripeCheckoutMethod,
+} from "@/app/lib/stripe/bank";
 
 const DEMO_BANK: StripeBankDetails = {
   paymentMethodId: "pm_demo_bank",
@@ -14,6 +18,7 @@ type Props = {
   role: StripeBankRole;
   email: string;
   returnPath: string;
+  method?: StripeCheckoutMethod;
   onConnected?: (bank: StripeBankDetails) => void | Promise<void>;
 };
 
@@ -21,6 +26,7 @@ export function StripeBankConnect({
   role,
   email,
   returnPath,
+  method = "bank",
   onConnected,
 }: Props) {
   const [loading, setLoading] = useState(false);
@@ -33,7 +39,7 @@ export function StripeBankConnect({
       const response = await fetch("/api/stripe/bank-setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, email, returnPath }),
+        body: JSON.stringify({ role, email, returnPath, method }),
       });
       const data = (await response.json()) as {
         configured?: boolean;
@@ -49,7 +55,10 @@ export function StripeBankConnect({
       if (response.status === 503 || data.configured === false) {
         await onConnected?.({
           ...DEMO_BANK,
+          bankName: method === "card" ? "Stripe Visa" : DEMO_BANK.bankName,
+          last4: method === "card" ? "4242" : DEMO_BANK.last4,
           accountHolder: email.split("@")[0] || DEMO_BANK.accountHolder,
+          kind: method === "card" ? "stripe" : "bank",
         });
         return;
       }
@@ -68,10 +77,18 @@ export function StripeBankConnect({
         type="button"
         onClick={() => void connectBank()}
         disabled={loading || !email}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#635bff] text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#4b45c6] disabled:cursor-not-allowed disabled:opacity-60"
+        className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold uppercase tracking-wide text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
+          method === "card"
+            ? "bg-[#635bff] hover:bg-[#4b45c6]"
+            : "bg-[#1db954] hover:bg-[#17a34a]"
+        }`}
       >
         <StripeMark />
-        {loading ? "Opening Stripe..." : "Connect bank with Stripe"}
+        {loading
+          ? "Opening Stripe..."
+          : method === "card"
+            ? "Connect card with Stripe"
+            : "Connect bank account"}
       </button>
       {error && (
         <p className="mt-2 text-sm text-red-600">{error}</p>

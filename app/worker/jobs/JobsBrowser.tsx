@@ -16,11 +16,24 @@ import {
 import {
   experienceLabels,
   jobCategories,
-  jobs,
   type ExperienceLevel,
   type Job,
 } from "../../lib/jobs";
 import { getAllMarketplaceJobs } from "../../lib/jobCatalog";
+import {
+  JOB_SOURCE_LABELS,
+  jobMatchesQuery,
+  type JobSource,
+} from "../../lib/externalHiringBoard";
+
+type BoardFilter = "all" | "myhiredito" | "linkedin" | "upwork";
+
+const BOARD_FILTERS: { id: BoardFilter; label: string }[] = [
+  { id: "all", label: "All platforms" },
+  { id: "myhiredito", label: "MyHiredito" },
+  { id: "linkedin", label: "LinkedIn" },
+  { id: "upwork", label: "Upwork" },
+];
 
 export function JobsBrowser() {
   const { user } = useWorkerAuth();
@@ -28,11 +41,12 @@ export function JobsBrowser() {
   const userKey = getWorkerUserKey(user);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [board, setBoard] = useState<BoardFilter>("all");
   const [experience, setExperience] = useState<ExperienceLevel | "all">("all");
   const [payType, setPayType] = useState<Job["payType"] | "all">("all");
   const [sort, setSort] = useState<"recent" | "match">("match");
   const [showFilters, setShowFilters] = useState(false);
-  const [allJobs, setAllJobs] = useState<Job[]>(jobs);
+  const [allJobs, setAllJobs] = useState<Job[]>(() => getAllMarketplaceJobs());
 
   const workerContext = useMemo(
     () =>
@@ -70,14 +84,12 @@ export function JobsBrowser() {
       if (experience !== "all" && job.experienceLevel !== experience)
         return false;
       if (payType !== "all" && job.payType !== payType) return false;
-      if (!q) return true;
-      return (
-        job.title.toLowerCase().includes(q) ||
-        job.company.toLowerCase().includes(q) ||
-        job.description.toLowerCase().includes(q) ||
-        job.skills.some((s) => s.toLowerCase().includes(q)) ||
-        job.category.toLowerCase().includes(q)
-      );
+      if (board === "myhiredito") {
+        if (job.source && job.source !== "myhiredito") return false;
+      } else if (board !== "all" && job.source !== board) {
+        return false;
+      }
+      return jobMatchesQuery(job, q);
     });
 
     if (sort === "match" && userKey) {
@@ -91,7 +103,7 @@ export function JobsBrowser() {
     return [...list].sort(
       (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
     );
-  }, [search, category, experience, payType, allJobs, sort, userKey, matches]);
+  }, [search, category, board, experience, payType, allJobs, sort, userKey, matches]);
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8">
@@ -147,6 +159,41 @@ export function JobsBrowser() {
                   {cat !== "All" && (
                     <span className="ml-1 text-xs opacity-60">
                       ({allJobs.filter((j) => j.category === cat).length})
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
+              Platform
+            </label>
+            <div className="mt-2 space-y-1">
+              {BOARD_FILTERS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setBoard(option.id)}
+                  className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                    board === option.id
+                      ? "bg-[var(--brand-light)] text-[var(--brand-dark)]"
+                      : "text-[var(--muted)] hover:bg-[var(--surface)]"
+                  }`}
+                >
+                  {option.label}
+                  {option.id !== "all" && (
+                    <span className="ml-1 text-xs opacity-60">
+                      (
+                      {
+                        allJobs.filter((job) =>
+                          option.id === "myhiredito"
+                            ? !job.source || job.source === "myhiredito"
+                            : job.source === option.id,
+                        ).length
+                      }
+                      )
                     </span>
                   )}
                 </button>
@@ -224,11 +271,28 @@ export function JobsBrowser() {
           </svg>
           <input
             type="search"
-            placeholder="Search jobs by title, skill, or company..."
+            placeholder="Search jobs, LinkedIn, or Upwork..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-12 w-full rounded-xl border border-black/10 bg-white pl-12 pr-4 text-sm outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
           />
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {BOARD_FILTERS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setBoard(option.id)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                board === option.id
+                  ? "bg-[var(--brand)] text-white"
+                  : "border border-zinc-200 bg-white text-zinc-600 hover:border-[var(--brand)]/40"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -241,6 +305,23 @@ export function JobsBrowser() {
               <span>
                 {" "}
                 in <span className="font-semibold">{category}</span>
+              </span>
+            )}
+            {board !== "all" && (
+              <span>
+                {" "}
+                on{" "}
+                <span className="font-semibold">
+                  {board === "myhiredito"
+                    ? "MyHiredito"
+                    : JOB_SOURCE_LABELS[board as JobSource]}
+                </span>
+              </span>
+            )}
+            {board === "all" && (
+              <span className="hidden sm:inline">
+                {" "}
+                · includes LinkedIn & Upwork
               </span>
             )}
           </p>

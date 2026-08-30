@@ -92,7 +92,7 @@ export type SkillsCertificatesOnboardingInput = {
 };
 
 export type PaymentOnboardingInput = {
-  paymentMethod: "bank-account" | "debit-card";
+  paymentMethod: "bank-account" | "debit-card" | "paypal" | "wise";
   accountHolder: string;
   accountLast4: string;
 };
