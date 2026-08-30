@@ -182,13 +182,18 @@ function saveOnboardingProgressLocal(
 }
 
 function completeDemoEmployerProgress(): OnboardingProgress {
+  const { identity, businessCertificate, businessDetails } =
+    EMPLOYER_DEMO_ONBOARDING.data;
   return {
     completedSteps: [...EMPLOYER_DEMO_ONBOARDING.completedSteps],
     dismissed: EMPLOYER_DEMO_ONBOARDING.dismissed,
     data: {
-      identity: { ...EMPLOYER_DEMO_ONBOARDING.data.identity },
-      businessCertificate: { ...EMPLOYER_DEMO_ONBOARDING.data.businessCertificate },
-      businessDetails: { ...EMPLOYER_DEMO_ONBOARDING.data.businessDetails },
+      identity: { ...identity },
+      businessCertificate: { ...businessCertificate },
+      businessDetails: {
+        ...businessDetails,
+        hiringRoles: [...businessDetails.hiringRoles],
+      },
     },
   };
 }
