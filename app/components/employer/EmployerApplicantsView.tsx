@@ -176,6 +176,14 @@ function ApplicantCard({
         >
           Message
         </button>
+        {applicant.status === "hired" && (
+          <Link
+            href={`/employer/tracker?worker=${applicant.id}`}
+            className="rounded-lg bg-[#1db954] px-3 py-1.5 text-xs font-bold text-white"
+          >
+            View tracker
+          </Link>
+        )}
       </div>
     </div>
   );

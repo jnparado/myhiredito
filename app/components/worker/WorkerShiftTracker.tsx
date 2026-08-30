@@ -11,11 +11,11 @@ import {
   formatDurationShort,
   formatShiftDate,
   formatShiftTime,
-  getCompletedTimesheet,
   getShiftDurationMs,
-  getTodayTrackedMs,
-  getWeekTrackedMs,
+  getTimesheetFromShifts,
+  getTrackedMsFromShifts,
   markShiftEnRoute,
+  localDateStamp,
   SHIFT_STATUS_COLORS,
   SHIFT_STATUS_LABELS,
   type ShiftStatus,
@@ -264,7 +264,7 @@ export function WorkerShiftTracker({ compact = false }: Props) {
 
   if (loading || !userKey) return null;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateStamp();
   const upcoming = shifts.filter(
     (shift) =>
       ["scheduled", "confirmed", "en-route", "clocked-in"].includes(shift.status) &&
@@ -274,9 +274,9 @@ export function WorkerShiftTracker({ compact = false }: Props) {
     (shift) => shift.status === "completed" || shift.shiftDate < today,
   );
   const focusShift = activeShift ?? nextShift;
-  const todayMs = getTodayTrackedMs(userKey, now);
-  const weekMs = getWeekTrackedMs(userKey, now);
-  const timesheet = getCompletedTimesheet(userKey);
+  const todayMs = getTrackedMsFromShifts(shifts, now, "today");
+  const weekMs = getTrackedMsFromShifts(shifts, now, "week");
+  const timesheet = getTimesheetFromShifts(shifts);
 
   if (compact) {
     return (

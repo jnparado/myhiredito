@@ -9,6 +9,7 @@ import {
   inviteWorker,
 } from "@/app/lib/employerWorkers";
 import { EmployerOnboardingTaskList } from "./EmployerOnboardingTaskList";
+import { EmployerTeamTracker } from "./EmployerTeamTracker";
 
 const HIRING_TIPS = [
   { title: "Post within 48 hours", detail: "Jobs posted early get 3× more applicants" },
@@ -32,6 +33,8 @@ export function EmployerHomeRightRail() {
   return (
     <aside className="space-y-2">
       <EmployerOnboardingTaskList />
+
+      <EmployerTeamTracker compact />
 
       <div className="overflow-hidden rounded-lg border border-zinc-300/60 bg-white shadow-sm">
         <div className="border-b border-zinc-100 px-4 py-3">

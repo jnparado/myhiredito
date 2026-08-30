@@ -32,6 +32,18 @@ function applicationsKey(userKey: string): string {
   return `${APPLICATIONS_PREFIX}${userKey}`;
 }
 
+export function listStoredApplicationUserKeys(): string[] {
+  if (typeof window === "undefined") return [];
+  const keys: string[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(APPLICATIONS_PREFIX)) {
+      keys.push(key.slice(APPLICATIONS_PREFIX.length));
+    }
+  }
+  return keys;
+}
+
 export function saveAssessmentResult(
   userKey: string,
   result: AssessmentResult,

@@ -1,3 +1,5 @@
+import { WORKER_DEMO_EMAIL } from "./workerDemoAuth";
+
 export type WorkerRosterStatus = "saved" | "invited" | "active" | "hired";
 
 export type EmployerWorker = {
@@ -9,6 +11,8 @@ export type EmployerWorker = {
   rating: number;
   status: WorkerRosterStatus;
   addedAt: string;
+  workerUserKey?: string;
+  workerEmail?: string;
 };
 
 const STORAGE_PREFIX = "myhiredito_employer_workers_";
@@ -29,6 +33,8 @@ const SUGGESTED_POOL: Omit<EmployerWorker, "id" | "status" | "addedAt">[] = [
     skills: "5 yrs experience · Patient Care",
     location: "Austin, TX",
     rating: 4.9,
+    workerUserKey: "maria.santos@email.com",
+    workerEmail: "maria.santos@email.com",
   },
   {
     name: "James Chen",
@@ -36,6 +42,8 @@ const SUGGESTED_POOL: Omit<EmployerWorker, "id" | "status" | "addedAt">[] = [
     skills: "ICU certified · ACLS",
     location: "Austin, TX",
     rating: 4.8,
+    workerUserKey: "james.chen@email.com",
+    workerEmail: "james.chen@email.com",
   },
   {
     name: "Aisha Patel",
@@ -43,6 +51,8 @@ const SUGGESTED_POOL: Omit<EmployerWorker, "id" | "status" | "addedAt">[] = [
     skills: "Home health · 4.9 rating",
     location: "Round Rock, TX",
     rating: 4.9,
+    workerUserKey: "aisha.patel@email.com",
+    workerEmail: "aisha.patel@email.com",
   },
   {
     name: "David Kim",
@@ -50,6 +60,8 @@ const SUGGESTED_POOL: Omit<EmployerWorker, "id" | "status" | "addedAt">[] = [
     skills: "Forklift certified · Night shifts",
     location: "Cedar Park, TX",
     rating: 4.7,
+    workerUserKey: "david.kim@email.com",
+    workerEmail: "david.kim@email.com",
   },
 ];
 
@@ -78,10 +90,24 @@ export function inviteWorker(
   const found = existing.find((w) => w.name === worker.name);
   if (found) {
     const updated = existing.map((w) =>
-      w.name === worker.name ? { ...w, status: "invited" as const } : w,
+      w.name === worker.name
+        ? {
+            ...w,
+            ...worker,
+            id: w.id,
+            addedAt: w.addedAt,
+            status: "invited" as const,
+          }
+        : w,
     );
     saveWorkers(userKey, updated);
-    return { ...found, status: "invited" };
+    return {
+      ...found,
+      ...worker,
+      id: found.id,
+      addedAt: found.addedAt,
+      status: "invited",
+    };
   }
 
   const created: EmployerWorker = {
@@ -136,11 +162,18 @@ export function addHiredWorkerToRoster(
   const existing = getEmployerWorkers(userKey);
   const found = existing.find((item) => item.name === worker.name);
   if (found) {
+    const merged: EmployerWorker = {
+      ...found,
+      ...worker,
+      id: found.id,
+      status: "hired",
+      addedAt: found.addedAt,
+    };
     const next = existing.map((item) =>
-      item.name === worker.name ? { ...item, status: "hired" as const } : item,
+      item.name === worker.name ? merged : item,
     );
     saveWorkers(userKey, next);
-    return { ...found, status: "hired" };
+    return merged;
   }
 
   const created: EmployerWorker = {
@@ -151,6 +184,31 @@ export function addHiredWorkerToRoster(
   };
   saveWorkers(userKey, [created, ...existing]);
   return created;
+}
+
+const KNOWN_WORKER_TRACKER_KEYS: Record<string, string> = {
+  "alex rivera": WORKER_DEMO_EMAIL,
+  "alex.rivera@email.com": WORKER_DEMO_EMAIL,
+  [WORKER_DEMO_EMAIL]: WORKER_DEMO_EMAIL,
+};
+
+export function getTrackerKeyForWorker(worker: {
+  name: string;
+  workerUserKey?: string;
+  workerEmail?: string;
+}): string {
+  const explicit = (worker.workerUserKey || worker.workerEmail || "").trim().toLowerCase();
+  if (explicit && KNOWN_WORKER_TRACKER_KEYS[explicit]) {
+    return KNOWN_WORKER_TRACKER_KEYS[explicit];
+  }
+  if (explicit) return worker.workerUserKey || worker.workerEmail || explicit;
+
+  const byName = KNOWN_WORKER_TRACKER_KEYS[worker.name.trim().toLowerCase()];
+  if (byName) return byName;
+
+  return (
+    worker.name.trim().toLowerCase().replace(/\s+/g, ".") + "@workers.myhiredito"
+  );
 }
 
 export function getActiveWorkerCount(userKey: string): number {

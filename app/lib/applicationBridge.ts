@@ -14,7 +14,7 @@ import {
 } from "./employerJobs";
 import type { Job } from "./jobs";
 import { getOrCreateEmployerConversation } from "./messages";
-import { addHiredWorkerToRoster } from "./employerWorkers";
+import { addHiredWorkerToRoster, getTrackerKeyForWorker } from "./employerWorkers";
 
 type SyncApplicationInput = {
   workerUserKey: string;
@@ -119,20 +119,31 @@ export function applyEmployerDecisionToWorker({
             ? "rejected"
             : "submitted";
 
-  if (applicant.workerUserKey) {
-    const key = `myhiredito_applications_${applicant.workerUserKey}`;
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      try {
-        const existing = JSON.parse(raw) as JobApplication[];
-        const next = existing.map((item) =>
-          item.jobSlug === applicant.jobSlug ? { ...item, status: workerStatus } : item,
-        );
-        localStorage.setItem(key, JSON.stringify(next));
-        window.dispatchEvent(new Event("myhiredito-job-applications"));
-      } catch {
-        // Ignore malformed application storage.
-      }
+  const applicationKeys = [
+    applicant.workerUserKey,
+    applicant.workerEmail,
+    applicant.workerName.trim().toLowerCase() === "alex rivera"
+      ? "worker@demo.com"
+      : "",
+    applicant.workerEmail.trim().toLowerCase() === "alex.rivera@email.com"
+      ? "worker@demo.com"
+      : "",
+  ].filter((key, index, list): key is string => !!key && list.indexOf(key) === index);
+
+  for (const key of applicationKeys) {
+    const storageKey = `myhiredito_applications_${key}`;
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) continue;
+    try {
+      const existing = JSON.parse(raw) as JobApplication[];
+      if (!existing.some((item) => item.jobSlug === applicant.jobSlug)) continue;
+      const next = existing.map((item) =>
+        item.jobSlug === applicant.jobSlug ? { ...item, status: workerStatus } : item,
+      );
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      window.dispatchEvent(new Event("myhiredito-job-applications"));
+    } catch {
+      // Ignore malformed application storage.
     }
   }
 
@@ -143,6 +154,12 @@ export function applyEmployerDecisionToWorker({
       skills: applicant.skills,
       location: applicant.location,
       rating: 4.8,
+      workerUserKey: getTrackerKeyForWorker({
+        name: applicant.workerName,
+        workerUserKey: applicant.workerUserKey,
+        workerEmail: applicant.workerEmail,
+      }),
+      workerEmail: applicant.workerEmail,
     });
   }
 }

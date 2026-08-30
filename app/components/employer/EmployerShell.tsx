@@ -9,6 +9,7 @@ import { useEmployerApplicants } from "@/app/hooks/useEmployerApplicants";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useEmployerMessages } from "@/app/hooks/useEmployerMessages";
 import { useEmployerOnboarding } from "@/app/hooks/useEmployerOnboarding";
+import { useEmployerTeamTracking } from "@/app/hooks/useEmployerTeamTracking";
 import {
   getEmployerCompanyName,
   getEmployerDisplayName,
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/employer/applicants", label: "Applicants", icon: "applicants" },
   { href: "/employer/messages", label: "Messages", icon: "messages" },
   { href: "/employer/workers", label: "Workers", icon: "workers" },
+  { href: "/employer/tracker", label: "Tracker", icon: "tracker" },
   { href: "/employer/billing", label: "Billing", icon: "billing" },
   { href: "/employer/reports", label: "Reports", icon: "reports" },
 ];
@@ -68,6 +70,12 @@ function NavIcon({ type }: { type: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
         </svg>
       );
+    case "tracker":
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
     case "billing":
       return (
         <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -96,6 +104,7 @@ export function EmployerShell({
   const { needsAttention: onboardingIncomplete, progress } = useEmployerOnboarding();
   const { unreadCount: unreadMessages } = useEmployerMessages();
   const { newCount: newApplicants } = useEmployerApplicants();
+  const { liveCount: trackingLiveCount } = useEmployerTeamTracking();
   const user = userProp ?? sessionUser;
   const displayName = user ? getEmployerDisplayName(user) : "Employer";
   const companyName = user ? getEmployerCompanyName(user) : "MyHiredito";
@@ -161,6 +170,8 @@ export function EmployerShell({
                       item.href !== "#";
               const showUnreadBadge =
                 item.icon === "messages" && unreadMessages > 0;
+              const showLiveBadge =
+                item.icon === "tracker" && trackingLiveCount > 0;
               return (
                 <Link
                   key={item.label}
@@ -181,6 +192,9 @@ export function EmployerShell({
                     <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
                       {unreadMessages > 9 ? "9+" : unreadMessages}
                     </span>
+                  )}
+                  {showLiveBadge && (
+                    <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-[#1db954] ring-2 ring-[#0f1115]" />
                   )}
                 </Link>
               );
@@ -287,6 +301,18 @@ export function EmployerShell({
                     {unreadMessages > 0 && (
                       <span className="ml-2 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
                         {unreadMessages}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    href="/employer/tracker"
+                    onClick={() => setOpenPanel(null)}
+                    className="block px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Team tracker
+                    {trackingLiveCount > 0 && (
+                      <span className="ml-2 rounded-full bg-[#1db954] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        {trackingLiveCount} live
                       </span>
                     )}
                   </Link>

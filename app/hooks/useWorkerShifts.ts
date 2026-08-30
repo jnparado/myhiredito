@@ -5,6 +5,7 @@ import { useWorkerAuth } from "./useWorkerAuth";
 import { getWorkerUserKey } from "@/app/lib/workerOnboarding";
 import {
   ensureWorkerShifts,
+  localDateStamp,
   type WorkerShift,
 } from "@/app/lib/workerShifts";
 
@@ -34,15 +35,25 @@ export function useWorkerShifts() {
     }
     window.addEventListener("myhiredito-worker-shifts", onChange);
     window.addEventListener("storage", onChange);
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel("myhiredito-worker-shifts");
+      channel.onmessage = onChange;
+    } catch {
+      channel = null;
+    }
+
     return () => {
       window.removeEventListener("myhiredito-worker-shifts", onChange);
       window.removeEventListener("storage", onChange);
+      channel?.close();
     };
   }, [refresh]);
 
   const activeShift =
     shifts.find((shift) => shift.status === "clocked-in") ?? null;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateStamp();
   const nextShift =
     shifts.find(
       (shift) =>

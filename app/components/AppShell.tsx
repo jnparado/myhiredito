@@ -30,6 +30,7 @@ function shouldHideAllChrome(pathname: string | null): boolean {
   if (pathname?.startsWith("/employer/messages")) return true;
   if (pathname?.startsWith("/employer/applicants")) return true;
   if (pathname?.startsWith("/employer/workers")) return true;
+  if (pathname?.startsWith("/employer/tracker")) return true;
   if (pathname?.startsWith("/employer/billing")) return true;
   if (pathname?.startsWith("/employer/reports")) return true;
   if (pathname?.startsWith("/employer/profile")) return true;

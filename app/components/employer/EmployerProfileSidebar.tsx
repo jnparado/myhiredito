@@ -147,6 +147,12 @@ export function EmployerProfileSidebar() {
           Messages
         </Link>
         <Link
+          href="/employer/tracker"
+          className="mt-1.5 block text-xs font-semibold text-zinc-700 hover:text-[#1db954]"
+        >
+          Team tracker
+        </Link>
+        <Link
           href="/employer/billing"
           className="mt-1.5 block text-xs font-semibold text-zinc-700 hover:text-[#1db954]"
         >

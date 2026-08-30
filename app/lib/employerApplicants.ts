@@ -47,6 +47,7 @@ function defaultApplicants(jobs: EmployerJobPost[]): JobApplicant[] {
       jobTitle: firstJob?.title ?? "Certified Nursing Assistant (CNA)",
       workerName: "Alex Rivera",
       workerEmail: "alex.rivera@email.com",
+      workerUserKey: "worker@demo.com",
       skills: "CNA · Patient Care · CPR",
       experience: "3 years",
       examScore: 92,
@@ -147,12 +148,38 @@ export function addApplicantFromApplication(
   applicant: Omit<JobApplicant, "id"> & { id?: string },
 ): JobApplicant {
   const existing = getApplicants(userKey);
-  const duplicate = existing.find(
-    (item) =>
-      item.workerEmail === applicant.workerEmail &&
-      item.jobSlug === applicant.jobSlug,
-  );
-  if (duplicate) return duplicate;
+  const applicantEmail = applicant.workerEmail.trim().toLowerCase();
+  const applicantName = applicant.workerName.trim().toLowerCase();
+  const duplicate = existing.find((item) => {
+    if (item.jobSlug !== applicant.jobSlug) return false;
+    if (item.workerEmail.trim().toLowerCase() === applicantEmail) return true;
+    if (
+      applicant.workerUserKey &&
+      item.workerUserKey &&
+      item.workerUserKey === applicant.workerUserKey
+    ) {
+      return true;
+    }
+    return item.workerName.trim().toLowerCase() === applicantName;
+  });
+  if (duplicate) {
+    const merged: JobApplicant = {
+      ...duplicate,
+      workerUserKey: applicant.workerUserKey || duplicate.workerUserKey,
+      workerEmail: applicant.workerEmail || duplicate.workerEmail,
+      workerName: applicant.workerName || duplicate.workerName,
+      skills: applicant.skills || duplicate.skills,
+      location: applicant.location || duplicate.location,
+      examScore: applicant.examScore ?? duplicate.examScore,
+    };
+    if (JSON.stringify(merged) !== JSON.stringify(duplicate)) {
+      saveApplicants(
+        userKey,
+        existing.map((item) => (item.id === duplicate.id ? merged : item)),
+      );
+    }
+    return merged;
+  }
 
   const created: JobApplicant = {
     ...applicant,
