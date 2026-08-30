@@ -141,7 +141,7 @@ export function EmployerShell({
   async function handleSignOut() {
     setOpenPanel(null);
     await signOut();
-    router.push("/employer/login");
+    router.push("/");
     router.refresh();
   }
 

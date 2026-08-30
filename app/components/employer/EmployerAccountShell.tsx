@@ -15,7 +15,7 @@ export function EmployerAccountShell({
 
   useEffect(() => {
     if (!loading && !authenticated) {
-      router.replace("/employer/login");
+      router.replace("/");
     }
   }, [authenticated, loading, router]);
 
