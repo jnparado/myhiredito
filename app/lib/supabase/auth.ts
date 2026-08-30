@@ -15,13 +15,11 @@ export async function signUpWithRole({
   password,
   role,
   metadata = {},
-  nextPath,
 }: {
   email: string;
   password: string;
   role: UserRole;
   metadata?: Record<string, string>;
-  nextPath: string;
 }) {
   if (!isSupabaseConfigured()) {
     throw new Error("Supabase is not configured.");
@@ -34,7 +32,6 @@ export async function signUpWithRole({
     password,
     options: {
       data: { role, ...metadata },
-      emailRedirectTo: getAuthCallbackUrl(nextPath),
     },
   });
 
@@ -42,17 +39,40 @@ export async function signUpWithRole({
     throw new Error(formatAuthError(result.error));
   }
 
-  if (result.data.user?.id) {
-    if (result.data.session) {
-      await ensureProfileForUser({
-        userId: result.data.user.id,
-        email: normalizedEmail,
-        role,
-      });
-      if (role === "worker") {
-        await ensureWorkerOnboardingInDb(result.data.user.id);
-      }
+  const existingUser =
+    result.data.user &&
+    !result.data.session &&
+    (result.data.user.identities?.length ?? 0) === 0;
+  if (existingUser) {
+    throw new Error(
+      "An account with this email already exists. Try logging in instead.",
+    );
+  }
+
+  if (!result.data.session) {
+    const signedIn = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    });
+    if (signedIn.error) {
+      throw new Error(formatAuthError(signedIn.error));
     }
+    result.data.session = signedIn.data.session;
+    result.data.user = signedIn.data.user;
+  }
+
+  const userId = result.data.user?.id;
+  if (!userId || !result.data.session) {
+    throw new Error("Account created, but sign-in failed. Try logging in.");
+  }
+
+  await ensureProfileForUser({
+    userId,
+    email: normalizedEmail,
+    role,
+  });
+  if (role === "worker") {
+    await ensureWorkerOnboardingInDb(userId);
   }
 
   return result.data;

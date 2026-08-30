@@ -25,7 +25,6 @@ export default function WorkerSignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const canSubmit = useMemo(
@@ -37,7 +36,6 @@ export default function WorkerSignupPage() {
     e.preventDefault();
     if (!canSubmit) return;
     setError(null);
-    setMessage(null);
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
@@ -48,19 +46,11 @@ export default function WorkerSignupPage() {
 
       beginSupabaseAuth();
 
-      const data = await signUpWithRole({
+      await signUpWithRole({
         email,
         password,
         role: "worker",
-        nextPath: "/worker/dashboard",
       });
-
-      if (data.user && !data.session) {
-        setMessage(
-          "Account created. Check your email to confirm your address, then log in.",
-        );
-        return;
-      }
 
       markRoleSignedIn("worker");
       setLastAuthRole("worker");
@@ -144,11 +134,6 @@ export default function WorkerSignupPage() {
         </label>
 
         {error && <div className={authErrorClass}>{error}</div>}
-        {message && (
-          <div className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand-light)] px-4 py-3 text-sm text-[var(--brand-dark)]">
-            {message}
-          </div>
-        )}
 
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Creating account..." : "Create Worker Account"}

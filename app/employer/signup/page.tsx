@@ -26,7 +26,6 @@ export default function EmployerSignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const canSubmit = useMemo(() => {
@@ -37,7 +36,6 @@ export default function EmployerSignupPage() {
     e.preventDefault();
     if (!canSubmit) return;
     setError(null);
-    setMessage(null);
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
@@ -52,16 +50,10 @@ export default function EmployerSignupPage() {
         email,
         password,
         role: "employer",
-        nextPath: "/employer/dashboard",
       });
 
       if (data.user?.id) {
         resetEmployerOnboarding(data.user.id);
-      }
-
-      if (data.user && !data.session) {
-        setMessage("Account created. Check your email to confirm, then log in.");
-        return;
       }
 
       markRoleSignedIn("employer");
@@ -146,11 +138,6 @@ export default function EmployerSignupPage() {
         </label>
 
         {error && <div className={authErrorClass}>{error}</div>}
-        {message && (
-          <div className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand-light)] px-4 py-3 text-sm text-[var(--brand-dark)]">
-            {message}
-          </div>
-        )}
 
         <button type="submit" disabled={!canSubmit} className={authButtonClass}>
           {loading ? "Creating account..." : "Create Employer Account"}

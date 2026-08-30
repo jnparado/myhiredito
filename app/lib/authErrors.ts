@@ -6,7 +6,7 @@ export function formatAuthError(error: unknown): string {
       return "Incorrect email or password.";
     }
     if (message.includes("Email not confirmed")) {
-      return "Please confirm your email before logging in. Check your inbox for the confirmation link.";
+      return "Could not start your session. Try logging in again.";
     }
     if (
       message.includes("User already registered") ||
