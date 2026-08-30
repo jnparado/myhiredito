@@ -50,15 +50,12 @@ export function useEmployerTeamTracking() {
       channel = null;
     }
 
-    const poll = window.setInterval(onChange, 2000);
-
     return () => {
       window.removeEventListener(WORKER_SHIFTS_EVENT, onChange);
       window.removeEventListener("myhiredito-employer-workers", onChange);
       window.removeEventListener("myhiredito-employer-applicants", onChange);
       window.removeEventListener("storage", onChange);
       channel?.close();
-      window.clearInterval(poll);
     };
   }, [refresh]);
 

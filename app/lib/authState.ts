@@ -147,6 +147,29 @@ export async function resolveAppAuthState(): Promise<ResolvedAppAuth> {
     const email = sessionUser?.email;
 
     if (sessionUser?.id && email) {
+      const metadataRole = sessionUser.user_metadata?.role as UserRole | undefined;
+
+      if (metadataRole === "employer") {
+        const employerProfile = await fetchProfile(sessionUser.id);
+        return {
+          worker: null,
+          employer: buildEmployerFromSupabase(sessionUser, employerProfile),
+        };
+      }
+
+      if (metadataRole === "worker") {
+        let workerProfile: ProfileRow | null = null;
+        try {
+          workerProfile = await fetchWorkerProfile(sessionUser.id);
+        } catch {
+          workerProfile = null;
+        }
+        return {
+          worker: buildWorkerFromSupabase(sessionUser, workerProfile),
+          employer: null,
+        };
+      }
+
       let workerProfile: ProfileRow | null = null;
       try {
         workerProfile = await fetchWorkerProfile(sessionUser.id);
@@ -172,7 +195,6 @@ export async function resolveAppAuthState(): Promise<ResolvedAppAuth> {
       const profileRole = (workerProfile?.role ?? employerProfile?.role) as
         | UserRole
         | undefined;
-      const metadataRole = sessionUser.user_metadata?.role as UserRole | undefined;
       const role = resolveRole(profileRole, metadataRole);
 
       if (role === "worker") {
@@ -200,29 +222,46 @@ export async function resolveAppAuthState(): Promise<ResolvedAppAuth> {
 
 let cachedAuth: ResolvedAppAuth | undefined;
 let inflightRefresh: Promise<ResolvedAppAuth> | null = null;
-const authListeners = new Set<() => void>();
+const authListeners = new Set<(state: ResolvedAppAuth) => void>();
 
 export function getCachedAppAuthState(): ResolvedAppAuth | undefined {
   return cachedAuth;
 }
 
-export function subscribeAppAuthState(listener: () => void): () => void {
+export function subscribeAppAuthState(
+  listener: (state: ResolvedAppAuth) => void,
+): () => void {
   authListeners.add(listener);
   return () => authListeners.delete(listener);
 }
 
-function notifyAuthListeners(): void {
-  authListeners.forEach((listener) => listener());
+function authIdentity(
+  user: ResolvedAppAuth["worker"] | ResolvedAppAuth["employer"],
+): string {
+  if (!user) return "";
+  if (user.source === "demo") return `demo:${user.user.email}`;
+  return `supabase:${user.id}`;
+}
+
+function authStateKey(state: ResolvedAppAuth): string {
+  return `${authIdentity(state.worker)}|${authIdentity(state.employer)}`;
+}
+
+function notifyAuthListeners(state: ResolvedAppAuth): void {
+  authListeners.forEach((listener) => listener(state));
 }
 
 export async function refreshAppAuthState(): Promise<ResolvedAppAuth> {
   if (inflightRefresh) return inflightRefresh;
 
+  const previousKey = cachedAuth ? authStateKey(cachedAuth) : null;
+
   inflightRefresh = resolveAppAuthState()
     .then((state) => {
+      const changed = !previousKey || previousKey !== authStateKey(state);
       cachedAuth = state;
       inflightRefresh = null;
-      notifyAuthListeners();
+      if (changed) notifyAuthListeners(state);
       return state;
     })
     .catch((error) => {

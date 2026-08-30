@@ -15,6 +15,17 @@ type RoleAuth<T> = {
   authenticated: boolean;
 };
 
+const AUTH_STORAGE_KEYS = new Set([
+  "myhiredito_worker_demo_session",
+  "myhiredito_employer_demo_session",
+]);
+
+function isAuthStorageKey(key: string | null): boolean {
+  if (!key) return false;
+  if (AUTH_STORAGE_KEYS.has(key)) return true;
+  return key.includes("auth-token") || key.startsWith("sb-");
+}
+
 export function useAppAuth() {
   const [state, setState] = useState<ResolvedAppAuth | undefined>(
     getCachedAppAuthState,
@@ -29,29 +40,35 @@ export function useAppAuth() {
   useEffect(() => {
     let mounted = true;
 
+    const unsubscribe = subscribeAppAuthState((next) => {
+      if (mounted) setState(next);
+    });
+
     if (!getCachedAppAuthState()) {
       void refreshAppAuthState().then((next) => {
         if (mounted) setState(next);
       });
     }
 
-    function onAuthChange() {
-      void refreshAppAuthState().then((next) => {
-        if (mounted) setState(next);
-      });
+    function onAuthEvent() {
+      void refreshAppAuthState();
     }
 
-    const unsubscribe = subscribeAppAuthState(onAuthChange);
+    function onStorage(event: StorageEvent) {
+      if (!isAuthStorageKey(event.key)) return;
+      onAuthEvent();
+    }
 
-    window.addEventListener("myhiredito-worker-auth", onAuthChange);
-    window.addEventListener("myhiredito-employer-auth", onAuthChange);
-    window.addEventListener("storage", onAuthChange);
+    window.addEventListener("myhiredito-worker-auth", onAuthEvent);
+    window.addEventListener("myhiredito-employer-auth", onAuthEvent);
+    window.addEventListener("storage", onStorage);
 
     let subscription: { unsubscribe: () => void } | null = null;
     if (isSupabaseConfigured()) {
       const supabase = createSupabaseBrowserClient();
-      const { data } = supabase.auth.onAuthStateChange(() => {
-        onAuthChange();
+      const { data } = supabase.auth.onAuthStateChange((event: string) => {
+        if (event === "INITIAL_SESSION") return;
+        onAuthEvent();
       });
       subscription = data.subscription;
     }
@@ -59,9 +76,9 @@ export function useAppAuth() {
     return () => {
       mounted = false;
       unsubscribe();
-      window.removeEventListener("myhiredito-worker-auth", onAuthChange);
-      window.removeEventListener("myhiredito-employer-auth", onAuthChange);
-      window.removeEventListener("storage", onAuthChange);
+      window.removeEventListener("myhiredito-worker-auth", onAuthEvent);
+      window.removeEventListener("myhiredito-employer-auth", onAuthEvent);
+      window.removeEventListener("storage", onStorage);
       subscription?.unsubscribe();
     };
   }, []);

@@ -13,14 +13,14 @@ import {
 
 export function useEmployerAuth() {
   const { loading, refresh, employer } = useAppAuth();
+  const userId = getEmployerUserId(employer.user);
 
   useEffect(() => {
-    const userId = getEmployerUserId(employer.user);
     setEmployerOnboardingSyncUserId(userId);
     if (userId) {
       void hydrateEmployerOnboardingFromDb(userId);
     }
-  }, [employer.user]);
+  }, [userId]);
 
   async function signOut() {
     await signOutEmployer();
