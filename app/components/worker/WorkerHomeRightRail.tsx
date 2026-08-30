@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useJobApplications } from "@/app/hooks/useJobApplications";
+import { APPLICATION_STATUS_LABELS } from "@/app/lib/jobApplications";
+import { getAllMarketplaceJobs } from "@/app/lib/jobCatalog";
 import { jobs } from "@/app/lib/jobs";
 import { OnboardingTaskList } from "./OnboardingTaskList";
 
@@ -20,15 +23,29 @@ const SHIFT_TIPS = [
   },
 ];
 
-const HIRING_NOW = jobs.slice(0, 4).map((job) => ({
-  company: job.company,
-  role: job.title.split("(")[0].trim(),
-  pay: job.pay,
-  slug: job.slug,
-}));
-
 export function WorkerHomeRightRail() {
   const { applications } = useJobApplications();
+  const [hiringNow, setHiringNow] = useState(
+    jobs.slice(0, 4).map((job) => ({
+      company: job.company,
+      role: job.title.split("(")[0].trim(),
+      pay: job.pay,
+      slug: job.slug,
+    })),
+  );
+
+  useEffect(() => {
+    const marketplace = getAllMarketplaceJobs().slice(0, 4);
+    if (marketplace.length === 0) return;
+    setHiringNow(
+      marketplace.map((job) => ({
+        company: job.company,
+        role: job.title.split("(")[0].trim(),
+        pay: job.pay,
+        slug: job.slug,
+      })),
+    );
+  }, []);
 
   return (
     <aside className="space-y-2">
@@ -92,7 +109,7 @@ export function WorkerHomeRightRail() {
                   {app.jobTitle}
                 </p>
                 <p className="truncate text-[11px] text-zinc-500">
-                  {app.company} · Submitted
+                  {app.company} · {APPLICATION_STATUS_LABELS[app.status] ?? app.status}
                 </p>
               </li>
             ))}
@@ -115,7 +132,7 @@ export function WorkerHomeRightRail() {
           <h2 className="text-sm font-bold text-zinc-800">Hiring now near you</h2>
         </div>
         <ul className="divide-y divide-zinc-100">
-          {HIRING_NOW.map((item) => (
+          {hiringNow.map((item) => (
             <li key={item.slug} className="flex items-center gap-3 px-4 py-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-bold text-zinc-600">
                 {item.company.charAt(0)}

@@ -14,6 +14,7 @@ import {
 } from "./employerJobs";
 import type { Job } from "./jobs";
 import { getOrCreateEmployerConversation } from "./messages";
+import { addHiredWorkerToRoster } from "./employerWorkers";
 
 type SyncApplicationInput = {
   workerUserKey: string;
@@ -49,6 +50,7 @@ export function syncApplicationToEmployerPipeline({
     jobTitle: job.title,
     workerName,
     workerEmail,
+    workerUserKey,
     skills: workerSkills || job.skills.join(" · "),
     experience: application.assessment
       ? `${application.assessment.percent}% exam score`
@@ -85,4 +87,62 @@ export function syncApplicationToEmployerPipeline({
   );
 
   getOrCreateEmployerConversation(workerUserKey, job.company, job.title);
+}
+
+export function applyEmployerDecisionToWorker({
+  applicant,
+  status,
+  employerUserKey,
+}: {
+  applicant: {
+    jobSlug: string;
+    jobTitle: string;
+    workerName: string;
+    workerEmail: string;
+    workerUserKey?: string;
+    skills: string;
+    location: string;
+  };
+  status: "new" | "reviewing" | "interview" | "hired" | "rejected";
+  employerUserKey: string;
+}): void {
+  if (typeof window === "undefined") return;
+
+  const workerStatus =
+    status === "reviewing"
+      ? "under-review"
+      : status === "interview"
+        ? "interview"
+        : status === "hired"
+          ? "hired"
+          : status === "rejected"
+            ? "rejected"
+            : "submitted";
+
+  if (applicant.workerUserKey) {
+    const key = `myhiredito_applications_${applicant.workerUserKey}`;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const existing = JSON.parse(raw) as JobApplication[];
+        const next = existing.map((item) =>
+          item.jobSlug === applicant.jobSlug ? { ...item, status: workerStatus } : item,
+        );
+        localStorage.setItem(key, JSON.stringify(next));
+        window.dispatchEvent(new Event("myhiredito-job-applications"));
+      } catch {
+        // Ignore malformed application storage.
+      }
+    }
+  }
+
+  if (status === "hired") {
+    addHiredWorkerToRoster(employerUserKey, {
+      name: applicant.workerName,
+      role: applicant.jobTitle,
+      skills: applicant.skills,
+      location: applicant.location,
+      rating: 4.8,
+    });
+  }
 }

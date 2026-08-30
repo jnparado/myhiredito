@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MyHireditoLogo } from "@/app/components/brand/MyHireditoLogo";
 import { GuestAuthButtons } from "@/app/components/shared/GuestAuthButtons";
+import { ProfileDropdownMenu } from "@/app/components/shared/ProfileDropdownMenu";
 import { getWorkerDisplayName, getWorkerEmail, type WorkerAuthUser } from "@/app/lib/workerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { useWorkerOnboarding } from "@/app/hooks/useWorkerOnboarding";

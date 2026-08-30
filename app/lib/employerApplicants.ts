@@ -14,6 +14,7 @@ export type JobApplicant = {
   jobTitle: string;
   workerName: string;
   workerEmail: string;
+  workerUserKey?: string;
   skills: string;
   experience: string;
   examScore?: number;

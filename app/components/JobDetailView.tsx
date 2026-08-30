@@ -20,6 +20,7 @@ import {
 } from "../lib/jobDetails";
 import type { Job } from "../lib/jobs";
 import { getWorkerDisplayName, getWorkerProfile } from "@/app/lib/workerAuth";
+import { incrementJobViewCount } from "@/app/lib/employerJobs";
 import { getWorkerUserKey, isOnboardingComplete } from "@/app/lib/workerOnboarding";
 
 type Props = {
@@ -58,6 +59,12 @@ export function JobDetailView({ job, meta }: Props) {
       getOrCreateEmployerConversation(userKey, job.company, job.title),
     );
   }, [userKey, job.company, job.title]);
+
+  useEffect(() => {
+    if (job.employerUserKey && job.employerJobId) {
+      incrementJobViewCount(job.employerUserKey, job.employerJobId);
+    }
+  }, [job.employerUserKey, job.employerJobId]);
 
   const fullAddress = formatFullAddress(meta);
   const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${meta.lng - 0.02}%2C${meta.lat - 0.015}%2C${meta.lng + 0.02}%2C${meta.lat + 0.015}&layer=mapnik&marker=${meta.lat}%2C${meta.lng}`;

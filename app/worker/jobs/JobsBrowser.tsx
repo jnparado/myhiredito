@@ -20,7 +20,7 @@ import {
   type ExperienceLevel,
   type Job,
 } from "../../lib/jobs";
-import { getPublishedJobs } from "../../lib/publishedJobs";
+import { getAllMarketplaceJobs } from "../../lib/jobCatalog";
 
 export function JobsBrowser() {
   const { user } = useWorkerAuth();
@@ -48,9 +48,7 @@ export function JobsBrowser() {
 
   useEffect(() => {
     function refresh() {
-      const published = getPublishedJobs();
-      const slugs = new Set(published.map((j) => j.slug));
-      setAllJobs([...published, ...jobs.filter((j) => !slugs.has(j.slug))]);
+      setAllJobs(getAllMarketplaceJobs());
     }
     refresh();
     window.addEventListener("myhiredito-published-jobs", refresh);

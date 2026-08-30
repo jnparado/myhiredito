@@ -12,6 +12,7 @@ import {
   type ApplicantStatus,
   type JobApplicant,
 } from "@/app/lib/employerApplicants";
+import { applyEmployerDecisionToWorker } from "@/app/lib/applicationBridge";
 import { createEmployerConversationFromApplicant } from "@/app/lib/employerMessages";
 
 export function EmployerApplicantsView() {
@@ -116,6 +117,11 @@ function ApplicantCard({
   function handleStatusChange(status: ApplicantStatus) {
     if (!userKey) return;
     updateApplicantStatus(userKey, applicant.id, status);
+    applyEmployerDecisionToWorker({
+      applicant,
+      status,
+      employerUserKey: userKey,
+    });
   }
 
   function handleMessage() {

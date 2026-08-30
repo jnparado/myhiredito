@@ -2,6 +2,13 @@ import type { AssessmentResult } from "./jobAssessments";
 import type { Job } from "./jobs";
 import { syncApplicationToEmployerPipeline } from "./applicationBridge";
 
+export type JobApplicationStatus =
+  | "submitted"
+  | "under-review"
+  | "interview"
+  | "hired"
+  | "rejected";
+
 export type JobApplication = {
   jobSlug: string;
   jobTitle: string;
@@ -11,7 +18,7 @@ export type JobApplication = {
   pay: string;
   appliedAt: string;
   assessment?: AssessmentResult;
-  status: "submitted" | "under-review";
+  status: JobApplicationStatus;
 };
 
 const ASSESSMENT_PREFIX = "myhiredito_assessment_";
@@ -97,3 +104,25 @@ export function submitJobApplication(
 export function hasAppliedToJob(userKey: string, jobSlug: string): boolean {
   return getJobApplications(userKey).some((item) => item.jobSlug === jobSlug);
 }
+
+export function updateWorkerApplicationStatus(
+  userKey: string,
+  jobSlug: string,
+  status: JobApplicationStatus,
+): void {
+  if (typeof window === "undefined") return;
+  const existing = getJobApplications(userKey);
+  const next = existing.map((item) =>
+    item.jobSlug === jobSlug ? { ...item, status } : item,
+  );
+  localStorage.setItem(applicationsKey(userKey), JSON.stringify(next));
+  window.dispatchEvent(new Event("myhiredito-job-applications"));
+}
+
+export const APPLICATION_STATUS_LABELS: Record<JobApplicationStatus, string> = {
+  submitted: "Submitted",
+  "under-review": "Under review",
+  interview: "Interview",
+  hired: "Hired",
+  rejected: "Rejected",
+};

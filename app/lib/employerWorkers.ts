@@ -129,6 +129,30 @@ export function getSuggestedWorkers(userKey: string): typeof SUGGESTED_POOL {
   return SUGGESTED_POOL.filter((w) => !rosterNames.has(w.name));
 }
 
+export function addHiredWorkerToRoster(
+  userKey: string,
+  worker: Omit<EmployerWorker, "id" | "status" | "addedAt">,
+): EmployerWorker {
+  const existing = getEmployerWorkers(userKey);
+  const found = existing.find((item) => item.name === worker.name);
+  if (found) {
+    const next = existing.map((item) =>
+      item.name === worker.name ? { ...item, status: "hired" as const } : item,
+    );
+    saveWorkers(userKey, next);
+    return { ...found, status: "hired" };
+  }
+
+  const created: EmployerWorker = {
+    ...worker,
+    id: `worker-${Date.now()}`,
+    status: "hired",
+    addedAt: new Date().toISOString(),
+  };
+  saveWorkers(userKey, [created, ...existing]);
+  return created;
+}
+
 export function getActiveWorkerCount(userKey: string): number {
   return getEmployerWorkers(userKey).filter(
     (w) => w.status === "active" || w.status === "hired",
