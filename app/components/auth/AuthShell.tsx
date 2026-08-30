@@ -12,7 +12,7 @@ const panelContent = {
     title: "Work when you want. Get paid fast.",
     description:
       "Pick up shifts at top healthcare facilities, restaurants, and venues. Set your schedule and build a verified track record.",
-    image: "/workers-hero.png",
+    image: "/workers-hero.jpg",
     imageAlt: "Healthcare and hospitality professionals",
     perks: [
       "AI-matched shifts in your market",

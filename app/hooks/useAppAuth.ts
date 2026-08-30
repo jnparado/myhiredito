@@ -26,19 +26,48 @@ function isAuthStorageKey(key: string | null): boolean {
   return key.includes("auth-token") || key.startsWith("sb-");
 }
 
+let authListenersBound = false;
+
+function bindGlobalAuthListeners() {
+  if (authListenersBound || typeof window === "undefined") return;
+  authListenersBound = true;
+
+  function onAuthEvent() {
+    void refreshAppAuthState();
+  }
+
+  function onStorage(event: StorageEvent) {
+    if (!isAuthStorageKey(event.key)) return;
+    onAuthEvent();
+  }
+
+  window.addEventListener("myhiredito-worker-auth", onAuthEvent);
+  window.addEventListener("myhiredito-employer-auth", onAuthEvent);
+  window.addEventListener("storage", onStorage);
+
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.onAuthStateChange((event: string) => {
+      if (event === "INITIAL_SESSION") return;
+      onAuthEvent();
+    });
+  }
+}
+
 export function useAppAuth() {
   const [state, setState] = useState<ResolvedAppAuth | undefined>(
     getCachedAppAuthState,
   );
 
   const refresh = useCallback(async () => {
-    const next = await refreshAppAuthState();
+    const next = await refreshAppAuthState({ force: true });
     setState(next);
     return next;
   }, []);
 
   useEffect(() => {
     let mounted = true;
+    bindGlobalAuthListeners();
 
     const unsubscribe = subscribeAppAuthState((next) => {
       if (mounted) setState(next);
@@ -50,36 +79,9 @@ export function useAppAuth() {
       });
     }
 
-    function onAuthEvent() {
-      void refreshAppAuthState();
-    }
-
-    function onStorage(event: StorageEvent) {
-      if (!isAuthStorageKey(event.key)) return;
-      onAuthEvent();
-    }
-
-    window.addEventListener("myhiredito-worker-auth", onAuthEvent);
-    window.addEventListener("myhiredito-employer-auth", onAuthEvent);
-    window.addEventListener("storage", onStorage);
-
-    let subscription: { unsubscribe: () => void } | null = null;
-    if (isSupabaseConfigured()) {
-      const supabase = createSupabaseBrowserClient();
-      const { data } = supabase.auth.onAuthStateChange((event: string) => {
-        if (event === "INITIAL_SESSION") return;
-        onAuthEvent();
-      });
-      subscription = data.subscription;
-    }
-
     return () => {
       mounted = false;
       unsubscribe();
-      window.removeEventListener("myhiredito-worker-auth", onAuthEvent);
-      window.removeEventListener("myhiredito-employer-auth", onAuthEvent);
-      window.removeEventListener("storage", onStorage);
-      subscription?.unsubscribe();
     };
   }, []);
 

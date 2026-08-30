@@ -25,6 +25,7 @@ function shouldHideAllChrome(pathname: string | null): boolean {
   if (pathname === "/worker/connect") return true;
   if (pathname?.startsWith("/worker/messages")) return true;
   if (pathname?.startsWith("/worker/onboarding")) return true;
+  if (pathname === "/worker") return true;
   if (pathname === "/employer/dashboard") return true;
   if (pathname?.startsWith("/employer/onboarding")) return true;
   if (pathname?.startsWith("/employer/messages")) return true;

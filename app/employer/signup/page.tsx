@@ -16,6 +16,8 @@ import { signUpWithRole } from "@/app/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import { resetEmployerOnboarding } from "@/app/lib/employerOnboarding";
 import { notifyEmployerAuthChange } from "@/app/lib/employerAuth";
+import { setLastAuthRole } from "@/app/lib/authRole";
+import { markRoleSignedIn } from "@/app/lib/authState";
 
 export default function EmployerSignupPage() {
   const router = useRouter();
@@ -62,6 +64,8 @@ export default function EmployerSignupPage() {
         return;
       }
 
+      markRoleSignedIn("employer");
+      setLastAuthRole("employer");
       notifyEmployerAuthChange();
       router.push("/employer/dashboard");
       router.refresh();

@@ -10,6 +10,8 @@ import {
   hydrateEmployerOnboardingFromDb,
   setEmployerOnboardingSyncUserId,
 } from "@/app/lib/employerOnboarding";
+import { applySignedOutRole } from "@/app/lib/authState";
+import { setLastAuthRole } from "@/app/lib/authRole";
 
 export function useEmployerAuth() {
   const { loading, refresh, employer } = useAppAuth();
@@ -23,8 +25,10 @@ export function useEmployerAuth() {
   }, [userId]);
 
   async function signOut() {
-    await signOutEmployer();
+    setLastAuthRole("employer");
+    applySignedOutRole("employer");
     setEmployerOnboardingSyncUserId(null);
+    await signOutEmployer();
     await refresh();
   }
 

@@ -34,14 +34,18 @@ export function JobsBrowser() {
   const [showFilters, setShowFilters] = useState(false);
   const [allJobs, setAllJobs] = useState<Job[]>(jobs);
 
-  const workerContext = user
-    ? buildWorkerContext({
-        displayName: getWorkerDisplayName(user),
-        profile: getWorkerProfile(user),
-        onboardingComplete: isOnboardingComplete(progress),
-        completedSteps: progress.completedSteps,
-      })
-    : null;
+  const workerContext = useMemo(
+    () =>
+      user
+        ? buildWorkerContext({
+            displayName: getWorkerDisplayName(user),
+            profile: getWorkerProfile(user),
+            onboardingComplete: isOnboardingComplete(progress),
+            completedSteps: progress.completedSteps,
+          })
+        : null,
+    [progress.completedSteps, user],
+  );
 
   const { matches, loading: matchesLoading, source: matchSource } =
     useAiJobMatches(workerContext, userKey, allJobs);

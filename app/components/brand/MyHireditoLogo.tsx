@@ -44,7 +44,7 @@ export function MyHireditoLogo({
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/myhiredito-logo.png"
+            src="/myhiredito-logo-sm.png"
             alt=""
             width={dimensions.icon}
             height={dimensions.icon}

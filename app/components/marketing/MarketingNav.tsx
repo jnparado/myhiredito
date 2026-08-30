@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
-import { GuestAuthButtons } from "@/app/components/shared/GuestAuthButtons";
+import { GuestAuthButtons, guestAuthRoleFromPath } from "@/app/components/shared/GuestAuthButtons";
 import { MyHireditoLogo } from "../brand/MyHireditoLogo";
 import { HowWeHelpMegaMenu } from "./HowWeHelpMegaMenu";
 import { PlatformMegaMenu } from "./PlatformMegaMenu";
@@ -58,6 +58,7 @@ export function MarketingNav() {
     useEmployerAuth();
   const isWorkersContext = pathname?.startsWith("/worker") ?? false;
   const isEmployersView = !isWorkersContext;
+  const guestRole = guestAuthRoleFromPath(pathname);
   const showWorkerAccountLinks =
     isWorkersContext && !workerLoading && workerAuthenticated;
   const showEmployerAccountLinks =
@@ -66,7 +67,9 @@ export function MarketingNav() {
     ? "/worker/dashboard"
     : showEmployerAccountLinks
       ? "/employer/dashboard"
-      : "/";
+      : guestRole === "worker"
+        ? "/worker"
+        : "/";
 
   return (
     <nav
@@ -176,7 +179,7 @@ export function MarketingNav() {
               My dashboard
             </Link>
           ) : (
-            <GuestAuthButtons role={isWorkersContext ? "worker" : "employer"} />
+            <GuestAuthButtons role={guestRole} />
           )}
         </div>
 
@@ -295,7 +298,7 @@ export function MarketingNav() {
             ) : (
               <div className="flex flex-col gap-3">
                 <GuestAuthButtons
-                  role={isWorkersContext ? "worker" : "employer"}
+                  role={guestRole}
                   onNavigate={() => setMobileOpen(false)}
                 />
               </div>

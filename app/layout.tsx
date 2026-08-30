@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   description:
     "The platform that runs your labor. Every shift filled. Every worker paid. Every rule followed.",
   icons: {
-    icon: "/myhiredito-logo.png",
-    apple: "/myhiredito-logo.png",
+    icon: "/myhiredito-logo-sm.png",
+    apple: "/myhiredito-logo-sm.png",
   },
 };
 

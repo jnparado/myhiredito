@@ -1,10 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MyHireditoLogo } from "@/app/components/brand/MyHireditoLogo";
-import { GuestAuthButtons } from "@/app/components/shared/GuestAuthButtons";
+import { GuestAuthButtons, guestAuthRoleFromPath } from "@/app/components/shared/GuestAuthButtons";
 import { ProfileDropdownMenu } from "@/app/components/shared/ProfileDropdownMenu";
 import { getWorkerDisplayName, getWorkerEmail, type WorkerAuthUser } from "@/app/lib/workerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
@@ -17,7 +18,14 @@ import {
 } from "@/app/lib/workerOnboarding";
 import { NotificationPanel } from "./NotificationPanel";
 import { FloatingMessagingWidget } from "./FloatingMessagingWidget";
-import { WorkerAiAssistant } from "./WorkerAiAssistant";
+
+const WorkerAiAssistant = dynamic(
+  () =>
+    import("./WorkerAiAssistant").then((mod) => ({
+      default: mod.WorkerAiAssistant,
+    })),
+  { ssr: false },
+);
 
 type OpenPanel = "notifications" | "more" | "profile" | null;
 
@@ -202,7 +210,7 @@ export function WorkerShell({
             className="relative ml-auto flex shrink-0 items-center gap-1 sm:gap-2"
           >
             {!user ? (
-              <GuestAuthButtons role="worker" />
+              <GuestAuthButtons role={guestAuthRoleFromPath(pathname)} />
             ) : (
               <>
             <div className="relative">

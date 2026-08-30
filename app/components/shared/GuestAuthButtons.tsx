@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 
-type Role = "worker" | "employer";
+import { guestRoleFromPath, type AuthRole } from "@/app/lib/authRole";
+
+type Role = AuthRole;
 type Theme = "dark" | "light";
 
 const ROUTES = {
@@ -61,6 +63,5 @@ export function GuestAuthButtons({ role, theme = "dark", onNavigate }: Props) {
 }
 
 export function guestAuthRoleFromPath(pathname: string | null): Role {
-  if (pathname?.startsWith("/worker")) return "worker";
-  return "employer";
+  return guestRoleFromPath(pathname);
 }

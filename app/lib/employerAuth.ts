@@ -67,6 +67,7 @@ export async function getEmployerAuthUser(): Promise<EmployerAuthUser | null> {
 export async function signOutEmployer(): Promise<void> {
   clearDemoEmployerSession();
   await signOutSupabase();
+  notifyEmployerAuthChange();
 }
 
 export function getEmployerDisplayName(user: EmployerAuthUser): string {

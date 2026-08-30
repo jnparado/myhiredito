@@ -222,7 +222,18 @@ export async function resolveAppAuthState(): Promise<ResolvedAppAuth> {
 
 let cachedAuth: ResolvedAppAuth | undefined;
 let inflightRefresh: Promise<ResolvedAppAuth> | null = null;
+let signedOutLock: { worker: boolean; employer: boolean } = {
+  worker: false,
+  employer: false,
+};
 const authListeners = new Set<(state: ResolvedAppAuth) => void>();
+
+function withSignedOutLocks(state: ResolvedAppAuth): ResolvedAppAuth {
+  return {
+    worker: signedOutLock.worker ? null : state.worker,
+    employer: signedOutLock.employer ? null : state.employer,
+  };
+}
 
 export function getCachedAppAuthState(): ResolvedAppAuth | undefined {
   return cachedAuth;
@@ -251,18 +262,38 @@ function notifyAuthListeners(state: ResolvedAppAuth): void {
   authListeners.forEach((listener) => listener(state));
 }
 
-export async function refreshAppAuthState(): Promise<ResolvedAppAuth> {
-  if (inflightRefresh) return inflightRefresh;
+export function applySignedOutRole(role: "worker" | "employer"): ResolvedAppAuth {
+  signedOutLock[role] = true;
+  const current = cachedAuth ?? { worker: null, employer: null };
+  cachedAuth =
+    role === "worker"
+      ? { worker: null, employer: current.employer }
+      : { worker: current.worker, employer: null };
+  inflightRefresh = null;
+  notifyAuthListeners(cachedAuth);
+  return cachedAuth;
+}
+
+export function markRoleSignedIn(role: "worker" | "employer"): void {
+  signedOutLock[role] = false;
+}
+
+export async function refreshAppAuthState(options?: {
+  force?: boolean;
+}): Promise<ResolvedAppAuth> {
+  if (inflightRefresh && !options?.force) return inflightRefresh;
 
   const previousKey = cachedAuth ? authStateKey(cachedAuth) : null;
 
   inflightRefresh = resolveAppAuthState()
     .then((state) => {
-      const changed = !previousKey || previousKey !== authStateKey(state);
-      cachedAuth = state;
+      const next = withSignedOutLocks(state);
+      const changed =
+        options?.force || !previousKey || previousKey !== authStateKey(next);
+      cachedAuth = next;
       inflightRefresh = null;
-      if (changed) notifyAuthListeners(state);
-      return state;
+      if (changed) notifyAuthListeners(next);
+      return next;
     })
     .catch((error) => {
       inflightRefresh = null;

@@ -111,13 +111,15 @@ export async function getWorkerAuthUser(): Promise<WorkerAuthUser | null> {
 
 export async function signOutWorker(): Promise<void> {
   clearDemoWorkerSession();
-  if (!isSupabaseConfigured()) return;
-  try {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
-  } catch {
-    // Ignore when Supabase is not configured.
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore when Supabase is not configured.
+    }
   }
+  notifyWorkerAuthChange();
 }
 
 export function getWorkerDisplayName(user: WorkerAuthUser): string {

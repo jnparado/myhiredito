@@ -15,6 +15,8 @@ import {
 import { signInWithRole } from "@/app/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import { notifyWorkerAuthChange } from "@/app/lib/workerAuth";
+import { setLastAuthRole } from "@/app/lib/authRole";
+import { markRoleSignedIn } from "@/app/lib/authState";
 import {
   isWorkerDemoCredentials,
   setDemoWorkerSession,
@@ -43,6 +45,8 @@ export default function WorkerLoginPage() {
     try {
       if (isWorkerDemoCredentials(email, password)) {
         await beginDemoAuth();
+        markRoleSignedIn("worker");
+        setLastAuthRole("worker");
         setDemoWorkerSession();
         notifyWorkerAuthChange();
         router.push("/worker/dashboard");
@@ -64,6 +68,8 @@ export default function WorkerLoginPage() {
         role: "worker",
       });
 
+      markRoleSignedIn("worker");
+      setLastAuthRole("worker");
       notifyWorkerAuthChange();
       router.push("/worker/dashboard");
       router.refresh();

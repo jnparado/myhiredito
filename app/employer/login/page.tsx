@@ -15,6 +15,8 @@ import {
 import { signInWithRole } from "@/app/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/app/lib/supabaseClient";
 import { notifyEmployerAuthChange } from "@/app/lib/employerAuth";
+import { setLastAuthRole } from "@/app/lib/authRole";
+import { markRoleSignedIn } from "@/app/lib/authState";
 import {
   EMPLOYER_DEMO_EMAIL,
   EMPLOYER_DEMO_PASSWORD,
@@ -43,6 +45,8 @@ export default function EmployerLoginPage() {
     try {
       if (isEmployerDemoCredentials(email, password)) {
         await beginDemoAuth();
+        markRoleSignedIn("employer");
+        setLastAuthRole("employer");
         setDemoEmployerSession();
         notifyEmployerAuthChange();
         router.push("/employer/dashboard");
@@ -57,6 +61,8 @@ export default function EmployerLoginPage() {
       beginSupabaseAuth();
 
       await signInWithRole({ email, password, role: "employer" });
+      markRoleSignedIn("employer");
+      setLastAuthRole("employer");
       notifyEmployerAuthChange();
       router.push("/employer/dashboard");
       router.refresh();

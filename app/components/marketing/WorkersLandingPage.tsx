@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MarketingNav } from "./MarketingNav";
+import { WorkerLandingAuthActions } from "./WorkerLandingAuthActions";
 
 function VisitCta({ className = "" }: { className?: string }) {
   return (
@@ -47,34 +48,19 @@ export function WorkersLandingPage() {
               <div className="mt-8">
                 <VisitCta />
               </div>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="/worker/login"
-                  className="inline-flex h-12 items-center justify-center rounded-lg bg-zinc-900 px-8 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-zinc-800"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/worker/signup"
-                  className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-zinc-900 px-8 text-sm font-bold uppercase tracking-wide text-zinc-900 transition hover:bg-zinc-100"
-                >
-                  Signup
-                </Link>
-                <Link
-                  href="/worker/jobs"
-                  className="inline-flex h-12 items-center justify-center rounded-lg bg-[var(--brand)] px-8 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[var(--brand-strong)]"
-                >
-                  Browse Jobs
-                </Link>
-              </div>
+              <WorkerLandingAuthActions />
             </div>
 
             <div className="relative">
               <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg sm:aspect-[3/4]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/workers-hero.png"
+                  src="/workers-hero.jpg"
                   alt="MyHiredito workers ready for their next role"
+                  width={900}
+                  height={1350}
+                  decoding="async"
+                  fetchPriority="high"
                   className="h-full w-full object-cover object-center"
                 />
               </div>

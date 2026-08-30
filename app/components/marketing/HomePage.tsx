@@ -55,8 +55,12 @@ export function HomePage() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl sm:aspect-[3/4]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/employers-hero.png"
+                src="/employers-hero.jpg"
                 alt="Employer team managing staffing on MyHiredito"
+                width={900}
+                height={1350}
+                decoding="async"
+                fetchPriority="high"
                 className="h-full w-full object-cover object-center"
               />
             </div>

@@ -1,13 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Job } from "@/app/lib/jobs";
 import type { JobMatchResult, WorkerContext } from "@/app/lib/ai/types";
 
 const CACHE_PREFIX = "myhiredito_ai_matches_";
+const MATCH_JOB_LIMIT = 8;
 
 function cacheKey(userKey: string, slugs: string[]): string {
   return `${CACHE_PREFIX}${userKey}_${slugs.sort().join(",")}`;
+}
+
+function workerFingerprint(worker: WorkerContext | null): string {
+  if (!worker) return "";
+  return [
+    worker.displayName,
+    worker.location ?? "",
+    worker.availability ?? "",
+    worker.headline ?? "",
+    worker.onboardingComplete ? "1" : "0",
+    ...(worker.skills ?? []),
+  ].join("|");
 }
 
 export function useAiJobMatches(
@@ -18,14 +31,23 @@ export function useAiJobMatches(
   const [matches, setMatches] = useState<Record<string, JobMatchResult>>({});
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"ai" | "heuristic" | null>(null);
+  const inFlight = useRef(false);
+
+  const fingerprint = workerFingerprint(worker);
+  const jobSlugs = jobs
+    .slice(0, MATCH_JOB_LIMIT)
+    .map((job) => job.slug)
+    .join(",");
 
   const refresh = useCallback(async () => {
     if (!worker || !userKey || jobs.length === 0) {
       setMatches({});
       return;
     }
+    if (inFlight.current) return;
 
-    const slugs = jobs.map((job) => job.slug);
+    const slice = jobs.slice(0, MATCH_JOB_LIMIT);
+    const slugs = slice.map((job) => job.slug);
     const cached = localStorage.getItem(cacheKey(userKey, slugs));
     if (cached) {
       try {
@@ -43,6 +65,7 @@ export function useAiJobMatches(
       }
     }
 
+    inFlight.current = true;
     setLoading(true);
     try {
       const response = await fetch("/api/ai/match", {
@@ -50,7 +73,7 @@ export function useAiJobMatches(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           worker,
-          jobs: jobs.map((job) => ({
+          jobs: slice.map((job) => ({
             slug: job.slug,
             title: job.title,
             company: job.company,
@@ -78,13 +101,14 @@ export function useAiJobMatches(
         JSON.stringify({ matches: data.matches ?? [], source: data.source }),
       );
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
-  }, [worker, userKey, jobs]);
+  }, [fingerprint, jobSlugs, userKey, worker, jobs]);
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [fingerprint, jobSlugs, userKey]);
 
   return { matches, loading, source, refresh };
 }
