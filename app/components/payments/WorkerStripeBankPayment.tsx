@@ -84,7 +84,9 @@ export function WorkerStripeBankPayment() {
           provider={provider}
           defaultEmail={email}
           onSave={async (handle) => {
-            if (!user || !userKey) return;
+            if (!user || !userKey) {
+              throw new Error("Sign in again to connect PayPal or Wise.");
+            }
             await savePaymentFromWallet(user, userKey, { provider, handle });
             finish();
           }}

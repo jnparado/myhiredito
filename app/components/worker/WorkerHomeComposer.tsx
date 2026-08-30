@@ -20,6 +20,8 @@ const PLACEHOLDERS: Record<WorkerActivityType, string> = {
   credential:
     "Just renewed my BLS certification — available for acute care roles.",
   win: "Completed my first week at Sunrise Care through MyHiredito. Great team!",
+  resume:
+    "CNA with 3 years in assisted living. CPR/BLS current. Available for Austin-area shifts.",
 };
 
 function PostModal({
@@ -36,6 +38,7 @@ function PostModal({
     availability: "Share your availability",
     credential: "Share a credential update",
     win: "Share a shift win",
+    resume: "Post your resume",
   };
 
   function handleSubmit(e: React.FormEvent) {
@@ -109,9 +112,18 @@ export function WorkerHomeComposer() {
         <div className="flex border-t border-zinc-200">
           <button
             type="button"
-            onClick={() => canPost && setModal("availability")}
+            onClick={() => canPost && setModal("resume")}
             disabled={!canPost}
             className="flex flex-1 items-center justify-center gap-2 py-3 text-xs font-bold text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <span className="text-[#1db954]">📄</span>
+            Resume
+          </button>
+          <button
+            type="button"
+            onClick={() => canPost && setModal("availability")}
+            disabled={!canPost}
+            className="flex flex-1 items-center justify-center gap-2 border-l border-zinc-200 py-3 text-xs font-bold text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className="text-[#1db954]">📅</span>
             Open to work

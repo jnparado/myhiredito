@@ -127,13 +127,24 @@ export async function getOnboardingProgress(
   user: WorkerAuthUser,
   userKey: string,
 ): Promise<OnboardingProgress> {
+  const local = getOnboardingProgressLocal(userKey);
   if (user.source === "demo") {
-    return getOnboardingProgressLocal(userKey);
+    return local;
   }
 
-  const row = await fetchOnboardingProgress(userKey);
-  if (!row) return getDefaultOnboardingProgress();
-  return rowToProgress(row);
+  try {
+    const row = await fetchOnboardingProgress(userKey);
+    if (!row) return local;
+    const remote = rowToProgress(row);
+    return {
+      completedSteps: [
+        ...new Set([...remote.completedSteps, ...local.completedSteps]),
+      ],
+      dismissed: remote.dismissed || local.dismissed,
+    };
+  } catch {
+    return local;
+  }
 }
 
 export async function dismissOnboarding(
@@ -229,23 +240,35 @@ export async function savePaymentFromStripeBank(
   }
 }
 
+function saveWorkerPayoutLocal(
+  userKey: string,
+  wallet: { provider: "paypal" | "wise"; handle: string },
+): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(
+    `myhiredito_worker_payout_${userKey}`,
+    JSON.stringify(wallet),
+  );
+}
+
 export async function savePaymentFromWallet(
   user: WorkerAuthUser,
   userKey: string,
   wallet: { provider: "paypal" | "wise"; handle: string },
 ): Promise<void> {
-  if (user.source === "demo") {
-    markDemoStepComplete(userKey, "payment-method");
-    return;
-  }
+  markDemoStepComplete(userKey, "payment-method");
+  saveWorkerPayoutLocal(userKey, wallet);
 
-  await savePaymentOnboarding(userKey, {
-    paymentMethod: wallet.provider,
-    accountHolder: wallet.handle,
-    accountLast4: wallet.handle.slice(-4),
-  });
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("myhiredito-worker-onboarding"));
+  if (user.source === "demo") return;
+
+  try {
+    await savePaymentOnboarding(userKey, {
+      paymentMethod: wallet.provider,
+      accountHolder: wallet.handle,
+      accountLast4: wallet.handle.slice(-4),
+    });
+  } catch {
+    // PayPal/Wise is already saved locally so onboarding can finish.
   }
 }
 

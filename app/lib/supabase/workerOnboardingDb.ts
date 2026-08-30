@@ -17,26 +17,42 @@ function normalizeCompletedSteps(steps: string[]): OnboardingStepId[] {
   });
 }
 
+function mapOnboardingRow(
+  workerId: string,
+  row: { completed_steps?: string[] | null; dismissed?: boolean | null; updated_at?: string },
+): WorkerOnboardingRow {
+  return {
+    worker_id: workerId,
+    completed_steps: normalizeCompletedSteps(row.completed_steps ?? []),
+    dismissed: row.dismissed ?? false,
+    updated_at: row.updated_at ?? new Date().toISOString(),
+  };
+}
+
 export async function fetchWorkerOnboardingFromDb(
   workerId: string,
 ): Promise<WorkerOnboardingRow | null> {
   if (!isSupabaseConfigured()) return null;
 
   const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase
+  const primary = await supabase
     .from("onboarding_progress")
     .select("*")
     .eq("worker_id", workerId)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (!primary.error && primary.data) {
+    return mapOnboardingRow(workerId, primary.data);
+  }
 
-  return {
-    worker_id: data.worker_id,
-    completed_steps: normalizeCompletedSteps(data.completed_steps ?? []),
-    dismissed: data.dismissed ?? false,
-    updated_at: data.updated_at,
-  };
+  const fallback = await supabase
+    .from("worker_onboarding")
+    .select("*")
+    .eq("user_id", workerId)
+    .maybeSingle();
+
+  if (fallback.error || !fallback.data) return null;
+  return mapOnboardingRow(workerId, fallback.data);
 }
 
 export async function ensureWorkerOnboardingInDb(workerId: string): Promise<void> {
@@ -66,28 +82,45 @@ export async function saveWorkerOnboardingToDb(
   const current = await fetchWorkerOnboardingFromDb(workerId);
   const supabase = createSupabaseBrowserClient();
 
+  const completedSteps =
+    updates.completed_steps ?? current?.completed_steps ?? [];
+  const dismissed = updates.dismissed ?? current?.dismissed ?? false;
+
   const { data, error } = await supabase
     .from("onboarding_progress")
     .upsert(
       {
         worker_id: workerId,
-        completed_steps:
-          updates.completed_steps ?? current?.completed_steps ?? [],
-        dismissed: updates.dismissed ?? current?.dismissed ?? false,
+        completed_steps: completedSteps,
+        dismissed,
       },
       { onConflict: "worker_id" },
     )
     .select("*")
     .single();
 
-  if (error) throw error;
+  if (!error && data) {
+    return mapOnboardingRow(workerId, data);
+  }
 
-  return {
-    worker_id: data.worker_id,
-    completed_steps: normalizeCompletedSteps(data.completed_steps ?? []),
-    dismissed: data.dismissed ?? false,
-    updated_at: data.updated_at,
-  };
+  const fallback = await supabase
+    .from("worker_onboarding")
+    .upsert(
+      {
+        user_id: workerId,
+        completed_steps: completedSteps,
+        dismissed,
+      },
+      { onConflict: "user_id" },
+    )
+    .select("*")
+    .single();
+
+  if (fallback.error || !fallback.data) {
+    throw error ?? fallback.error ?? new Error("Could not save onboarding.");
+  }
+
+  return mapOnboardingRow(workerId, fallback.data);
 }
 
 export async function markWorkerOnboardingStepCompleteInDb(

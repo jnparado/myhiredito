@@ -82,16 +82,19 @@ function WorkerPostCard({
   body,
   type,
   postedAt,
+  applicationCount,
 }: {
   displayName: string;
   body: string;
   type: string;
   postedAt: string;
+  applicationCount: number;
 }) {
   const labels: Record<string, string> = {
     availability: "📅 Availability update",
     credential: "📜 Credential update",
     win: "🏆 Shift win",
+    resume: "📄 Resume posted",
   };
 
   return (
@@ -112,6 +115,15 @@ function WorkerPostCard({
           </div>
         </div>
         <p className="mt-3 text-sm leading-6 text-zinc-800">{body}</p>
+        <div className="mt-3 rounded-lg border border-[#1db954]/20 bg-[#1db954]/5 px-3 py-2">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-[#1a5c42]">
+            Resume tracker
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-600">
+            {applicationCount} application{applicationCount === 1 ? "" : "s"} ·
+            live to employers since {formatPostedAgo(postedAt)}
+          </p>
+        </div>
       </div>
       <div className="flex border-t border-zinc-200">
         <FeedAction
@@ -214,6 +226,7 @@ export function WorkerJobFeed() {
               body={item.activity.body}
               type={item.activity.type}
               postedAt={item.postedAt}
+              applicationCount={applications.length}
             />
           );
         }

@@ -1,4 +1,6 @@
-export type WorkerActivityType = "availability" | "credential" | "win";
+import { recordResumePost } from "./resumeTracker";
+
+export type WorkerActivityType = "availability" | "credential" | "win" | "resume";
 
 export type WorkerActivity = {
   id: string;
@@ -50,5 +52,6 @@ export function createWorkerPost(
     postedAt: new Date().toISOString(),
   };
   saveActivity(userKey, [item, ...getWorkerActivity(userKey)]);
+  recordResumePost(userKey, type, item.body);
   return item;
 }

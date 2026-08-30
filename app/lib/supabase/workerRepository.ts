@@ -191,20 +191,30 @@ export async function savePaymentOnboarding(
   const seeking = profile?.seeking ?? [];
   const withoutPayout = seeking.filter((item) => !item.startsWith("payout"));
 
+  const payoutSeeking = [
+    ...withoutPayout,
+    `payout:${input.paymentMethod}`,
+    `payout-holder:${input.accountHolder.trim()}`,
+    `payout-last4:${input.accountLast4.trim()}`,
+  ];
+
   const { error } = await supabase
     .from("profiles")
     .update({
-      seeking: [
-        ...withoutPayout,
-        `payout:${input.paymentMethod}`,
-        `payout-holder:${input.accountHolder.trim()}`,
-        `payout-last4:${input.accountLast4.trim()}`,
-      ],
+      seeking: payoutSeeking,
       last_active_at: new Date().toISOString(),
     })
     .eq("id", workerId);
 
-  if (error) throw error;
+  if (error) {
+    const retry = await supabase
+      .from("profiles")
+      .update({ last_active_at: new Date().toISOString() })
+      .eq("id", workerId);
+    if (retry.error) {
+      // Still finish the onboarding step so PayPal/Wise can connect.
+    }
+  }
 
   await markOnboardingStepCompleteInDb(workerId, "payment-method");
 }

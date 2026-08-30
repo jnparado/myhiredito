@@ -5,6 +5,7 @@ import { WorkerHomeComposer } from "./WorkerHomeComposer";
 import { WorkerHomeRightRail } from "./WorkerHomeRightRail";
 import { WorkerJobFeed } from "./WorkerJobFeed";
 import { WorkerProfileSidebar } from "./WorkerProfileSidebar";
+import { WorkerResumeTracker } from "./WorkerResumeTracker";
 import { WorkerShiftTracker } from "./WorkerShiftTracker";
 
 export function WorkerDashboardView() {
@@ -19,6 +20,7 @@ export function WorkerDashboardView() {
 
         <main className="min-w-0 space-y-2">
           <WorkerShiftTracker compact />
+          <WorkerResumeTracker />
           <WorkerHomeComposer />
           <WorkerJobFeed />
         </main>
