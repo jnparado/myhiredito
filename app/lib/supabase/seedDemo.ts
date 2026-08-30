@@ -20,7 +20,7 @@ export async function seedDemoUserData(
       company_name: EMPLOYER_DEMO_USER.companyName,
     });
 
-    await supabase.from("employer_onboarding").upsert({
+    const { error: onboardingError } = await supabase.from("employer_onboarding").upsert({
       user_id: userId,
       completed_steps: [...EMPLOYER_DEMO_ONBOARDING.completedSteps],
       dismissed: EMPLOYER_DEMO_ONBOARDING.dismissed,
@@ -28,6 +28,9 @@ export async function seedDemoUserData(
       business_certificate: EMPLOYER_DEMO_ONBOARDING.data.businessCertificate,
       business_details: EMPLOYER_DEMO_ONBOARDING.data.businessDetails,
     });
+    if (onboardingError) {
+      // Older projects may not have employer_onboarding yet.
+    }
     return;
   }
 
@@ -73,7 +76,7 @@ async function upsertProfile(
       email: row.email,
       first_name: row.first_name,
       last_name: row.last_name,
-      company_name: row.company_name ?? null,
+      display_name: row.display_name ?? null,
     },
     { onConflict: "id" },
   );
