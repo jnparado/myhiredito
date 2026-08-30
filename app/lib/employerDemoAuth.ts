@@ -1,5 +1,9 @@
-export const EMPLOYER_DEMO_EMAIL = "employer@demo.com";
-export const EMPLOYER_DEMO_PASSWORD = "demo123";
+export const EMPLOYER_DEMO_EMAIL = "employer@gmail.com";
+export const EMPLOYER_DEMO_PASSWORD = "demo1234";
+export const EMPLOYER_DEMO_EMAIL_ALIASES = [
+  EMPLOYER_DEMO_EMAIL,
+  "employer@demo.com",
+] as const;
 
 export type EmployerDemoUser = {
   email: string;
@@ -63,11 +67,18 @@ function seedDemoEmployerOnboarding(): void {
   window.dispatchEvent(new Event("myhiredito-employer-onboarding"));
 }
 
-export function isEmployerDemoCredentials(email: string, password: string): boolean {
-  return (
-    email.trim().toLowerCase() === EMPLOYER_DEMO_EMAIL &&
-    password === EMPLOYER_DEMO_PASSWORD
+export function isEmployerDemoEmail(email: string): boolean {
+  return EMPLOYER_DEMO_EMAIL_ALIASES.includes(
+    email.trim().toLowerCase() as (typeof EMPLOYER_DEMO_EMAIL_ALIASES)[number],
   );
+}
+
+export function isEmployerDemoCredentials(email: string, password: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  if (normalized === EMPLOYER_DEMO_EMAIL && password === EMPLOYER_DEMO_PASSWORD) {
+    return true;
+  }
+  return normalized === "employer@demo.com" && password === "demo123";
 }
 
 export function setDemoEmployerSession(): void {

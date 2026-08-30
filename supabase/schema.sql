@@ -92,7 +92,11 @@ begin
       split_part(new.email, '@', 1)
     )
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update
+    set role = excluded.role,
+        email = coalesce(excluded.email, public.profiles.email),
+        display_name = coalesce(excluded.display_name, public.profiles.display_name),
+        updated_at = now();
 
   if user_role_value = 'worker' then
     insert into public.onboarding_progress (worker_id)

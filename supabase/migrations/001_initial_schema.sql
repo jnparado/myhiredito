@@ -69,7 +69,10 @@ as $$
 declare
   user_role text;
 begin
-  user_role := coalesce(new.raw_user_meta_data->>'role', 'worker');
+  user_role := lower(coalesce(new.raw_user_meta_data->>'role', 'worker'));
+  if user_role not in ('worker', 'employer') then
+    user_role := 'worker';
+  end if;
 
   insert into public.profiles (id, role, email, first_name, last_name, company_name)
   values (
@@ -80,7 +83,13 @@ begin
     new.raw_user_meta_data->>'last_name',
     new.raw_user_meta_data->>'company_name'
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update
+    set role = excluded.role,
+        email = coalesce(excluded.email, public.profiles.email),
+        first_name = coalesce(excluded.first_name, public.profiles.first_name),
+        last_name = coalesce(excluded.last_name, public.profiles.last_name),
+        company_name = coalesce(excluded.company_name, public.profiles.company_name),
+        updated_at = now();
 
   if user_role = 'employer' then
     insert into public.employer_onboarding (user_id)

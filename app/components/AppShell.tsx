@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { GuestAuthButtons, guestAuthRoleFromPath } from "./shared/GuestAuthButtons";
+import { setLastAuthRole } from "@/app/lib/authRole";
 import { MyHireditoLogo } from "./brand/MyHireditoLogo";
 
 const HIDE_CHROME_PATHS = new Set([
@@ -69,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden items-center gap-1 rounded-full border border-zinc-200 p-0.5 md:flex">
               <Link
                 href="/employer"
+                onClick={() => setLastAuthRole("employer")}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                   pathname?.startsWith("/employer")
                     ? "bg-zinc-900 text-white"
@@ -79,6 +81,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
               <Link
                 href="/worker"
+                onClick={() => setLastAuthRole("worker")}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                   pathname?.startsWith("/worker")
                     ? "bg-zinc-900 text-white"
@@ -161,10 +164,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {menuOpen && (
             <div className="border-t border-zinc-100 bg-white px-4 py-4 lg:hidden">
               <div className="mb-4 flex gap-1 rounded-full border border-zinc-200 p-0.5">
-                <Link href="/employer" className="flex-1 rounded-full bg-zinc-900 py-2 text-center text-xs font-semibold text-white" onClick={() => setMenuOpen(false)}>
+                <Link
+                  href="/employer"
+                  className="flex-1 rounded-full bg-zinc-900 py-2 text-center text-xs font-semibold text-white"
+                  onClick={() => {
+                    setLastAuthRole("employer");
+                    setMenuOpen(false);
+                  }}
+                >
                   Employers
                 </Link>
-                <Link href="/worker" className="flex-1 rounded-full py-2 text-center text-xs font-semibold text-zinc-600" onClick={() => setMenuOpen(false)}>
+                <Link
+                  href="/worker"
+                  className="flex-1 rounded-full py-2 text-center text-xs font-semibold text-zinc-600"
+                  onClick={() => {
+                    setLastAuthRole("worker");
+                    setMenuOpen(false);
+                  }}
+                >
                   Workers
                 </Link>
               </div>

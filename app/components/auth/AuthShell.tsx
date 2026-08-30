@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { setLastAuthRole } from "@/app/lib/authRole";
 import { MyHireditoLogo } from "../brand/MyHireditoLogo";
 
 type AuthVariant = "worker" | "employer";
@@ -57,7 +58,10 @@ export function AuthShell({
   const content = panelContent[variant];
   const loginHref = variant === "worker" ? "/worker/login" : "/employer/login";
   const signupHref = variant === "worker" ? "/worker/signup" : "/employer/signup";
+  const employerAuthHref = mode === "signup" ? "/employer/signup" : "/employer/login";
+  const workerAuthHref = mode === "signup" ? "/worker/signup" : "/worker/login";
   const isEmployers = variant === "employer";
+  const switchHref = content.switchLink[mode];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0f1115] lg:flex-row">
@@ -104,28 +108,30 @@ export function AuthShell({
       </div>
 
       {/* Form panel */}
-      <div className="flex flex-1 flex-col bg-zinc-50">
+      <div className="relative z-10 flex flex-1 flex-col bg-zinc-50">
         <header className="border-b-2 border-[#1db954] bg-[#0f1115] px-4 py-3 lg:border-b-0 lg:bg-zinc-50 lg:px-8 lg:py-6">
           <div className="mx-auto flex max-w-md items-center justify-between lg:max-w-lg">
             <MyHireditoLogo href="/" theme="dark" size="md" className="lg:hidden" />
             <MyHireditoLogo href="/" theme="light" size="md" className="hidden lg:inline-flex" />
-            <div className="flex items-center rounded-full border border-white/20 bg-white/5 p-0.5 lg:border-zinc-200 lg:bg-white">
+            <div className="relative z-20 flex items-center rounded-full border border-white/20 bg-white/5 p-0.5 lg:border-zinc-200 lg:bg-white">
               <Link
-                href="/"
+                href={employerAuthHref}
+                onClick={() => setLastAuthRole("employer")}
                 className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition sm:px-4 sm:text-[11px] ${
                   isEmployers
                     ? "bg-white text-zinc-900"
-                    : "text-zinc-400 hover:text-white lg:text-zinc-500 lg:hover:text-zinc-900"
+                    : "text-zinc-300 underline-offset-2 hover:text-white hover:underline lg:text-zinc-600 lg:hover:text-zinc-900"
                 }`}
               >
                 Employers
               </Link>
               <Link
-                href="/worker"
+                href={workerAuthHref}
+                onClick={() => setLastAuthRole("worker")}
                 className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition sm:px-4 sm:text-[11px] ${
                   !isEmployers
                     ? "bg-white text-zinc-900"
-                    : "text-zinc-400 hover:text-white lg:text-zinc-500 lg:hover:text-zinc-900"
+                    : "text-zinc-300 underline-offset-2 hover:text-white hover:underline lg:text-zinc-600 lg:hover:text-zinc-900"
                 }`}
               >
                 Workers
@@ -169,11 +175,14 @@ export function AuthShell({
               {children}
             </div>
 
-            <p className="mt-6 text-center text-sm text-zinc-500">
+            <p className="relative z-20 mt-6 text-center text-sm text-zinc-500">
               {content.switchPrompt}{" "}
               <Link
-                href={content.switchLink[mode]}
-                className="font-semibold text-zinc-900 hover:text-[#1db954] hover:underline"
+                href={switchHref}
+                onClick={() =>
+                  setLastAuthRole(variant === "worker" ? "employer" : "worker")
+                }
+                className="inline-block font-semibold text-zinc-900 underline decoration-zinc-300 underline-offset-2 hover:text-[#1db954] hover:decoration-[#1db954]"
               >
                 {content.switchLabel} {mode === "login" ? "log in" : "sign up"}
               </Link>

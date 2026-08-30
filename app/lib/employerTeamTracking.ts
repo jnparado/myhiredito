@@ -107,7 +107,10 @@ export function getTeamWorkers(employerUserKey: string): EmployerWorker[] {
     });
   }
 
-  if (employerUserKey === EMPLOYER_DEMO_EMAIL) {
+  if (
+    employerUserKey === EMPLOYER_DEMO_EMAIL ||
+    employerUserKey === "employer@demo.com"
+  ) {
     const alex = demoTeamWorker();
     if (!combined.some((item) => isSameWorker(item, alex))) {
       combined.unshift(alex);

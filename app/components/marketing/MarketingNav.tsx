@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useWorkerAuth } from "@/app/hooks/useWorkerAuth";
 import { GuestAuthButtons, guestAuthRoleFromPath } from "@/app/components/shared/GuestAuthButtons";
+import { setLastAuthRole } from "@/app/lib/authRole";
 import { MyHireditoLogo } from "../brand/MyHireditoLogo";
 import { HowWeHelpMegaMenu } from "./HowWeHelpMegaMenu";
 import { PlatformMegaMenu } from "./PlatformMegaMenu";
@@ -82,6 +83,7 @@ export function MarketingNav() {
         <div className="hidden items-center rounded-full border border-white/20 bg-white/5 p-0.5 md:flex">
           <Link
             href="/"
+            onClick={() => setLastAuthRole("employer")}
             className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
               isEmployersView
                 ? "bg-white text-zinc-900"
@@ -92,6 +94,7 @@ export function MarketingNav() {
           </Link>
           <Link
             href="/worker"
+            onClick={() => setLastAuthRole("worker")}
             className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
               isWorkersContext
                 ? "bg-[#1db954] text-white"
@@ -212,7 +215,10 @@ export function MarketingNav() {
               className={`flex-1 rounded-full py-2 text-center text-[11px] font-bold uppercase ${
                 isEmployersView ? "bg-white text-zinc-900" : "text-zinc-400"
               }`}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setLastAuthRole("employer");
+                setMobileOpen(false);
+              }}
             >
               Employers
             </Link>
@@ -221,7 +227,10 @@ export function MarketingNav() {
               className={`flex-1 rounded-full py-2 text-center text-[11px] font-bold uppercase ${
                 isWorkersContext ? "bg-[#1db954] text-white" : "text-zinc-400"
               }`}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setLastAuthRole("worker");
+                setMobileOpen(false);
+              }}
             >
               Workers
             </Link>

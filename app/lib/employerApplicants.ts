@@ -109,7 +109,10 @@ export function getApplicantLookupKeys(
   if (!user) return [...keys];
   const email = getEmployerEmail(user).trim().toLowerCase();
   if (email) keys.add(email);
-  if (email === EMPLOYER_DEMO_EMAIL) keys.add(EMPLOYER_DEMO_EMAIL);
+  if (email === EMPLOYER_DEMO_EMAIL || email === "employer@demo.com") {
+    keys.add(EMPLOYER_DEMO_EMAIL);
+    keys.add("employer@demo.com");
+  }
   return [...keys];
 }
 

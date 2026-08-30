@@ -4,6 +4,7 @@ import { formatAuthError } from "../authErrors";
 import { ensureProfileForUser, fetchProfile } from "./profiles";
 import type { UserRole } from "./database.types";
 import { ensureWorkerOnboardingInDb } from "./workerOnboardingDb";
+import { resetEmployerOnboardingInDb } from "./onboarding";
 
 export function getAuthCallbackUrl(nextPath: string): string {
   if (typeof window === "undefined") return nextPath;
@@ -66,6 +67,10 @@ export async function signUpWithRole({
     throw new Error("Account created, but sign-in failed. Try logging in.");
   }
 
+  await supabase.auth.updateUser({
+    data: { role, ...metadata },
+  });
+
   await ensureProfileForUser({
     userId,
     email: normalizedEmail,
@@ -73,6 +78,9 @@ export async function signUpWithRole({
   });
   if (role === "worker") {
     await ensureWorkerOnboardingInDb(userId);
+  }
+  if (role === "employer") {
+    await resetEmployerOnboardingInDb(userId);
   }
 
   return result.data;
