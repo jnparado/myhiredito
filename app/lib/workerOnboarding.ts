@@ -1,4 +1,5 @@
 import type { WorkerAuthUser } from "./workerAuth";
+import type { StripeBankDetails } from "./stripe/bank";
 import {
   fetchOnboardingProgress,
   formDataToPaymentInput,
@@ -49,7 +50,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: "payment-method",
     step: 3,
     label: "Add payment method",
-    description: "Bank account or debit card to receive pay after shifts",
+    description: "Connect a bank account with Stripe to receive pay after shifts",
     icon: "💳",
     href: "/worker/onboarding/payment",
   },
@@ -205,6 +206,26 @@ export async function saveOnboardingStep(
       break;
     default:
       await markOnboardingStepComplete(user, userKey, stepId);
+  }
+}
+
+export async function savePaymentFromStripeBank(
+  user: WorkerAuthUser,
+  userKey: string,
+  bank: StripeBankDetails,
+): Promise<void> {
+  if (user.source === "demo") {
+    markDemoStepComplete(userKey, "payment-method");
+    return;
+  }
+
+  await savePaymentOnboarding(userKey, {
+    paymentMethod: "bank-account",
+    accountHolder: bank.accountHolder,
+    accountLast4: bank.last4,
+  });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("myhiredito-worker-onboarding"));
   }
 }
 

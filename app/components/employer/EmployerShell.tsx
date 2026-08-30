@@ -26,6 +26,7 @@ import { GuestAuthButtons } from "@/app/components/shared/GuestAuthButtons";
 
 type OpenPanel = "notifications" | "more" | "profile" | null;
 
+
 const navItems = [
   { href: "/employer/dashboard?post=1", label: "Post Job", icon: "post" },
   { href: "/employer/dashboard", label: "Home", icon: "home" },
@@ -337,9 +338,11 @@ export function EmployerShell({
             </div>
 
               <ProfileDropdownMenu
+                variant="employer"
                 displayName={displayName}
                 email={userEmail}
-                roleLabel="admin"
+                roleLabel="Employer"
+                companyName={companyName}
                 open={openPanel === "profile"}
                 onToggle={() => togglePanel("profile")}
                 onClose={() => setOpenPanel(null)}

@@ -1,18 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { authFieldClass, authLabelClass } from "@/app/components/auth/AuthShell";
+import { useCallback } from "react";
+import { StripeBankConnect } from "@/app/components/payments/StripeBankConnect";
+import { useEmployerAuth } from "@/app/hooks/useEmployerAuth";
 import { useEmployerBilling } from "@/app/hooks/useEmployerBilling";
+import { useStripeBankReturn } from "@/app/hooks/useStripeBankReturn";
+import { getEmployerEmail } from "@/app/lib/employerAuth";
 import {
-  addPaymentMethod,
+  addBankPaymentMethod,
   removePaymentMethod,
 } from "@/app/lib/employerBilling";
+import type { StripeBankDetails } from "@/app/lib/stripe/bank";
 
 export function EmployerBillingView() {
+  const { user } = useEmployerAuth();
   const { userKey, billing, loading } = useEmployerBilling();
-  const [showAddCard, setShowAddCard] = useState(false);
-  const [last4, setLast4] = useState("");
-  const [expiry, setExpiry] = useState("");
+  const email = user ? getEmployerEmail(user) : "";
+
+  const handleBankConnected = useCallback(
+    (bank: StripeBankDetails) => {
+      if (!userKey) return;
+      addBankPaymentMethod(userKey, bank);
+    },
+    [userKey],
+  );
+
+  const { status, error } = useStripeBankReturn(handleBankConnected);
 
   if (loading || !billing) {
     return (
@@ -20,19 +33,6 @@ export function EmployerBillingView() {
         Loading billing...
       </div>
     );
-  }
-
-  function handleAddCard(e: React.FormEvent) {
-    e.preventDefault();
-    if (!userKey || last4.length !== 4) return;
-    addPaymentMethod(userKey, {
-      brand: "Visa",
-      last4,
-      expiry,
-    });
-    setLast4("");
-    setExpiry("");
-    setShowAddCard(false);
   }
 
   return (
@@ -43,7 +43,7 @@ export function EmployerBillingView() {
         </p>
         <h1 className="mt-2 text-2xl font-bold text-zinc-900">Billing</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Manage your plan, payment methods, and invoices.
+          Pay hiring fees from a Stripe-connected bank account.
         </p>
       </div>
 
@@ -58,53 +58,37 @@ export function EmployerBillingView() {
       </div>
 
       <div className="mb-4 rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
-          <h2 className="text-sm font-bold text-zinc-900">Payment methods</h2>
-          <button
-            type="button"
-            onClick={() => setShowAddCard((v) => !v)}
-            className="text-xs font-bold text-[#1db954] hover:underline"
-          >
-            + Add card
-          </button>
+        <div className="border-b border-zinc-100 px-5 py-3">
+          <h2 className="text-sm font-bold text-zinc-900">Bank payment</h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            Connect a US bank account with Stripe for ACH payments.
+          </p>
         </div>
 
-        {showAddCard && (
-          <form onSubmit={handleAddCard} className="border-b border-zinc-100 px-5 py-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className={authLabelClass}>Last 4 digits</label>
-                <input
-                  className={authFieldClass}
-                  value={last4}
-                  onChange={(e) => setLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  placeholder="4242"
-                  maxLength={4}
-                  required
-                />
-              </div>
-              <div>
-                <label className={authLabelClass}>Expiry (MM/YY)</label>
-                <input
-                  className={authFieldClass}
-                  value={expiry}
-                  onChange={(e) => setExpiry(e.target.value)}
-                  placeholder="12/28"
-                  required
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              className="mt-3 rounded-lg bg-[#1db954] px-4 py-2 text-sm font-bold text-white"
-            >
-              Save card
-            </button>
-          </form>
-        )}
+        <div className="border-b border-zinc-100 px-5 py-4">
+          {status === "saving" && (
+            <p className="mb-3 text-sm text-zinc-500">
+              Saving your Stripe bank account...
+            </p>
+          )}
+          {status === "cancel" && (
+            <p className="mb-3 text-sm text-amber-700">
+              Stripe bank setup was canceled. You can try again below.
+            </p>
+          )}
+          {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+          <StripeBankConnect
+            role="employer"
+            email={email}
+            returnPath="/employer/billing"
+            onConnected={handleBankConnected}
+          />
+        </div>
 
         {billing.paymentMethods.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-zinc-500">No payment methods on file.</p>
+          <p className="px-5 py-6 text-sm text-zinc-500">
+            No bank account on file yet.
+          </p>
         ) : (
           <ul className="divide-y divide-zinc-100">
             {billing.paymentMethods.map((method) => (
@@ -121,7 +105,11 @@ export function EmployerBillingView() {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-zinc-500">Expires {method.expiry}</p>
+                  <p className="text-xs text-zinc-500">
+                    {method.kind === "bank"
+                      ? "ACH bank account · Stripe"
+                      : `Expires ${method.expiry}`}
+                  </p>
                 </div>
                 <button
                   type="button"

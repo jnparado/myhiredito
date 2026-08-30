@@ -20,6 +20,8 @@ type Props = {
   items?: MenuItem[];
   manageAccountsHref?: string;
   manageAccountsLabel?: string;
+  variant?: "default" | "employer";
+  companyName?: string;
 };
 
 function MenuIcon({ type }: { type: MenuItem["icon"] | "sign-out" }) {
@@ -52,11 +54,41 @@ function MenuIcon({ type }: { type: MenuItem["icon"] | "sign-out" }) {
   }
 }
 
-function AvatarBadge({ initial }: { initial: string }) {
+function AvatarBadge({
+  initial,
+  variant = "default",
+}: {
+  initial: string;
+  variant?: "default" | "employer";
+}) {
+  if (variant === "employer") {
+    return (
+      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1db954] text-sm font-black text-[#062510] shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)]">
+        {initial}
+        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#0f1115] ring-2 ring-[#1db954]" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-sm font-bold text-white">
       {initial}
     </div>
+  );
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`h-3.5 w-3.5 shrink-0 text-white/70 transition ${open ? "rotate-180" : ""}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2.25}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    </svg>
   );
 }
 
@@ -71,8 +103,11 @@ export function ProfileDropdownMenu({
   items,
   manageAccountsHref,
   manageAccountsLabel = "Manage User Accounts",
+  variant = "default",
+  companyName,
 }: Props) {
   const initial = displayName.charAt(0).toUpperCase();
+  const isEmployer = variant === "employer";
 
   const defaultItems: MenuItem[] = items ?? [
     { href: "#", label: "My Profile", icon: "profile" },
@@ -84,30 +119,69 @@ export function ProfileDropdownMenu({
       <button
         type="button"
         onClick={onToggle}
-        className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-1.5 transition sm:px-3 ${
-          open
-            ? "border-white/40 bg-white/10"
-            : "border-white/25 bg-white/5 hover:border-white/40 hover:bg-white/10"
-        }`}
+        className={
+          isEmployer
+            ? `flex max-w-[13.5rem] items-center gap-2 rounded-2xl border py-1 pl-1 pr-2.5 transition sm:max-w-[16rem] ${
+                open
+                  ? "border-[#1db954]/70 bg-[#14181d]"
+                  : "border-white/15 bg-[#181c22] hover:border-[#1db954]/50 hover:bg-[#1c2128]"
+              }`
+            : `flex items-center gap-2.5 rounded-lg border px-2.5 py-1.5 transition sm:px-3 ${
+                open
+                  ? "border-white/40 bg-white/10"
+                  : "border-white/25 bg-white/5 hover:border-white/40 hover:bg-white/10"
+              }`
+        }
         aria-label="Account menu"
         aria-expanded={open}
       >
-        <AvatarBadge initial={initial} />
+        <AvatarBadge initial={initial} variant={variant} />
         <div className="hidden min-w-0 text-left sm:block">
-          <p className="truncate text-sm font-semibold leading-tight text-white">
+          <p
+            className={`truncate leading-tight text-white ${
+              isEmployer ? "text-[13px] font-bold tracking-tight" : "text-sm font-semibold"
+            }`}
+          >
             {displayName}
           </p>
-          <p className="truncate text-[11px] text-white/60">{roleLabel}</p>
+          <p
+            className={
+              isEmployer
+                ? "truncate text-[10px] font-bold uppercase tracking-[0.14em] text-[#1db954]"
+                : "truncate text-[11px] text-white/60"
+            }
+          >
+            {roleLabel}
+          </p>
         </div>
+        {isEmployer && <Chevron open={open} />}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(16rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 text-zinc-900 shadow-xl sm:w-64">
+        <div
+          className={`absolute right-0 top-full z-50 mt-2 w-[min(16rem,calc(100vw-1.5rem))] overflow-hidden bg-white py-1 text-zinc-900 shadow-xl sm:w-64 ${
+            isEmployer
+              ? "rounded-2xl border border-zinc-200 shadow-[0_12px_40px_rgba(15,17,21,0.18)]"
+              : "rounded-xl border border-zinc-200"
+          }`}
+        >
+          {isEmployer && <div className="h-1 bg-[#1db954]" />}
           <div className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3.5">
-            <AvatarBadge initial={initial} />
+            <AvatarBadge initial={initial} variant={variant} />
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-zinc-900">{displayName}</p>
-              <p className="truncate text-xs text-zinc-500">{email}</p>
+              {isEmployer ? (
+                <>
+                  <p className="truncate text-[10px] font-bold uppercase tracking-[0.14em] text-[#1db954]">
+                    Employer
+                  </p>
+                  <p className="truncate text-xs text-zinc-500">
+                    {companyName || email}
+                  </p>
+                </>
+              ) : (
+                <p className="truncate text-xs text-zinc-500">{email}</p>
+              )}
             </div>
           </div>
 

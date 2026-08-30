@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { EmployerAccountShell } from "../../components/employer/EmployerAccountShell";
 import { EmployerBillingView } from "../../components/employer/EmployerBillingView";
 
@@ -9,7 +10,15 @@ export const metadata = {
 export default function EmployerBillingPage() {
   return (
     <EmployerAccountShell>
-      <EmployerBillingView />
+      <Suspense
+        fallback={
+          <div className="flex min-h-[40vh] items-center justify-center text-sm text-zinc-500">
+            Loading billing...
+          </div>
+        }
+      >
+        <EmployerBillingView />
+      </Suspense>
     </EmployerAccountShell>
   );
 }

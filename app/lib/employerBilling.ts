@@ -3,6 +3,7 @@ export type PaymentMethod = {
   brand: string;
   last4: string;
   expiry: string;
+  kind: "card" | "bank";
   isDefault: boolean;
 };
 
@@ -52,7 +53,15 @@ export function getBillingState(userKey: string): BillingState {
   const raw = localStorage.getItem(storageKey(userKey));
   if (!raw) return defaultBilling();
   try {
-    return { ...defaultBilling(), ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw) as Partial<BillingState>;
+    return {
+      ...defaultBilling(),
+      ...parsed,
+      paymentMethods: (parsed.paymentMethods ?? []).map((method) => ({
+        ...method,
+        kind: method.kind ?? "card",
+      })),
+    };
   } catch {
     return defaultBilling();
   }
@@ -66,19 +75,36 @@ export function saveBillingState(userKey: string, state: BillingState): void {
 
 export function addPaymentMethod(
   userKey: string,
-  card: { brand: string; last4: string; expiry: string },
+  card: { brand: string; last4: string; expiry: string; kind?: "card" | "bank"; id?: string },
 ): PaymentMethod {
   const state = getBillingState(userKey);
   const method: PaymentMethod = {
-    id: `pm-${Date.now()}`,
-    ...card,
+    id: card.id ?? `pm-${Date.now()}`,
+    brand: card.brand,
+    last4: card.last4,
+    expiry: card.expiry,
+    kind: card.kind ?? "card",
     isDefault: state.paymentMethods.length === 0,
   };
+  const methods = state.paymentMethods.filter((item) => item.id !== method.id);
   saveBillingState(userKey, {
     ...state,
-    paymentMethods: [...state.paymentMethods, method],
+    paymentMethods: [...methods, method],
   });
   return method;
+}
+
+export function addBankPaymentMethod(
+  userKey: string,
+  bank: { paymentMethodId: string; bankName: string; last4: string },
+): PaymentMethod {
+  return addPaymentMethod(userKey, {
+    id: bank.paymentMethodId,
+    brand: bank.bankName,
+    last4: bank.last4,
+    expiry: "",
+    kind: "bank",
+  });
 }
 
 export function removePaymentMethod(userKey: string, methodId: string): void {
