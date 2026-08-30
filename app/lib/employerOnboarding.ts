@@ -1,4 +1,9 @@
 import type { EmployerAuthUser } from "./employerAuth";
+import {
+  EMPLOYER_DEMO_ONBOARDING,
+  isEmployerDemoAccount,
+} from "./employerDemoAuth";
+import { getEmployerDisplayName, getEmployerEmail } from "./employerAuth";
 
 export type EmployerOnboardingStepId =
   | "identity"
@@ -176,12 +181,33 @@ function saveOnboardingProgressLocal(
   }
 }
 
+function completeDemoEmployerProgress(): OnboardingProgress {
+  return {
+    completedSteps: [...EMPLOYER_DEMO_ONBOARDING.completedSteps],
+    dismissed: EMPLOYER_DEMO_ONBOARDING.dismissed,
+    data: {
+      identity: { ...EMPLOYER_DEMO_ONBOARDING.data.identity },
+      businessCertificate: { ...EMPLOYER_DEMO_ONBOARDING.data.businessCertificate },
+      businessDetails: { ...EMPLOYER_DEMO_ONBOARDING.data.businessDetails },
+    },
+  };
+}
+
+function isDemoEmployerUser(user: EmployerAuthUser): boolean {
+  if (user.source === "demo") return true;
+  return isEmployerDemoAccount(getEmployerEmail(user), getEmployerDisplayName(user));
+}
+
 export async function getOnboardingProgress(
   user: EmployerAuthUser,
   userKey: string,
 ): Promise<OnboardingProgress> {
-  if (user.source === "demo") {
-    return getOnboardingProgressLocal(userKey);
+  if (isDemoEmployerUser(user)) {
+    const existing = getOnboardingProgressLocal(userKey);
+    if (isOnboardingComplete(existing)) return existing;
+    const complete = completeDemoEmployerProgress();
+    saveOnboardingProgressLocal(userKey, complete);
+    return complete;
   }
 
   const { fetchEmployerOnboardingFromDb } = await import("./supabase/onboarding");

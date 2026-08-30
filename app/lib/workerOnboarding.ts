@@ -1,4 +1,9 @@
 import type { WorkerAuthUser } from "./workerAuth";
+import { getWorkerDisplayName, getWorkerEmail } from "./workerAuth";
+import {
+  isWorkerDemoAccount,
+  WORKER_DEMO_ONBOARDING,
+} from "./workerDemoAuth";
 import type { StripeBankDetails } from "./stripe/bank";
 import {
   fetchOnboardingProgress,
@@ -123,13 +128,28 @@ function rowToProgress(row: {
   };
 }
 
+function completeDemoWorkerProgress(): OnboardingProgress {
+  return {
+    completedSteps: [...WORKER_DEMO_ONBOARDING.completedSteps],
+    dismissed: WORKER_DEMO_ONBOARDING.dismissed,
+  };
+}
+
+function isDemoWorkerUser(user: WorkerAuthUser): boolean {
+  if (user.source === "demo") return true;
+  return isWorkerDemoAccount(getWorkerEmail(user), getWorkerDisplayName(user));
+}
+
 export async function getOnboardingProgress(
   user: WorkerAuthUser,
   userKey: string,
 ): Promise<OnboardingProgress> {
   const local = getOnboardingProgressLocal(userKey);
-  if (user.source === "demo") {
-    return local;
+  if (isDemoWorkerUser(user)) {
+    if (isOnboardingComplete(local)) return local;
+    const complete = completeDemoWorkerProgress();
+    saveOnboardingProgressLocal(userKey, complete);
+    return complete;
   }
 
   try {

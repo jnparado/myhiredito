@@ -30,6 +30,19 @@ export const WORKER_DEMO_USER: WorkerDemoUser = {
 const SESSION_KEY = "myhiredito_worker_demo_session";
 const ONBOARDING_PREFIX = "myhiredito_worker_onboarding_";
 
+export const WORKER_DEMO_ONBOARDING = {
+  completedSteps: ["profile", "skills-certificates", "payment-method"] as const,
+  dismissed: false,
+};
+
+export function isWorkerDemoAccount(email: string, displayName?: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  if (normalized === WORKER_DEMO_EMAIL || normalized === "alex.rivera@email.com") {
+    return true;
+  }
+  return displayName?.trim().toLowerCase() === "alex rivera";
+}
+
 export function isWorkerDemoCredentials(email: string, password: string): boolean {
   return (
     email.trim().toLowerCase() === WORKER_DEMO_EMAIL &&

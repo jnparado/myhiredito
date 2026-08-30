@@ -5,7 +5,9 @@ import { signOutSupabase } from "./supabase/auth";
 import type { Profile, UserRole } from "./supabase/database.types";
 import {
   clearDemoEmployerSession,
+  EMPLOYER_DEMO_USER,
   getDemoEmployerSession,
+  isEmployerDemoAccount,
   type EmployerDemoUser,
 } from "./employerDemoAuth";
 
@@ -76,6 +78,9 @@ export function getEmployerDisplayName(user: EmployerAuthUser): string {
 
 export function getEmployerCompanyName(user: EmployerAuthUser): string {
   if (user.source === "demo") return user.user.companyName;
+  if (isEmployerDemoAccount(user.email, user.displayName)) {
+    return user.profile?.company_name || EMPLOYER_DEMO_USER.companyName;
+  }
   return user.profile?.company_name || "Your business";
 }
 

@@ -73,6 +73,11 @@ export function isEmployerDemoEmail(email: string): boolean {
   );
 }
 
+export function isEmployerDemoAccount(email: string, displayName?: string): boolean {
+  if (isEmployerDemoEmail(email)) return true;
+  return displayName?.trim().toLowerCase() === "jordan lee";
+}
+
 export function isEmployerDemoCredentials(email: string, password: string): boolean {
   const normalized = email.trim().toLowerCase();
   if (normalized === EMPLOYER_DEMO_EMAIL && password === EMPLOYER_DEMO_PASSWORD) {
